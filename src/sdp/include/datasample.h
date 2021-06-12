@@ -7,7 +7,18 @@
 #ifndef SDP_DATASAMPLE_H__
 #define SDP_DATASAMPLE_H__
 
-#include <stdint.h>
+#include <sdp.h>
+
+/**
+ * @defgroup DATASAMPLE Data sample definitions.
+ * @ingroup sdp_api
+ * @{
+ */
+
+/**
+ * @file
+ * @brief API header file for SDP data samples.
+ */
 
 #ifdef __cplusplus
 extern "C" {
@@ -22,7 +33,7 @@ extern "C" {
  * +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
  * |              Flags            |   Ext. Type   |   Base Type   | <- Filter
  * +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
- * |   Source ID   |   Rsvd  | T |P|        Payload Length         | <- SrcLen
+ * |   Source ID   |  Rsvd | TSt |P|        Payload Length         | <- SrcLen
  * +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
  * |                                                               |
  * |                            Payload                            |
@@ -34,11 +45,11 @@ extern "C" {
  *            1
  *  5 4 3 2 1 0 9 8 7 6 5 4 3 2 1 0
  * +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
- * |  Reserved | Alg | Encod |  DS | <- Flags
+ * |  Reserved | Alg | Encod |  DF | <- Flags
  * +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
  *     |          |      |      |
- *     |          |      |      +-------- Data Structure
- *     |          |      +--------------- Encoding Format
+ *     |          |      |      +-------- Data Format (TLV, CBOR, etc.)
+ *     |          |      +--------------- Encoding (BASE64, etc.)
  *     |          +---------------------- Encryption Algorithm
  *     +--------------------------------- Reserved
  *
@@ -58,9 +69,9 @@ extern "C" {
  *
  *   o Flags [16:31] (Optional)
  *
- *       o Data Structure [0:2]
+ *       o Data Format [0:2]
  *
- *           Data structure used to pack the payload (if any).
+ *           Data format used to organise the payload (if any).
  *
  *           0 = Raw binary data
  *
@@ -78,17 +89,17 @@ extern "C" {
  *               be included with a sample, or for multiple samples to be
  *               included in a single data sample record for efficieny sake.
  *
- *           2 = JSON
- *           3 = Reserved
+ *           2 = CBOR (Concise Binary Object Representation, rfc8949)
+ *           3 = JSON (JavaScript Object Notation, rfc8259)
+ *           4..7 Reserved
  *
- *       o Encoding Format [3:6]
+ *       o Payload Encoding [3:6]
  *
  *           Encoding format used for the payload:
  *
  *           0 = None
  *           1 = BASE64 encoding	Data has been BASE64 encoded
- *           2 = CBOR encoding		Data has been CBOR encoded
- *           3..15 = Reserved
+ *           2..15 = Reserved
  *
  *       o Encryption Algorithm [7:9]
  *
@@ -107,7 +118,8 @@ extern "C" {
  *
  *   o Payload Length [0:15]
  *
- *       Payload length in bytes, minus the header
+ *       Payload length in bytes, minus the header, including optional
+ *       timestamp if present.
  *
  *   o Partial        [16]
  *
@@ -115,7 +127,7 @@ extern "C" {
  *       contents should be appended to the previous packets from this source
  *       before being parsed.
  *
- *   o Timestamp      [17:18]
+ *   o Timestamp      [17:19]
  *
  *       Indicates that a timestamp of the specified format is appended at the
  *       end of the record. The length of the timestamp is INCLUDED in the
@@ -126,9 +138,9 @@ extern "C" {
  *       0 = None
  *       1 = Unix Epoch 32-bit
  *       2 = Unix Epoch 64-bit
- *       3 = Reserved
+ *       3..7 = Reserved
  *
- *   o Reserved       [17:23]
+ *   o Reserved       [20:23]
  *
  *       Reserved
  *
@@ -150,10 +162,10 @@ struct sdp_ds_header {
 			/* Flags */
 			union {
 				struct {
-					/* Data structure used (0 = none, 1 = TLV, 2 = JSON). */
-					uint16_t data_struct : 3;
-					/* Encoding format used (0 = binary, 1 = BASE64, 2 = CBOR). */
-					uint16_t encoding_fmt : 4;
+					/* Data format used (0 = none, 1 = TLV, 2 = CBOR, 3 = JSON). */
+					uint16_t data_format : 3;
+					/* Payload encoding used (0 = none, 1 = BASE64). */
+					uint16_t encoding : 4;
 					/* Encryption algorithm used (0 for none). */
 					uint16_t encrypt_alg : 3;
 					/* Reserved for future used. */
@@ -175,10 +187,10 @@ struct sdp_ds_header {
 			struct {
 				/* Indicates this is a partial, non-final packet. */
 				uint8_t is_partial : 1;
-				/* Timestamp format (0 for none, 1 = epoch). */
-				uint8_t timestamp : 2;
+				/* Timestamp format (0 for none, 1 = epoch32, 2 : epoch64). */
+				uint8_t timestamp : 3;
 				/* Reserved for future used */
-				uint8_t _rsvd : 5;
+				uint8_t _rsvd : 4;
 			};
 			/* Data source registery ID associated with this sample. */
 			uint8_t sourceid;
@@ -197,7 +209,7 @@ enum sdp_ds_type {
 	SDP_DS_TYPE_EVENT       = 1,
 
 	/* 0x2..0xF (2-15): Unclassified standard data types. */
-	SDP_DS_TYPE_NUMERIC     = 1,            /**< Unclassified numeric values. */
+	SDP_DS_TYPE_NUMERIC     = 2,            /**< Unclassified numeric values. */
 	SDP_DS_TYPE_STRING,                     /**< Null-terminated string. */
 
 	/* 0x10..0x7F (16-127): Standardised base data types. */
@@ -292,23 +304,23 @@ enum sdp_ds_ext_color {
 };
 
 /** Payload data structure used. */
-enum sdp_ds_structure {
+enum sdp_ds_format {
 	/** No data structure (single record). */
-	SDP_DS_STRUCTURE_NONE = 0,
+	SDP_DS_FORMAT_NONE   = 0,
 	/** Type, Length, Value record(s). */
-	SDP_DS_STRUCTURE_TLV = 1,
+	SDP_DS_FORMAT_TLV    = 1,
+	/** CBOR record(s). */
+	SDP_DS_FORMAT_CBOR   = 2,
 	/** JSON record(s). */
-	SDP_DS_STRUCTURE_JSON = 2
+	SDP_DS_FORMAT_JSON   = 3
 };
 
-/** Payload encoding format used. */
-enum sdp_ds_encoding_fmt {
+/** Payload encoding used. */
+enum sdp_ds_encoding {
 	/** No encoding used (binary data). */
-	SDP_DS_ENCODING_FMT_NONE = 0,
+	SDP_DS_ENCODING_NONE        = 0,
 	/** BASE64 Encoding. */
-	SDP_DS_ENCODING_FMT_BASE64 = 1,
-	/** CBOR Encoding. */
-	SDP_DS_ENCODING_FMT_CBOR = 2
+	SDP_DS_ENCODING_BASE64      = 1
 };
 
 /** Payload encryption algorithm. */
@@ -317,12 +329,12 @@ enum sdp_ds_encrypt_alg {
 	SDP_DS_ENCRYPT_ALG_NONE = 0
 };
 
-/**
- * @}
- */
-
 #ifdef __cplusplus
 }
 #endif
+
+/**
+ * @}
+ */
 
 #endif /* SDP_DATASAMPLE_H_ */
