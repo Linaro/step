@@ -9,6 +9,10 @@ Overview
 An experimental data processing pipeline that can be used with any
 :ref:`supported board <boards>`.
 
+.. image:: doc/SensorDataPipeline.png
+  :width: 800
+  :alt: Basic Architecture
+
 Building and Running
 ********************
 
