@@ -7,7 +7,7 @@
 #ifndef SDP_FILTER_H__
 #define SDP_FILTER_H__
 
-#include <sdp.h>
+#include "sdp.h"
 
 /**
  * @defgroup FILTER Filter engine definitions.

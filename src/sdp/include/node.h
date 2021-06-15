@@ -7,11 +7,11 @@
 #ifndef SDP_NODE_H__
 #define SDP_NODE_H__
 
-#include <sdp.h>
-#include <filter.h>
-#include <datasample.h>
+#include "sdp.h"
+#include "filter.h"
+#include "datasample.h"
 
-#include <sys/slist.h>
+#include "sys/slist.h"
 
 /**
  * @defgroup NODE Node definition

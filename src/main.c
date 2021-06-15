@@ -7,7 +7,7 @@
 #include <zephyr.h>
 #include <sys/printk.h>
 #include "datasample.h"
-#include "node.h"
+#include "procmgr.h"
 
 void print_header(struct sdp_ds_header *header)
 {
@@ -27,11 +27,6 @@ void print_header(struct sdp_ds_header *header)
 	printk("  _rsvd:          %u\n", header->srclen._rsvd);
 	printk("  sourceid:       %u\n", header->srclen.sourceid);
 	printk("\n");
-}
-
-void print_node(struct sdp_node *node)
-{
-
 }
 
 bool node_evaluate(struct sdp_datasample *sample, void *cfg)
@@ -122,7 +117,14 @@ static const struct sdp_ds_header g_test_ds_header = {
 
 int main()
 {
+	uint32_t rc = 0;
+	uint8_t handle = 0;
+
+	/* Parse the data sample. */
 	print_header(&g_test_ds_header);
+
+	/* Register the processor node. */
+	rc = sdp_pm_register(&g_test_proc_node, &handle);
 
 	return 0;
 }

@@ -7,7 +7,7 @@
 #ifndef SDP_H__
 #define SDP_H__
 
-#include <stdint.h>
+#include "stdint.h"
 
 /**
  * @defgroup sdp_api Secure data pipeline (SDP) API

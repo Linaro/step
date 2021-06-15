@@ -7,7 +7,7 @@
 #ifndef SDP_DATASAMPLE_H__
 #define SDP_DATASAMPLE_H__
 
-#include <sdp.h>
+#include "sdp.h"
 
 /**
  * @defgroup DATASAMPLE Data sample definitions.
