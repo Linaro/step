@@ -5,6 +5,7 @@
  */
 
 #include <zephyr.h>
+#include <string.h>
 #include <sys/printk.h>
 #include "sample_pool.h"
 #include "proc_mgr.h"
@@ -45,7 +46,7 @@ void node_error(struct sdp_datasample *sample, void *cfg, int error)
 }
 
 static struct sdp_node g_test_proc_node = {
-	/* Matches if DS filter field = (0x26 OR 0x226) AND bit 17 is set. */
+	/* Matches if DS filter field = (0x26 OR 0x226) AND bit 26 is set. */
 	.filter_count = 3,
 	.filters = (struct sdp_filter[]){
 		{
@@ -57,9 +58,10 @@ static struct sdp_node g_test_proc_node = {
 		},
 		{
 			.comb_op = SDP_FILTER_COMB_OP_AND,
-			.bits = {
-				.mask = 0xFFFDFFFF,
-				.set = (1 << 17)
+			.bit_match = {
+				/* Bit 26 = EPOCH32 timestamp */
+				.mask = 0xFBFFFFFF,
+				.set = (1 << 26)
 			}
 		}
 	},
@@ -76,7 +78,7 @@ static struct sdp_node g_test_proc_node = {
 	.error_handler = node_error
 };
 
-static struct sdp_datasample g_test_datasample = {
+static struct sdp_datasample g_test_sample = {
 	.header = {
 		/* Filter word. */
 		.filter.data_type = SDP_DS_TYPE_TEMPERATURE,
@@ -85,11 +87,11 @@ static struct sdp_datasample g_test_datasample = {
 			.data_format = SDP_DS_FORMAT_NONE,
 			.encoding = SDP_DS_ENCODING_NONE,
 			.encrypt_alg = SDP_DS_ENCRYPT_ALG_NONE,
+			.timestamp = SDP_DS_TIMESTAMP_EPOCH_32,
 		},
 		/* Source/Len word. */
-		.srclen.len = 4,
-		.srclen.is_partial = 1,
-		.srclen.timestamp = 1,
+		.srclen.len = 8,
+		.srclen.is_partial = 0,
 		.srclen.sourceid = 10
 	},
 	.payload = NULL
@@ -100,11 +102,21 @@ int main()
 	uint32_t rc = 0;
 	uint8_t pm_handle = 0;
 
+	/* Set a sample payload. */
+	struct {
+		float temp_c;
+		uint32_t epoch32;
+	} payload = {
+		.temp_c = 32.1f,
+		.epoch32 = 0x12345678
+	};
+	
 	/* Register the processor node. */
 	rc = sdp_pm_register(&g_test_proc_node, &pm_handle);
 
 	/* Add a sample to the sample pool. */
-	rc = sdp_sp_add(&g_test_datasample);
+	g_test_sample.payload = (uint8_t *)&payload;
+	rc = sdp_sp_add(&g_test_sample);
 
 	return 0;
 }

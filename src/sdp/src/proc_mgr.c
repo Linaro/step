@@ -42,12 +42,12 @@ static void sdp_pm_print(struct sdp_node *node)
 		}
 		/* Exact match or bit-based */
 		if (node->filters[i].exact_match) {
-			printk("exact match 0x%08X\n", node->filters[i].exact_match);
+			printk("exact match: 0x%08X\n", node->filters[i].exact_match);
 		} else {
-			printk("mask 0x%08X set 0x%08X cleared 0x%08X\n",
-			       node->filters[i].bits.mask,
-			       node->filters[i].bits.set,
-			       node->filters[i].bits.cleared);
+			printk("bit match: mask 0x%08X set 0x%08X cleared 0x%08X\n",
+			       node->filters[i].bit_match.mask,
+			       node->filters[i].bit_match.set,
+			       node->filters[i].bit_match.cleared);
 		}
 	}
 

@@ -65,15 +65,15 @@ struct sdp_filter {
 	/**
 	 * @brief The data sample's filter value must exactly match this value.
 	 *
-	 * @note This value has a higher priority than the 'bits' fields, and an
-	 *       exact_match will cause the filter engine to skip parsing the
-	 *       'bits' fields.
+	 * @note This value has a higher priority than the 'bit_match' fields, and
+	 *       an exact_match will cause the filter engine to skip parsing the
+	 *       'bit_match' fields.
 	 */
 	uint32_t exact_match;
 
 	/**
-	 * @brief When an exact match isn't required, the bits fields can be
-	 *        used to pattern match based on mask, set and cleared values.
+	 * @brief When an exact match isn't required, the bit fields can be
+	 *        used to pattern match based on mask, set and cleared bit values.
 	 */
 	struct {
 		/**
@@ -108,7 +108,7 @@ struct sdp_filter {
          *       setting the bit in the 'mask' field.
 		 */
 		uint32_t cleared;
-	} bits;
+	} bit_match;
 };
 
 #ifdef __cplusplus

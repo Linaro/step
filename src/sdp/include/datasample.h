@@ -33,7 +33,7 @@ extern "C" {
  * +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
  * |              Flags            |   Ext. Type   |   Base Type   | <- Filter
  * +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
- * |   Source ID   |  Rsvd | TSt |P|        Payload Length         | <- SrcLen
+ * |   Source ID   |   Reserved  |P|        Payload Length         | <- SrcLen
  * +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
  * |                                                               |
  * |                            Payload                            |
@@ -45,12 +45,13 @@ extern "C" {
  *            1
  *  5 4 3 2 1 0 9 8 7 6 5 4 3 2 1 0
  * +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
- * |  Reserved | Alg | Encod |  DF | <- Flags
+ * | Res | TSt | Alg | Encod |  DF | <- Flags
  * +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
- *     |          |      |      |
- *     |          |      |      +-------- Data Format (TLV, CBOR, etc.)
- *     |          |      +--------------- Encoding (BASE64, etc.)
- *     |          +---------------------- Encryption Algorithm
+ *     |    |     |      |      |
+ *     |    |     |      |      +-------- Data Format (TLV, CBOR, etc.)
+ *     |    |     |      +--------------- Encoding (BASE64, etc.)
+ *     |    |     +---------------------- Encryption Algorithm
+ *     |    +---------------------------- Timestampp
  *     +--------------------------------- Reserved
  *
  * Filter
@@ -107,7 +108,20 @@ extern "C" {
  *
  *           0..7 = Reserved (TBD)
  *
- *       o Reserved [10:15]
+ *       o Timestamp      [10:12]
+ *
+ *           Indicates that a timestamp of the specified format is appended at
+ *           the end of the record. The length of the timestamp is INCLUDED in
+ *           the packet's 'payload length' field. Timestamp size should only be
+ *           considered when 'Partial' is 0, meaning that this is the final
+ *           packet in the payload and contains the timestamp value.
+ *
+ *           0 = None
+ *           1 = Unix Epoch 32-bit
+ *           2 = Unix Epoch 64-bit
+ *           3..7 = Reserved
+ * 
+ *       o Reserved [13:15]
  *
  * 			 Must be set to 0.
  *
@@ -127,20 +141,7 @@ extern "C" {
  *       contents should be appended to the previous packets from this source
  *       before being parsed.
  *
- *   o Timestamp      [17:19]
- *
- *       Indicates that a timestamp of the specified format is appended at the
- *       end of the record. The length of the timestamp is INCLUDED in the
- *       packet's 'payload length' field. Timestamp size should only be
- *       considered when 'Partial' is 0, meaning that this is the final packet
- *       in the payload and contains the timestamp value.
- *
- *       0 = None
- *       1 = Unix Epoch 32-bit
- *       2 = Unix Epoch 64-bit
- *       3..7 = Reserved
- *
- *   o Reserved       [20:23]
+ *   o Reserved       [17:23]
  *
  *       Reserved
  *
@@ -168,8 +169,10 @@ struct sdp_ds_header {
 					uint16_t encoding : 4;
 					/* Encryption algorithm used (0 for none). */
 					uint16_t encrypt_alg : 3;
+				    /* Timestamp format (0 for none, 1 = epoch32, 2 = epoch64). */
+					uint16_t timestamp : 3;
 					/* Reserved for future used. */
-					uint16_t _rsvd : 6;
+					uint16_t _rsvd : 3;
 				} flags;
 				/* Flag bits (cbor, TLV array, etc.). */
 				uint16_t flags_bits;
@@ -187,8 +190,6 @@ struct sdp_ds_header {
 			struct {
 				/* Indicates this is a partial, non-final packet. */
 				uint8_t is_partial : 1;
-				/* Timestamp format (0 for none, 1 = epoch32, 2 : epoch64). */
-				uint8_t timestamp : 3;
 				/* Reserved for future used */
 				uint8_t _rsvd : 4;
 			};
@@ -341,6 +342,16 @@ enum sdp_ds_encoding {
 enum sdp_ds_encrypt_alg {
 	/** No encryption used. */
 	SDP_DS_ENCRYPT_ALG_NONE = 0
+};
+
+enum sdp_ds_timestamp
+{
+	/** No timestamp defined. */
+	SDP_DS_TIMESTAMP_NONE = 0,
+	/** 32-bit Unix epoch timestamp present. */
+	SDP_DS_TIMESTAMP_EPOCH_32 = 1,
+	/** 64-bit Unix epoch timestamp present. */
+	SDP_DS_TIMESTAMP_EPOCH_64 = 2
 };
 
 #ifdef __cplusplus
