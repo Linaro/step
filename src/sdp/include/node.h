@@ -11,8 +11,6 @@
 #include "filter.h"
 #include "datasample.h"
 
-#include "sys/slist.h"
-
 /**
  * @defgroup NODE Node definition
  * @ingroup sdp_api
@@ -135,12 +133,6 @@ struct sdp_node {
 	 *        by the implementing module.
 	 */
 	void *config;
-
-	/**
-	 * @brief The next node in the node chain. NULL if this is
-	 *        a solitary node, or the final node in a chain.
-	 */
-	sys_snode_t next;
 };
 
 #ifdef __cplusplus

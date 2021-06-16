@@ -4,8 +4,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-#ifndef SDP_PROCMGR_H__
-#define SDP_PROCMGR_H__
+#ifndef SDP_PROC_MGR_H__
+#define SDP_PROC_MGR_H__
 
 #include "sdp.h"
 #include "node.h"
@@ -33,7 +33,7 @@ extern "C" {
  *
  * @return int  0 on success, negative error code on failure.
  */
-int sdp_pm_register(const struct sdp_node *node, uint8_t *handle);
+int sdp_pm_register(struct sdp_node *node, uint8_t *handle);
 
 #ifdef __cplusplus
 }
@@ -43,4 +43,4 @@ int sdp_pm_register(const struct sdp_node *node, uint8_t *handle);
  * @}
  */
 
-#endif /* SDP_PROCMGR_H_ */
+#endif /* SDP_PROC_MGR_H_ */

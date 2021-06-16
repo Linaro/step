@@ -55,7 +55,7 @@ struct sdp_filter {
 	 * @brief The combinatorial operand to apply between the current and
      *        previous sdp_filters.
 	 */
-	enum sdp_filter_op comb_op;
+	enum sdp_filter_boolean_op comb_op;
 
 	/**
 	 * @brief The operand to apply to the current sdp_filter.

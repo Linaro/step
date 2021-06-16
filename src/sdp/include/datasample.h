@@ -200,6 +200,17 @@ struct sdp_ds_header {
 	};
 };
 
+/**
+ * @brief Data sample packet wrapper.
+ */
+struct sdp_datasample {
+	/** Packet header containing filter data and payload length. */
+	struct sdp_ds_header header;
+
+	/** Payload contents. */
+	uint8_t *payload;
+};
+
 /** Base data sample types (8-bit) */
 enum sdp_ds_type {
 	/* 0 = Metadata only? */
@@ -262,6 +273,7 @@ enum sdp_ds_type {
 
 /** Extended data types for SDP_DS_TYPE_NUMERIC. */
 enum sdp_ds_ext_number {
+	SDP_DS_EXT_TYPE_NUM_UNDEFINED = 0,
 	/* Unsigned integers. */
 	SDP_DS_EXT_TYPE_NUM_U8 = 0x01,
 	SDP_DS_EXT_TYPE_NUM_U16,
@@ -283,6 +295,7 @@ enum sdp_ds_ext_number {
 
 /** Extended data types for SDP_DS_TYPE_TEMPERATURE. */
 enum sdp_ds_ext_temperature {
+	SDP_DS_EXT_TYPE_TEMP_UNDEFINED  = 0,    /**< Undefined temperature */
 	SDP_DS_EXT_TYPE_TEMP_AMBIENT    = 1,    /**< Ambient temperature */
 	SDP_DS_EXT_TYPE_TEMP_DIE        = 2,    /**< Die temperature */
 	SDP_DS_EXT_TYPE_TEMP_OBJECT     = 3     /**< Object temperature */
@@ -290,6 +303,7 @@ enum sdp_ds_ext_temperature {
 
 /** Extended data type values for SDP_DS_TYPE_COLOR. */
 enum sdp_ds_ext_color {
+	SDP_DS_EXT_TYPE_COLOR_UNDEFINED         = 0,    /**< Undefined RGBA */
 	/* Standard RGB(+A) triplets */
 	SDP_DS_EXT_TYPE_COLOR_RGBA8             = 1,    /**< 8-bit RGBA */
 	SDP_DS_EXT_TYPE_COLOR_RGBA16            = 2,    /**< 16-bit RGBA */

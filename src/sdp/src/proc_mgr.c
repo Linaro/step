@@ -6,12 +6,12 @@
 
 #include <zephyr.h>
 #include <sys/printk.h>
-#include "procmgr.h"
+#include "proc_mgr.h"
 #include "filter.h"
 
 static uint32_t g_sdp_pm_handle_counter = 0;
 
-static void sdp_pm_print(const struct sdp_node *node)
+static void sdp_pm_print(struct sdp_node *node)
 {
 	/* Filtering */
 	printk("  Filters: %d\n", node->filter_count);
@@ -59,12 +59,9 @@ static void sdp_pm_print(const struct sdp_node *node)
 	printk("    run: %s\n", node->run_handler == NULL ? "no" : "yes");
 	printk("    stop: %s\n", node->stop_handler == NULL ? "no" : "yes");
 	printk("    error: %s\n", node->error_handler == NULL ? "no" : "yes");
-
-    /* Processor chain */
-	// printk("  Chain: %s\n", node->next == NULL ? "no" : "yes");
 }
 
-int sdp_pm_register(const struct sdp_node *node, uint8_t *handle)
+int sdp_pm_register(struct sdp_node *node, uint8_t *handle)
 {
 	*handle = g_sdp_pm_handle_counter++;
 
