@@ -49,12 +49,12 @@ extern "C" {
  *            1
  *  5 4 3 2 1 0 9 8 7 6 5 4 3 2 1 0
  * +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
- * | Res | TSt | Alg | Encod |  DF | <- Flags
+ * | Res | TSt | Res | Encod |  DF | <- Flags
  * +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
  *     |    |     |      |      |
- *     |    |     |      |      +-------- Data Format (TLV, CBOR, etc.)
+ *     |    |     |      |      +-------- Data Format (CBOR, TLV, JSON, etc.)
  *     |    |     |      +--------------- Encoding (BASE64, etc.)
- *     |    |     +---------------------- Encryption Algorithm
+ *     |    |     +---------------------- Reserved
  *     |    +---------------------------- Timestampp
  *     +--------------------------------- Reserved
  *
@@ -83,7 +83,14 @@ extern "C" {
  *               A single data sample in binary format of the base and
  *               extended data type value supplied.
  *
- *           1 = TLV (Type, Length, Value record)
+ *           1 = CBOR (Concise Binary Object Representation, rfc8949)
+ * 
+ *               The sample is encoded as CBOR records (rfc8949), which
+ *               optionally allows the use of COSE (rfc8152) to sign and/or
+ *               encrypt the CBOR record(s). For non-trivial data, this is the
+ *               recommended data format to use.
+ *
+ *           2 = TLV (Type, Length, Value record)
  *
  *               The sample consists of one or more TLV (type, length, value)
  *               records, with the full array of records being 'Record Length'
@@ -94,7 +101,6 @@ extern "C" {
  *               be included with a sample, or for multiple samples to be
  *               included in a single data sample record for efficieny sake.
  *
- *           2 = CBOR (Concise Binary Object Representation, rfc8949)
  *           3 = JSON (JavaScript Object Notation, rfc8259)
  *           4..7 Reserved
  *
@@ -106,11 +112,9 @@ extern "C" {
  *           1 = BASE64 encoding	Data has been BASE64 encoded
  *           2..15 = Reserved
  *
- *       o Encryption Algorithm [7:9]
- *
- *           Encryption algorithm used (Data Structure = TLV Array):
- *
- *           0..7 = Reserved (TBD)
+ *       o Reserved [7:9]
+ * 
+ *           Must be set to 0.
  *
  *       o Timestamp      [10:12]
  *
@@ -127,7 +131,7 @@ extern "C" {
  *
  *       o Reserved [13:15]
  *
- * 			 Must be set to 0.
+ *           Must be set to 0.
  *
  * SrcLen
  * ------
@@ -167,16 +171,16 @@ struct sdp_ds_header {
 			/* Flags */
 			union {
 				struct {
-					/* Data format used (0 = none, 1 = TLV, 2 = CBOR, 3 = JSON). */
+					/* Data format used (0 = none, 1 = CBOR, 2 = TLV, 3 = JSON). */
 					uint16_t data_format : 3;
 					/* Payload encoding used (0 = none, 1 = BASE64). */
 					uint16_t encoding : 4;
-					/* Encryption algorithm used (0 for none). */
-					uint16_t encrypt_alg : 3;
+					/* Reserved for future use. */
+					uint16_t _rsvd1 : 3;
 					/* Timestamp format (0 for none, 1 = epoch32, 2 = epoch64). */
 					uint16_t timestamp : 3;
-					/* Reserved for future used (version?). */
-					uint16_t _rsvd : 3;
+					/* Reserved for future use. */
+					uint16_t _rsvd2 : 3;
 				} flags;
 				/* Flag bits (cbor, TLV array, etc.). */
 				uint16_t flags_bits;
@@ -220,10 +224,10 @@ struct sdp_datasample {
 enum sdp_ds_format {
 	/** No data structure (single record). */
 	SDP_DS_FORMAT_NONE      = 0,
-	/** Type, Length, Value record(s). */
-	SDP_DS_FORMAT_TLV       = 1,
 	/** CBOR record(s). */
-	SDP_DS_FORMAT_CBOR      = 2,
+	SDP_DS_FORMAT_CBOR      = 1,
+	/** Type, Length, Value record(s). */
+	SDP_DS_FORMAT_TLV       = 2,
 	/** JSON record(s). */
 	SDP_DS_FORMAT_JSON      = 3,
 };
@@ -234,12 +238,6 @@ enum sdp_ds_encoding {
 	SDP_DS_ENCODING_NONE    = 0,
 	/** BASE64 Encoding. */
 	SDP_DS_ENCODING_BASE64  = 1,
-};
-
-/** Payload encryption algorithm. */
-enum sdp_ds_encrypt_alg {
-	/** No encryption used. */
-	SDP_DS_ENCRYPT_ALG_NONE = 0,
 };
 
 /** Optional timestamp format used. */

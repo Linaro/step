@@ -22,9 +22,9 @@ static void sdp_sp_print_sample(struct sdp_datasample *sample)
 	printk("  Flags:          0x%04X\n", sample->header.filter.flags_bits);
 	printk("    data_format:  %u\n", sample->header.filter.flags.data_format);
 	printk("    encoding:     %u\n", sample->header.filter.flags.encoding);
-	printk("    encrypr_alg:  %u\n", sample->header.filter.flags.encrypt_alg);
+	printk("    _rsvd1:       %u\n", sample->header.filter.flags._rsvd1);
 	printk("    timestamp:    %u\n", sample->header.filter.flags.timestamp);
-	printk("    _rsvd1:       %u\n", sample->header.filter.flags._rsvd);
+	printk("    _rsvd2:       %u\n", sample->header.filter.flags._rsvd2);
 	printk("\n");
 	printk("SrcLen:           0x%08X\n", sample->header.srclen_bits);
 	printk("  len:            0x%04X (%u)\n", sample->header.srclen.len, sample->header.srclen.len);
