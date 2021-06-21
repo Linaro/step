@@ -1,15 +1,18 @@
-# SPDX-License-Identifier: Apache-2.0
+if(CONFIG_SDP)
+zephyr_interface_library_named(SDP)
 
-cmake_minimum_required(VERSION 3.13.1)
+zephyr_include_directories(include)
 
-find_package(Zephyr REQUIRED HINTS $ENV{ZEPHYR_BASE})
-project(sensor_pipeline)
+zephyr_library()
+zephyr_library_sources(
+    src/filter.c
+    src/proc_mgr.c
+    src/sample_pool.c
+    src/shell.c
+    src/sink_mgr.c
+    src/src_mgr.c
+)
 
-target_sources(app PRIVATE src/main.c)
-target_sources(app PRIVATE src/sdp/src/filter_engine.c)
-target_sources(app PRIVATE src/sdp/src/proc_mgr.c)
-target_sources(app PRIVATE src/sdp/src/sample_pool.c)
-target_sources(app PRIVATE src/sdp/src/sink_mgr.c)
-target_sources(app PRIVATE src/sdp/src/src_mgr.c)
-
-target_include_directories(app PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src/sdp/include)
+zephyr_library_link_libraries(SDP)
+target_link_libraries(SDP INTERFACE zephyr_interface)
+endif()

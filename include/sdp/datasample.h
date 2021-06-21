@@ -7,7 +7,7 @@
 #ifndef SDP_DATASAMPLE_H__
 #define SDP_DATASAMPLE_H__
 
-#include "sdp.h"
+#include <sdp/sdp.h>
 
 /**
  * @defgroup DATASAMPLE Data sample definitions.
@@ -120,7 +120,7 @@ extern "C" {
  *           1 = Unix Epoch 32-bit
  *           2 = Unix Epoch 64-bit
  *           3..7 = Reserved
- * 
+ *
  *       o Reserved [13:15]
  *
  * 			 Must be set to 0.
@@ -169,7 +169,7 @@ struct sdp_ds_header {
 					uint16_t encoding : 4;
 					/* Encryption algorithm used (0 for none). */
 					uint16_t encrypt_alg : 3;
-				    /* Timestamp format (0 for none, 1 = epoch32, 2 = epoch64). */
+					/* Timestamp format (0 for none, 1 = epoch32, 2 = epoch64). */
 					uint16_t timestamp : 3;
 					/* Reserved for future used. */
 					uint16_t _rsvd : 3;
@@ -214,8 +214,8 @@ struct sdp_datasample {
 
 /** Base data sample types (8-bit) */
 enum sdp_ds_type {
-	/* 0 = Metadata only? */
-	SDP_DS_TYPE_NONE        = 0,
+	/* 0 = Reserved */
+	SDP_DS_TYPE_UNDEFINED   = 0,
 
 	/* 1 = System event to alert to processors and sinks. */
 	SDP_DS_TYPE_EVENT       = 1,
@@ -274,9 +274,9 @@ enum sdp_ds_type {
 
 /** Extended data types for SDP_DS_TYPE_NUMERIC. */
 enum sdp_ds_ext_number {
-	SDP_DS_EXT_TYPE_NUM_UNDEFINED = 0,
+	SDP_DS_EXT_TYPE_NUM_UNDEFINED   = 0,
 	/* Unsigned integers. */
-	SDP_DS_EXT_TYPE_NUM_U8 = 0x01,
+	SDP_DS_EXT_TYPE_NUM_U8          = 0x01,
 	SDP_DS_EXT_TYPE_NUM_U16,
 	SDP_DS_EXT_TYPE_NUM_U32,
 	SDP_DS_EXT_TYPE_NUM_U64,
@@ -321,21 +321,21 @@ enum sdp_ds_ext_color {
 /** Payload data structure used. */
 enum sdp_ds_format {
 	/** No data structure (single record). */
-	SDP_DS_FORMAT_NONE   = 0,
+	SDP_DS_FORMAT_NONE      = 0,
 	/** Type, Length, Value record(s). */
-	SDP_DS_FORMAT_TLV    = 1,
+	SDP_DS_FORMAT_TLV       = 1,
 	/** CBOR record(s). */
-	SDP_DS_FORMAT_CBOR   = 2,
+	SDP_DS_FORMAT_CBOR      = 2,
 	/** JSON record(s). */
-	SDP_DS_FORMAT_JSON   = 3
+	SDP_DS_FORMAT_JSON      = 3
 };
 
 /** Payload encoding used. */
 enum sdp_ds_encoding {
 	/** No encoding used (binary data). */
-	SDP_DS_ENCODING_NONE        = 0,
+	SDP_DS_ENCODING_NONE    = 0,
 	/** BASE64 Encoding. */
-	SDP_DS_ENCODING_BASE64      = 1
+	SDP_DS_ENCODING_BASE64  = 1
 };
 
 /** Payload encryption algorithm. */
@@ -344,14 +344,13 @@ enum sdp_ds_encrypt_alg {
 	SDP_DS_ENCRYPT_ALG_NONE = 0
 };
 
-enum sdp_ds_timestamp
-{
+enum sdp_ds_timestamp {
 	/** No timestamp defined. */
-	SDP_DS_TIMESTAMP_NONE = 0,
+	SDP_DS_TIMESTAMP_NONE           = 0,
 	/** 32-bit Unix epoch timestamp present. */
-	SDP_DS_TIMESTAMP_EPOCH_32 = 1,
+	SDP_DS_TIMESTAMP_EPOCH_32       = 1,
 	/** 64-bit Unix epoch timestamp present. */
-	SDP_DS_TIMESTAMP_EPOCH_64 = 2
+	SDP_DS_TIMESTAMP_EPOCH_64       = 2
 };
 
 #ifdef __cplusplus

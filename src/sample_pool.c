@@ -6,8 +6,8 @@
 
 #include <zephyr.h>
 #include <sys/printk.h>
-#include "sample_pool.h"
-#include "datasample.h"
+#include <sdp/sample_pool.h>
+#include <sdp/datasample.h>
 
 /**
  * @brief Helper function to display the contents of the sdp_datasample.

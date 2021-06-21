@@ -7,8 +7,8 @@
 #ifndef SDP_SAMPLE_POOL_H__
 #define SDP_SAMPLE_POOL_H__
 
-#include "sdp.h"
-#include "datasample.h"
+#include <sdp/sdp.h>
+#include <sdp/datasample.h>
 
 /**
  * @defgroup SAMPLEPOOL Sample pool

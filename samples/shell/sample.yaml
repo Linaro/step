@@ -1,0 +1,5 @@
+sample:
+  name: Secure data pipeline shell example
+tests:
+  test:
+    tags: sdp

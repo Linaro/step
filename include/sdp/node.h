@@ -7,9 +7,9 @@
 #ifndef SDP_NODE_H__
 #define SDP_NODE_H__
 
-#include "sdp.h"
-#include "filter.h"
-#include "datasample.h"
+#include <sdp/sdp.h>
+#include <sdp/filter.h>
+#include <sdp/datasample.h>
 
 /**
  * @defgroup NODE Node definition
@@ -60,23 +60,9 @@ typedef void (*sdp_node_error_t)(struct sdp_datasample *sample, void *cfg,
 				 int error);
 
 /**
- * @brief Node implementation.
- *
- * The callback handlers in this struct are used to implement a node or node
- * chain, and to define the node's filter properties to know when it should
- * be executed.
+ * @brief Optional callback handlers for nodes.
  */
-struct sdp_node {
-	/**
-	 * @brief Filter settings for this node. NULL = none.
-	 */
-	struct sdp_filter *filters;
-
-	/**
-	 * @brief The number of filters supplied in 'filters'.
-	 */
-	uint32_t filter_count;
-
+struct sdp_node_callbacks {
 	/**
 	 * @brief Callback to fire when the node is being evaluated based on
 	 *        its filter chain. This callback allows the node implementation
@@ -126,6 +112,25 @@ struct sdp_node {
 	 * @brief Callback to fire when the 'run' command fails.
 	 */
 	sdp_node_error_t error_handler;
+};
+
+/**
+ * @brief Node implementation.
+ *
+ * The callback handlers in this struct are used to implement a node or node
+ * chain, and to define the node's filter properties to know when it should
+ * be executed.
+ */
+struct sdp_node {
+	/**
+	 * @brief The filter chain use to determine matches for this node.
+	 */
+	struct sdp_filter_chain filters;
+
+	/**
+	 * @brief Callback handlers for this node.
+	 */
+	struct sdp_node_callbacks callbacks;
 
 	/**
 	 * @brief Config settings for the node. The exact struct or
