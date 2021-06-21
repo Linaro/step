@@ -52,7 +52,7 @@ extern "C" {
  * | Res | TSt | Res | Encod |  DF | <- Flags
  * +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
  *     |    |     |      |      |
- *     |    |     |      |      +-------- Data Format (CBOR, TLV, JSON, etc.)
+ *     |    |     |      |      +-------- Data Format (CBOR, etc.)
  *     |    |     |      +--------------- Encoding (BASE64, etc.)
  *     |    |     +---------------------- Reserved
  *     |    +---------------------------- Timestampp
@@ -90,19 +90,7 @@ extern "C" {
  *               encrypt the CBOR record(s). For non-trivial data, this is the
  *               recommended data format to use.
  *
- *           2 = TLV (Type, Length, Value record)
- *
- *               The sample consists of one or more TLV (type, length, value)
- *               records, with the full array of records being 'Record Length'
- *               bytes in total. TLV samples should be read until the end of
- *               the packet is reached.
- *
- *               This allow for additional meta-data (timestamps, etc.) to
- *               be included with a sample, or for multiple samples to be
- *               included in a single data sample record for efficieny sake.
- *
- *           3 = JSON (JavaScript Object Notation, rfc8259)
- *           4..7 Reserved
+ *           2..7 Reserved
  *
  *       o Payload Encoding [3:6]
  *
@@ -171,7 +159,7 @@ struct sdp_ds_header {
 			/* Flags */
 			union {
 				struct {
-					/* Data format used (0 = none, 1 = CBOR, 2 = TLV, 3 = JSON). */
+					/* Data format used (0 = none, 1 = CBOR). */
 					uint16_t data_format : 3;
 					/* Payload encoding used (0 = none, 1 = BASE64). */
 					uint16_t encoding : 4;
@@ -182,7 +170,7 @@ struct sdp_ds_header {
 					/* Reserved for future use. */
 					uint16_t _rsvd2 : 3;
 				} flags;
-				/* Flag bits (cbor, TLV array, etc.). */
+				/* Flag bits (cbor, timestamp, etc.). */
 				uint16_t flags_bits;
 			};
 		} filter;
@@ -226,10 +214,6 @@ enum sdp_ds_format {
 	SDP_DS_FORMAT_NONE      = 0,
 	/** CBOR record(s). */
 	SDP_DS_FORMAT_CBOR      = 1,
-	/** Type, Length, Value record(s). */
-	SDP_DS_FORMAT_TLV       = 2,
-	/** JSON record(s). */
-	SDP_DS_FORMAT_JSON      = 3,
 };
 
 /** Payload encoding used. */

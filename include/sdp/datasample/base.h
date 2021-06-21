@@ -29,12 +29,12 @@ enum sdp_ds_type {
 	/* 0 = Reserved */
 	SDP_DS_TYPE_UNDEFINED           = 0,
 
-	/* 1 = System event to alert to processors and sinks. */
-	SDP_DS_TYPE_EVENT               = 0x1,
+	/* 2 = System event to alert to processors and sinks. */
+	SDP_DS_TYPE_EVENT               = 0x2,
 
-	/* 0x2..0xF (2-15): Standard data types (uncategorised data). */
-	SDP_DS_TYPE_NUMBER              = 0x2,          /**< Generic numeric value. */
-	SDP_DS_TYPE_STRING              = 0x3,          /**< Null-terminated string. */
+	/* 0x5..0xF (5-15): Standard data types (uncategorised data). */
+	SDP_DS_TYPE_NUMBER              = 0x5,          /**< Generic numeric value. */
+	SDP_DS_TYPE_STRING              = 0x6,          /**< Null-terminated string. */
 
 	/* 0x10..0x7F (16-127): Standardised base data types. */
 	SDP_DS_TYPE_AUDIO               = 0x10,
