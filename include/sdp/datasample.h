@@ -8,6 +8,10 @@
 #define SDP_DATASAMPLE_H__
 
 #include <sdp/sdp.h>
+#include <sdp/datasample/base.h>
+#include <sdp/datasample/ext_color.h>
+#include <sdp/datasample/ext_number.h>
+#include <sdp/datasample/ext_temperature.h>
 
 /**
  * @defgroup DATASAMPLE Data sample definitions.
@@ -171,7 +175,7 @@ struct sdp_ds_header {
 					uint16_t encrypt_alg : 3;
 					/* Timestamp format (0 for none, 1 = epoch32, 2 = epoch64). */
 					uint16_t timestamp : 3;
-					/* Reserved for future used. */
+					/* Reserved for future used (version?). */
 					uint16_t _rsvd : 3;
 				} flags;
 				/* Flag bits (cbor, TLV array, etc.). */
@@ -212,112 +216,6 @@ struct sdp_datasample {
 	uint8_t *payload;
 };
 
-/** Base data sample types (8-bit) */
-enum sdp_ds_type {
-	/* 0 = Reserved */
-	SDP_DS_TYPE_UNDEFINED   = 0,
-
-	/* 1 = System event to alert to processors and sinks. */
-	SDP_DS_TYPE_EVENT       = 1,
-
-	/* 0x2..0xF (2-15): Unclassified standard data types. */
-	SDP_DS_TYPE_NUMERIC     = 2,            /**< Unclassified numeric values. */
-	SDP_DS_TYPE_STRING,                     /**< Null-terminated string. */
-
-	/* 0x10..0x7F (16-127): Standardised base data types. */
-	SDP_DS_TYPE_AUDIO       = 16,
-	SDP_DS_TYPE_ACCELEROMETER,              /**< m/s^2 */
-	SDP_DS_TYPE_AMPLITUDE,                  /**< 0..1.0 float */
-	SDP_DS_TYPE_COLOR,                      /**< See extended type */
-	SDP_DS_TYPE_COORDINATES,
-	SDP_DS_TYPE_CURRENT,                    /**< mA */
-	SDP_DS_TYPE_DIMENSION,                  /**< cm (length, width, etc.) */
-	SDP_DS_TYPE_DISTANCE,                   /**< space between two points (proximity, etc.), cm */
-	SDP_DS_TYPE_GRAVITY,                    /**< m/s^2 */
-	SDP_DS_TYPE_GYROSCOPE,                  /**< rad/s */
-	SDP_DS_TYPE_HUMIDITY,                   /**< relative humidity in percent */
-	SDP_DS_TYPE_INDUCTANCE,                 /**< nH? */
-	SDP_DS_TYPE_LIGHT,                      /**< Lux */
-	SDP_DS_TYPE_LINEAR_ACCELERATION,        /**< m/s^2, WITHOUT gravity */
-	SDP_DS_TYPE_MAGNETIC_FIELD,             /**< micro-Tesla */
-	SDP_DS_TYPE_MASS,                       /**< Grams */
-	SDP_DS_TYPE_ORIENTATION,                /* Rename Euler? */
-	SDP_DS_TYPE_PRESSURE,                   /**< hectopascal (hPa) */
-	SDP_DS_TYPE_QUATERNION,
-	SDP_DS_TYPE_RESISTANCE,                 /**< Ohms */
-	SDP_DS_TYPE_ROTATION_VECTOR,
-	SDP_DS_TYPE_SPECTRAL_POWER,             /**< Array of values with nm + value */
-	SDP_DS_TYPE_TEMPERATURE,                /**< Celcius */
-	SDP_DS_TYPE_TIME,                       /**< Default = Epoch, Duration? */
-	SDP_DS_TYPE_VOLTAGE,                    /**< mV? */
-
-	/* 0xF0..0xFE (240-254): User-defined types. */
-	SDP_DS_TYPE_USER_1      = 240,
-	SDP_DS_TYPE_USER_2      = 241,
-	SDP_DS_TYPE_USER_3      = 242,
-	SDP_DS_TYPE_USER_4      = 243,
-	SDP_DS_TYPE_USER_5      = 244,
-	SDP_DS_TYPE_USER_6      = 245,
-	SDP_DS_TYPE_USER_7      = 246,
-	SDP_DS_TYPE_USER_8      = 247,
-	SDP_DS_TYPE_USER_9      = 248,
-	SDP_DS_TYPE_USER_10     = 249,
-	SDP_DS_TYPE_USER_11     = 250,
-	SDP_DS_TYPE_USER_12     = 251,
-	SDP_DS_TYPE_USER_13     = 252,
-	SDP_DS_TYPE_USER_14     = 253,
-	SDP_DS_TYPE_USER_15     = 254,
-
-	/* 0xFF (255) reserved for future use. */
-	SDP_DS_TYPE_LAST        = 0xFF
-};
-
-/** Extended data types for SDP_DS_TYPE_NUMERIC. */
-enum sdp_ds_ext_number {
-	SDP_DS_EXT_TYPE_NUM_UNDEFINED   = 0,
-	/* Unsigned integers. */
-	SDP_DS_EXT_TYPE_NUM_U8          = 0x01,
-	SDP_DS_EXT_TYPE_NUM_U16,
-	SDP_DS_EXT_TYPE_NUM_U32,
-	SDP_DS_EXT_TYPE_NUM_U64,
-	SDP_DS_EXT_TYPE_NUM_U128,
-	/* Signed integers. */
-	SDP_DS_EXT_TYPE_NUM_S8 = 0x10,
-	SDP_DS_EXT_TYPE_NUM_S16,
-	SDP_DS_EXT_TYPE_NUM_S32,
-	SDP_DS_EXT_TYPE_NUM_S64,
-	SDP_DS_EXT_TYPE_NUM_S128,
-	/* IEEE 754 floats. */
-	SDP_DS_EXT_TYPE_NUM_IEEE754_F16 = 0x20,
-	SDP_DS_EXT_TYPE_NUM_IEEE754_F32,
-	SDP_DS_EXT_TYPE_NUM_IEEE754_F64
-	/* ToDo: Fixed point values. */
-};
-
-/** Extended data types for SDP_DS_TYPE_TEMPERATURE. */
-enum sdp_ds_ext_temperature {
-	SDP_DS_EXT_TYPE_TEMP_UNDEFINED  = 0,    /**< Undefined temperature */
-	SDP_DS_EXT_TYPE_TEMP_AMBIENT    = 1,    /**< Ambient temperature */
-	SDP_DS_EXT_TYPE_TEMP_DIE        = 2,    /**< Die temperature */
-	SDP_DS_EXT_TYPE_TEMP_OBJECT     = 3     /**< Object temperature */
-};
-
-/** Extended data type values for SDP_DS_TYPE_COLOR. */
-enum sdp_ds_ext_color {
-	SDP_DS_EXT_TYPE_COLOR_UNDEFINED         = 0,    /**< Undefined RGBA */
-	/* Standard RGB(+A) triplets */
-	SDP_DS_EXT_TYPE_COLOR_RGBA8             = 1,    /**< 8-bit RGBA */
-	SDP_DS_EXT_TYPE_COLOR_RGBA16            = 2,    /**< 16-bit RGBA */
-	SDP_DS_EXT_TYPE_COLOR_RGBAF             = 3,    /**< 0..1.0 float32 RGBA */
-	/* CIE values. */
-	SDP_DS_EXT_TYPE_COLOR_CIE1931_XYZ       = 10,   /**< CIE1931 XYZ tristimulus */
-	SDP_DS_EXT_TYPE_COLOR_CIE1931_XYY       = 11,   /**< CIE1931 xyY chromaticity */
-	SDP_DS_EXT_TYPE_COLOR_CIE1960_UCS       = 12,   /**< CIE1960 UCS chromaticity */
-	SDP_DS_EXT_TYPE_COLOR_CIE1976_UCS       = 13,   /**< CIE1976 UCS chromaticity */
-	SDP_DS_EXT_TYPE_COLOR_CIE1960_CCT       = 20,   /**< CIE1960 CCT (Duv = 0) */
-	SDP_DS_EXT_TYPE_COLOR_CIE1960_CCT_DUV   = 21    /**< CIE1960 CCT and Duv */
-};
-
 /** Payload data structure used. */
 enum sdp_ds_format {
 	/** No data structure (single record). */
@@ -327,7 +225,7 @@ enum sdp_ds_format {
 	/** CBOR record(s). */
 	SDP_DS_FORMAT_CBOR      = 2,
 	/** JSON record(s). */
-	SDP_DS_FORMAT_JSON      = 3
+	SDP_DS_FORMAT_JSON      = 3,
 };
 
 /** Payload encoding used. */
@@ -335,22 +233,29 @@ enum sdp_ds_encoding {
 	/** No encoding used (binary data). */
 	SDP_DS_ENCODING_NONE    = 0,
 	/** BASE64 Encoding. */
-	SDP_DS_ENCODING_BASE64  = 1
+	SDP_DS_ENCODING_BASE64  = 1,
 };
 
 /** Payload encryption algorithm. */
 enum sdp_ds_encrypt_alg {
 	/** No encryption used. */
-	SDP_DS_ENCRYPT_ALG_NONE = 0
+	SDP_DS_ENCRYPT_ALG_NONE = 0,
 };
 
+/** Optional timestamp format used. */
 enum sdp_ds_timestamp {
-	/** No timestamp defined. */
+	/** No timestamp included. */
 	SDP_DS_TIMESTAMP_NONE           = 0,
 	/** 32-bit Unix epoch timestamp present. */
 	SDP_DS_TIMESTAMP_EPOCH_32       = 1,
 	/** 64-bit Unix epoch timestamp present. */
-	SDP_DS_TIMESTAMP_EPOCH_64       = 2
+	SDP_DS_TIMESTAMP_EPOCH_64       = 2,
+	/** 32-bit millisecond device uptime counter. */
+	SDP_DS_TIMESTAMP_UPTIME_MS_32   = 3,
+	/** 64-bit millisecond device uptime counter. */
+	SDP_DS_TIMESTAMP_UPTIME_MS_64   = 4,
+	/** 64-bit microsecond device uptime counter. */
+	SDP_DS_TIMESTAMP_UPTIME_US_64   = 5,
 };
 
 #ifdef __cplusplus

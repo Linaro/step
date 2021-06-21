@@ -107,7 +107,7 @@ struct sdp_node sdp_test_data_pnode = {
 	.config = (void *)0x12345678,
 };
 
-
+/* Die temperature with 32-bit timestamp payload. */
 struct {
 	float temp_c;
 	uint32_t timestamp;
