@@ -14,21 +14,11 @@
 #include <sdp/datasample/ext_temperature.h>
 
 /**
- * @defgroup DATASAMPLE Data sample definitions.
+ * @defgroup DATASAMPLE Data Samples
  * @ingroup sdp_api
- * @{
- */
-
-/**
- * @file
- * @brief API header file for SDP data samples.
- */
-
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-/*
+ * @brief API Header file for Data Samples
+ *
+ * <PRE>
  * Data Sample
  * ===========
  *
@@ -144,55 +134,66 @@ extern "C" {
  *   o Source ID      [24:31]
  *
  *       Source registry ID to correlate data with
- *
+ * </PRE>
+ * 
+ * @{
  */
+
+/**
+ * @file datasample.h
+ * @brief API header file for SDP data samples.
+ */
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 /** Data sample header. All fields in little endian. */
 struct sdp_ds_header {
-	/* Filter (header upper word). */
+	/** Filter (header upper word). */
 	union {
 		struct {
-			/* Data type this record contains. */
+			/** Data type this record contains. */
 			uint8_t data_type;
-			/* Extended data type value (meaning depends on datatype). */
+			/** Extended data type value (meaning depends on datatype). */
 			uint8_t ext_type;
-			/* Flags */
+			/** Flags */
 			union {
 				struct {
-					/* Data format used (0 = none, 1 = CBOR). */
+					/** Data format used (0 = none, 1 = CBOR). */
 					uint16_t data_format : 3;
-					/* Payload encoding used (0 = none, 1 = BASE64). */
+					/** Payload encoding used (0 = none, 1 = BASE64). */
 					uint16_t encoding : 4;
-					/* Reserved for future use. */
+					/** Reserved for future use. */
 					uint16_t _rsvd1 : 3;
-					/* Timestamp format (0 for none, 1 = epoch32, 2 = epoch64). */
+					/** Timestamp format (0 for none, 1 = epoch32, 2 = epoch64). */
 					uint16_t timestamp : 3;
-					/* Reserved for future use. */
+					/** Reserved for future use. */
 					uint16_t _rsvd2 : 3;
 				} flags;
-				/* Flag bits (cbor, timestamp, etc.). */
+				/** Flag bits (cbor, timestamp, etc.). */
 				uint16_t flags_bits;
 			};
 		} filter;
-		/* Filter bits. */
+		/** Filter bits. */
 		uint32_t filter_bits;
 	};
 
-	/* Src/Len (header lower word). */
+	/** Src/Len (header lower word). */
 	union {
 		struct {
-			/* Data length, excluding the header. */
+			/** Data length, excluding the header. */
 			uint16_t len;
 			struct {
-				/* Indicates this is a partial, non-final packet. */
+				/** Indicates this is a partial, non-final packet. */
 				uint8_t is_partial : 1;
-				/* Reserved for future used */
+				/** Reserved for future used */
 				uint8_t _rsvd : 4;
 			};
-			/* Data source registery ID associated with this sample. */
+			/** Data source registery ID associated with this sample. */
 			uint8_t sourceid;
 		} srclen;
-		/* Src/Len bits. */
+		/** Src/Len bits. */
 		uint32_t srclen_bits;
 	};
 };

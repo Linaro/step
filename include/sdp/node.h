@@ -12,14 +12,10 @@
 #include <sdp/datasample.h>
 
 /**
- * @defgroup NODE Node definition
+ * @defgroup NODE Nodes
  * @ingroup sdp_api
- * @{
- */
-
-/**
- * @file
  * @brief API header file for SDP processor and sink nodes.
+ * @{
  */
 
 #ifdef __cplusplus

@@ -11,14 +11,10 @@
 #include <sdp/node.h>
 
 /**
- * @defgroup PROCMGR Processor node manager
+ * @defgroup PROCMGR Processor Node Management
  * @ingroup sdp_api
- * @{
- */
-
-/**
- * @file
  * @brief API header file for SDP processor node manager
+ * @{
  */
 
 #ifdef __cplusplus

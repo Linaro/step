@@ -11,14 +11,10 @@
 #include <sdp/datasample.h>
 
 /**
- * @defgroup SAMPLEPOOL Sample pool
+ * @defgroup SAMPLEPOOL Sample Pool Management
  * @ingroup sdp_api
- * @{
- */
-
-/**
- * @file
  * @brief API header file for SDP sample pool
+ * @{
  */
 
 #ifdef __cplusplus

@@ -11,14 +11,10 @@
 #include <sdp/datasample.h>
 
 /**
- * @defgroup FILTER Filter engine definitions.
+ * @defgroup FILTER Filter Definitions
  * @ingroup sdp_api
- * @{
- */
-
-/**
- * @file
  * @brief API header file for the SDP filter engine.
+ * @{
  */
 
 #ifdef __cplusplus

@@ -10,14 +10,10 @@
 #include <sdp/sdp.h>
 
 /**
- * @defgroup DATASAMPLE Data sample definitions.
- * @ingroup sdp_api
- * @{
- */
-
-/**
  * @file
- * @brief SDP data sample SDP_DS_TYPE_COLOR extended type definitions
+ * @brief SDP_DS_TYPE_COLOR extended type definitions
+ * @ingroup DATASAMPLE
+ * @{
  */
 
 #ifdef __cplusplus
