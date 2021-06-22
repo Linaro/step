@@ -33,31 +33,36 @@ enum sdp_ds_type {
 	SDP_DS_TYPE_STRING              = 0x6,  /**< Null-terminated string */
 
 	/* 0x10..0x7F (16-127): Standardised base data types. */
+	/* Area? */
 	SDP_DS_TYPE_AUDIO               = 0x10,
 	SDP_DS_TYPE_ACCELEROMETER       = 0x11, /**< m/s^2 */
 	SDP_DS_TYPE_AMPLITUDE           = 0x12, /**< 0..1.0 float */
-	SDP_DS_TYPE_COLOR               = 0x13, /**< See extended type */
-	SDP_DS_TYPE_COORDINATES         = 0x14,
-	SDP_DS_TYPE_CURRENT             = 0x15, /**< mA */
-	SDP_DS_TYPE_DIMENSION           = 0x16, /**< cm (length, width, etc.) */
-	SDP_DS_TYPE_DISTANCE            = 0x17, /**< space between two points */
-	SDP_DS_TYPE_GRAVITY             = 0x18, /**< m/s^2 */
-	SDP_DS_TYPE_GYROSCOPE           = 0x19, /**< rad/s */
-	SDP_DS_TYPE_HUMIDITY            = 0x1A, /**< relative humidity in percent */
-	SDP_DS_TYPE_INDUCTANCE          = 0x1B, /**< nH? */
-	SDP_DS_TYPE_LIGHT               = 0x1C, /**< Lux */
-	SDP_DS_TYPE_LINEAR_ACCELERATION = 0x1D, /**< m/s^2, WITHOUT gravity */
-	SDP_DS_TYPE_MAGNETIC_FIELD      = 0x1E, /**< micro-Tesla */
-	SDP_DS_TYPE_MASS                = 0x1F, /**< Grams */
-	SDP_DS_TYPE_ORIENTATION         = 0x20,
-	SDP_DS_TYPE_PRESSURE            = 0x21, /**< hectopascal (hPa) */
-	SDP_DS_TYPE_QUATERNION          = 0x22,
-	SDP_DS_TYPE_RESISTANCE          = 0x23, /**< Ohms */
-	SDP_DS_TYPE_ROTATION_VECTOR     = 0x24,
-	SDP_DS_TYPE_SPECTRAL_POWER      = 0x25, /**< Array of nm + ampl. values */
-	SDP_DS_TYPE_TEMPERATURE         = 0x26, /**< Celcius */
-	SDP_DS_TYPE_TIME                = 0x27, /**< Default = Epoch, Duration? */
-	SDP_DS_TYPE_VOLTAGE             = 0x28, /**< mV? */
+	SDP_DS_TYPE_CAPACITANCE         = 0x13, /**< uF */
+	SDP_DS_TYPE_COLOR               = 0x14, /**< See extended type */
+	SDP_DS_TYPE_COORDINATES         = 0x15,
+	SDP_DS_TYPE_CURRENT             = 0x16, /**< mA */
+	SDP_DS_TYPE_DIMENSION           = 0x17, /**< cm (length, width, etc.) */
+	SDP_DS_TYPE_DISTANCE            = 0x18, /**< space between two points */
+	SDP_DS_TYPE_FREQUENCY           = 0x19, /**< kHz */
+	SDP_DS_TYPE_GRAVITY             = 0x1A, /**< m/s^2 */
+	SDP_DS_TYPE_GYROSCOPE           = 0x1B, /**< rad/s */
+	SDP_DS_TYPE_HUMIDITY            = 0x1C, /**< relative humidity in percent */
+	SDP_DS_TYPE_INDUCTANCE          = 0x1D, /**< nH? */
+	SDP_DS_TYPE_LIGHT               = 0x1E, /**< Lux */
+	SDP_DS_TYPE_LINEAR_ACCELERATION = 0x1F, /**< m/s^2, WITHOUT gravity */
+	SDP_DS_TYPE_MAGNETIC_FIELD      = 0x20, /**< micro-Tesla */
+	SDP_DS_TYPE_MASS                = 0x21, /**< Grams */
+	SDP_DS_TYPE_ORIENTATION         = 0x22,
+	SDP_DS_TYPE_PHASE               = 0x23, /**< radians? */
+	SDP_DS_TYPE_PRESSURE            = 0x24, /**< hectopascal (hPa) */
+	SDP_DS_TYPE_QUATERNION          = 0x25,
+	SDP_DS_TYPE_RESISTANCE          = 0x26, /**< Ohms */
+	/* Rotation speed in rpm? */
+	SDP_DS_TYPE_ROTATION_VECTOR     = 0x27,
+	SDP_DS_TYPE_SPECTRAL_POWER      = 0x28, /**< Array of nm + ampl. values */
+	SDP_DS_TYPE_TEMPERATURE         = 0x29, /**< Celcius */
+	SDP_DS_TYPE_TIME                = 0x2A, /**< Default = Epoch, Duration? */
+	SDP_DS_TYPE_VOLTAGE             = 0x2B, /**< mV? */
 
 	/* 0xF0..0xFE (240-254): User-defined types. */
 	SDP_DS_TYPE_USER_1              = 0xF0, /**< User defined 1 */

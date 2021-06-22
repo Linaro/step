@@ -10,6 +10,7 @@
 #include <sdp/sdp.h>
 #include <sdp/datasample/base.h>
 #include <sdp/datasample/ext_color.h>
+#include <sdp/datasample/ext_light.h>
 #include <sdp/datasample/ext_number.h>
 #include <sdp/datasample/ext_temperature.h>
 
