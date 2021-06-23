@@ -44,7 +44,7 @@
  * +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
  *     |    |     |      |      |
  *     |    |     |      |      +-------- Data Format (CBOR, etc.)
- *     |    |     |      +--------------- Encoding (BASE64, etc.)
+ *     |    |     |      +--------------- Encoding (BASE64, BASE45, etc.)
  *     |    |     +---------------------- Reserved
  *     |    +---------------------------- Timestampp
  *     +--------------------------------- Reserved
@@ -89,7 +89,8 @@
  *
  *           0 = None
  *           1 = BASE64 encoding	Data has been BASE64 encoded
- *           2..15 = Reserved
+ *           2 = BASE45 encoding    Data has been BASE45 encoded
+ *           3..15 = Reserved
  *
  *       o Reserved [7:9]
  * 
@@ -222,8 +223,10 @@ enum sdp_ds_format {
 enum sdp_ds_encoding {
 	/** No encoding used (binary data). */
 	SDP_DS_ENCODING_NONE    = 0,
-	/** BASE64 Encoding. */
+	/** BASE64 Encoding (rfc4648). */
 	SDP_DS_ENCODING_BASE64  = 1,
+	/** BASE45 Encoding (draft-faltstrom-base45-06). */
+	SDP_DS_ENCODING_BASE45  = 2,
 };
 
 /** Optional timestamp format used. */
