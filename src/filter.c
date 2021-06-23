@@ -14,6 +14,7 @@ int sdp_filt_evaluate(struct sdp_filter_chain *fc,
 		      struct sdp_datasample *sample, int *match)
 {
 	int rc = 0;
+	int curr_match, prev_match;
 
 	*match = 0;
 
@@ -25,7 +26,9 @@ int sdp_filt_evaluate(struct sdp_filter_chain *fc,
 	printk("Sample value: 0x%08X\n", sample->header.filter_bits);
 
 	/* Iterate through filter chain. */
-	for (uint32_t i = 0; i < fc->count; i++) {
+	curr_match = prev_match = 0;
+	for (uint32_t i = 0; i < fc->count; i++)
+	{
 		printk("Evaluating filter #%d - ", i);
 
 		/* Combinatory operand */
@@ -43,6 +46,7 @@ int sdp_filt_evaluate(struct sdp_filter_chain *fc,
 		default:
 			break;
 		}
+
 		/* Current operand */
 		switch (fc->chain[i].op) {
 		case SDP_FILTER_OP_NOT:

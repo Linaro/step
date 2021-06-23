@@ -40,12 +40,12 @@
  *            1
  *  5 4 3 2 1 0 9 8 7 6 5 4 3 2 1 0
  * +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
- * | Res | TSt | Res | Encod |  DF | <- Flags
+ * | Res | TSt | CMP | Encod |  DF | <- Flags
  * +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
  *     |    |     |      |      |
  *     |    |     |      |      +-------- Data Format (CBOR, etc.)
  *     |    |     |      +--------------- Encoding (BASE64, BASE45, etc.)
- *     |    |     +---------------------- Reserved
+ *     |    |     +---------------------- Compression (ZLIB DEFLATE, LZ4, etc.)
  *     |    +---------------------------- Timestampp
  *     +--------------------------------- Reserved
  *
@@ -92,9 +92,14 @@
  *           2 = BASE45 encoding    Data has been BASE45 encoded
  *           3..15 = Reserved
  *
- *       o Reserved [7:9]
+ *       o Compression [7:9]
  * 
- *           Must be set to 0.
+ *           Compression algorithm used on the payload:
+ * 
+ *           0 = None
+ *           1 = DEFLATE (RFC1951)
+ *           2 = LZ4
+ *           3..7 = Reserved
  *
  *       o Timestamp      [10:12]
  *
@@ -166,12 +171,12 @@ struct sdp_ds_header {
 					uint16_t data_format : 3;
 					/** Payload encoding used (0 = none, 1 = BASE64). */
 					uint16_t encoding : 4;
-					/** Reserved for future use. */
-					uint16_t _rsvd1 : 3;
-					/** Timestamp format (0 for none, 1 = epoch32, 2 = epoch64). */
+					/** Compression algorithm used (0 = none, 1 = DEFLATE, 2 = LZ4). */
+					uint16_t compression : 3;
+					/** Timestamp format (0 = none, 1 = epoch32, 2 = epoch64). */
 					uint16_t timestamp : 3;
 					/** Reserved for future use. */
-					uint16_t _rsvd2 : 3;
+					uint16_t _rsvd : 3;
 				} flags;
 				/** Flag bits (cbor, timestamp, etc.). */
 				uint16_t flags_bits;
@@ -227,6 +232,16 @@ enum sdp_ds_encoding {
 	SDP_DS_ENCODING_BASE64  = 1,
 	/** BASE45 Encoding (draft-faltstrom-base45-06). */
 	SDP_DS_ENCODING_BASE45  = 2,
+};
+
+/** Payload compression algorithm used. */
+enum sdp_ds_compression {
+	/** No payload compression used. */
+	SDP_DS_COMPRESSION_NONE    = 0,
+	/** DEFLATE compression (rfc1951). */
+	SDP_DS_COMPRESSION_DEFLATE  = 1,
+	/** LZ4 compression. */
+	SDP_DS_COMPRESSION_LZ4  = 2,
 };
 
 /** Optional timestamp format used. */

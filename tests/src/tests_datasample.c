@@ -29,6 +29,10 @@ void test_ds_check_header(void)
 	zassert_equal(sdp_test_data_sample_dietemp.header.filter.flags.encoding,
 		      SDP_DS_ENCODING_NONE, NULL);
 
+	/* Compression. */
+	zassert_equal(sdp_test_data_sample_dietemp.header.filter.flags.compression,
+		      SDP_DS_COMPRESSION_NONE, NULL);
+
 	/* Timestamp format. */
 	zassert_equal(sdp_test_data_sample_dietemp.header.filter.flags.timestamp,
 		      SDP_DS_TIMESTAMP_EPOCH_32, NULL);
