@@ -131,7 +131,7 @@ struct sdp_datasample sdp_test_data_sample_dietemp = {
 		},
 		/* Source/Len word. */
 		.srclen.len = sizeof(sdp_test_data_dietemp_payload),
-		.srclen.is_partial = 0,
+		.srclen.fragment = 0,
 		.srclen.sourceid = 10,
 	},
 

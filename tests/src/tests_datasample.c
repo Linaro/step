@@ -41,8 +41,8 @@ void test_ds_check_header(void)
 	zassert_equal(sdp_test_data_sample_dietemp.header.srclen.len, 8,
 		      NULL);
 
-	/* Partial, non-final payload packet? */
-	zassert_equal(sdp_test_data_sample_dietemp.header.srclen.is_partial, 0,
+	/* Partial payload packet? */
+	zassert_equal(sdp_test_data_sample_dietemp.header.srclen.fragment, 0,
 		      NULL);
 
 	/* Source ID from the source manager registry. */

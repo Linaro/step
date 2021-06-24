@@ -28,7 +28,7 @@
  * +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
  * |              Flags            |   Ext. Type   |   Base Type   | <- Filter
  * +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
- * |   Source ID   |   Reserved  |P|        Payload Length         | <- SrcLen
+ * |   Source ID   |  Reserved | F |        Payload Length         | <- SrcLen
  * +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
  * |                                                               |
  * |                            Payload                            |
@@ -128,11 +128,10 @@
  *       Payload length in bytes, minus the header, including optional
  *       timestamp if present.
  *
- *   o Partial        [16]
+ *   o Fragment       [16:17]
  *
- *       A 1 indicates that this is a partial and non-final packet, and the
- *       contents should be appended to the previous packets from this source
- *       before being parsed.
+ *       Indicates that this is a packet fragment, and the contents should be
+ *       appended to the previous packets from this source before being parsed.
  *
  *   o Reserved       [17:23]
  *
@@ -192,10 +191,10 @@ struct sdp_ds_header {
 			/** Data length, excluding the header. */
 			uint16_t len;
 			struct {
-				/** Indicates this is a partial, non-final packet. */
-				uint8_t is_partial : 1;
+				/** Indicates this is a fragment of a larger packet. */
+				uint8_t fragment : 2;
 				/** Reserved for future used */
-				uint8_t _rsvd : 4;
+				uint8_t _rsvd : 6;
 			};
 			/** Data source registery ID associated with this sample. */
 			uint8_t sourceid;
@@ -242,6 +241,16 @@ enum sdp_ds_compression {
 	SDP_DS_COMPRESSION_DEFLATE  = 1,
 	/** LZ4 compression. */
 	SDP_DS_COMPRESSION_LZ4  = 2,
+};
+
+/** Packet fragments. */
+enum sdp_ds_fragment {
+	/** No a fragment (complete payload). */
+	SDP_DS_FRAGMENT_NONE    = 0,
+	/** Non-final fragment in a larger payload. */
+	SDP_DS_FRAGMENT_PARTIAL  = 1,
+	/** Final fragment in the larger payload. */
+	SDP_DS_FRAGMENT_FINAL  = 2,
 };
 
 /** Optional timestamp format used. */

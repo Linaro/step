@@ -28,7 +28,7 @@ static void sdp_sp_print_sample(struct sdp_datasample *sample)
 	printk("\n");
 	printk("SrcLen:           0x%08X\n", sample->header.srclen_bits);
 	printk("  len:            0x%04X (%u)\n", sample->header.srclen.len, sample->header.srclen.len);
-	printk("  is_partial:     %u\n", sample->header.srclen.is_partial);
+	printk("  fragment:       %u\n", sample->header.srclen.fragment);
 	printk("  _rsvd:          %u\n", sample->header.srclen._rsvd);
 	printk("  sourceid:       %u\n", sample->header.srclen.sourceid);
 	printk("\n");
