@@ -68,7 +68,7 @@ void node_error(struct sdp_datasample *sample, void *cfg, int error)
 
 /* Test processor node. */
 struct sdp_node sdp_test_data_pnode = {
-	/* Matches if DS filter field = (0x26 OR 0x226) AND bit 26 is set. */
+	/* Matches if DS filter field = 0x26 OR 0x226 AND bit 26 is set. */
 	.filters = {
 		.count = 3,
 		.chain = (struct sdp_filter[]){
@@ -77,13 +77,13 @@ struct sdp_node sdp_test_data_pnode = {
 				.exact_match_mask = 0xFFFF0000,
 			},
 			{
-				.comb_op = SDP_FILTER_COMB_OP_OR,
+				.op = SDP_FILTER_OP_OR,
 				.exact_match = SDP_DS_TYPE_TEMPERATURE +
 					       (SDP_DS_EXT_TYPE_TEMP_DIE << 8),
 				.exact_match_mask = 0xFFFF0000,
 			},
 			{
-				.comb_op = SDP_FILTER_COMB_OP_AND,
+				.op = SDP_FILTER_OP_AND,
 				.bit_match = {
 					/* Bit 26 = EPOCH32 timestamp */
 					.mask = 0xFBFFFFFF,

@@ -14,7 +14,7 @@ int sdp_filt_evaluate(struct sdp_filter_chain *fc,
 		      struct sdp_datasample *sample, int *match)
 {
 	int rc = 0;
-	int curr_match, prev_match;
+	int curr_eval, prev_eval;
 
 	*match = 0;
 
@@ -26,33 +26,36 @@ int sdp_filt_evaluate(struct sdp_filter_chain *fc,
 	printk("Sample value: 0x%08X\n", sample->header.filter_bits);
 
 	/* Iterate through filter chain. */
-	curr_match = prev_match = 0;
+	curr_eval = prev_eval = 0;
 	for (uint32_t i = 0; i < fc->count; i++)
 	{
 		printk("Evaluating filter #%d - ", i);
 
-		/* Combinatory operand */
-		switch (fc->chain[i].comb_op) {
-		case SDP_FILTER_COMB_OP_AND:
-			printk("AND ");
-			break;
-		case SDP_FILTER_COMB_OP_OR:
-			printk("OR ");
-			break;
-		case SDP_FILTER_COMB_OP_XOR:
-			printk("XOR ");
-			break;
-		case SDP_FILTER_COMB_OP_NONE:
-		default:
-			break;
-		}
-
-		/* Current operand */
+		/* Operand */
 		switch (fc->chain[i].op) {
+		case SDP_FILTER_OP_IS:
+			printk("IS ");
+			break;
 		case SDP_FILTER_OP_NOT:
 			printk("NOT ");
 			break;
-		default:
+		case SDP_FILTER_OP_AND:
+			printk("AND ");
+			break;
+		case SDP_FILTER_OP_AND_NOT:
+			printk("AND NOT ");
+			break;
+		case SDP_FILTER_OP_OR:
+			printk("OR ");
+			break;
+		case SDP_FILTER_OP_OR_NOT:
+			printk("OR NOT ");
+			break;
+		case SDP_FILTER_OP_XOR:
+			printk("XOR ");
+			break;
+		case SDP_FILTER_OP_XOR_NOT:
+			printk("XOR_NOT ");
 			break;
 		}
 

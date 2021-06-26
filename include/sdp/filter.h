@@ -22,26 +22,77 @@ extern "C" {
 #endif
 
 /**
- * @brief Combinatorial boolean logic operand used between the current and
- *        previous filter values in a filter chain. (Prev AND current = match,
- *        Prev OR current = match, etc.)
- */
-enum sdp_filter_boolean_op {
-	SDP_FILTER_COMB_OP_NONE = 0,    /**< Undefined. */
-	SDP_FILTER_COMB_OP_AND  = 1,    /**< Current AND previous filter must
-	                                     match. */
-	SDP_FILTER_COMB_OP_OR   = 2,    /**< Either current and/or previous filter
-	                                     must match. */
-	SDP_FILTER_COMB_OP_XOR  = 3,    /**< Only ONE of the current or previous
-	                                     filters can match. */
-};
-
-/**
- * @brief Operand to apply to the current filter value.
+ * @brief Logical operand used between the current and
+ *        previous filter values in a filter chain.
  */
 enum sdp_filter_op {
-	SDP_FILTER_OP_NONE      = 0,    /**< Undefined. */
-	SDP_FILTER_OP_NOT       = 1     /**< Current filter must NOT match. */
+	/**
+	 * @brief Filter evaluate must be logically true. Solely for use as
+	 *        the first operand in a filter chain.
+	 * 
+	 * @note This is functionally identical to SDP_FILTER_AND_IS, with the
+	 *       assumption that the previous value is true.
+	 *
+	 * @note The first value in a filter chain MUST be either SDP_FILTER_OP_IS
+	 *       of SDP_FILTER_OP_NOT.
+	 */
+	SDP_FILTER_OP_IS = 0,
+
+	/**
+	 * @brief Filter evaluation must be logically false. Solely for use as
+	 *        the first operand in a filter chain.
+	 * 
+	 * @note This is functionally identical to SDP_FILTER_AND_IS, with the
+	 *       assumption that the previous value is true.
+	 *
+	 * @note The first value in a filter chain MUST be either SDP_FILTER_OP_IS
+	 *       of SDP_FILTER_OP_NOT.
+	 */
+	SDP_FILTER_OP_NOT = 1,
+
+	/**
+	 * @brief Previous operand AND current operand must resolve to being true,
+	 *        where the current filter evaluation is logically true. Solely for
+	 *        use in non-initial entries in a filter chain.
+	 */
+	SDP_FILTER_OP_AND = 2,
+
+	/**
+	 * @brief Previous operand AND current operand must resolve to being true,
+	 *        where the current filter evaluation is logically false. Solely for
+	 *        use in non-initial entries in a filter chain.
+	 */
+	SDP_FILTER_OP_AND_NOT = 3,
+
+	/**
+	 * @brief Previous operand OR current operand must resolve to being true,
+	 *        where the current filter evaluation is logically true. Solely for
+	 *        use in non-initial entries in a filter chain.
+	 */
+	SDP_FILTER_OP_OR = 4,
+
+	/**
+	 * @brief Previous operand OR current operand must resolve to being true,
+	 *        where the current filter evaluation is logically false. Solely for
+	 *        use in non-initial entries in a filter chain.
+	 */
+	SDP_FILTER_OP_OR_NOT = 5,
+
+	/**
+	 * @brief Exactly one of the previous operand OR current operand must
+	 *        resolve to being true, where the current filter evaluation is
+	 *        logically true. Solely for use in non-initial entries in a filter
+	 *        chain.
+	 */
+	SDP_FILTER_OP_XOR = 6,
+
+	/**
+	 * @brief Exactly one of the previous operand OR current operand must
+	 *        resolve to being true, where the current filter evaluation is
+	 *        logically false. Solely for use in non-initial entries in a
+	 *        filter chain.
+	 */
+	SDP_FILTER_OP_XOR_NOT = 7,
 };
 
 /**
@@ -49,13 +100,7 @@ enum sdp_filter_op {
  */
 struct sdp_filter {
 	/**
-	 * @brief The combinatorial operand to apply between the current and
-	 *        previous sdp_filters.
-	 */
-	enum sdp_filter_boolean_op comb_op;
-
-	/**
-	 * @brief The operand to apply to the current sdp_filter.
+	 * @brief The operand to apply between the current and previous sdp_filters.
 	 */
 	enum sdp_filter_op op;
 
@@ -119,6 +164,12 @@ struct sdp_filter {
 
 /**
  * @brief An filter chain.
+ * 
+ * @note Entries in a filter chain are evaluated in a strictly linear
+ *       left-to-right (or top-to-bottom) manner, where the sum of the
+ *       previous operands is evaluated against the current filter entry.
+ *       There is currently no mechanism to override the order of evaluation
+ *       via parentheses or operator precedence.
  */
 struct sdp_filter_chain {
 	/**

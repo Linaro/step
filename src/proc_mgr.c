@@ -23,28 +23,31 @@ static void sdp_pm_print_node_full(struct sdp_node *node)
 	for (uint8_t i = 0; i < node->filters.count; i++) {
 		printk("    #%d: ", i);
 
-		/* Combinatory operand */
-		switch (node->filters.chain[i].comb_op) {
-		case SDP_FILTER_COMB_OP_AND:
-			printk("AND ");
-			break;
-		case SDP_FILTER_COMB_OP_OR:
-			printk("OR ");
-			break;
-		case SDP_FILTER_COMB_OP_XOR:
-			printk("XOR ");
-			break;
-		case SDP_FILTER_COMB_OP_NONE:
-		default:
-			break;
-		}
-
-		/* Current operand */
+		/* Operand */
 		switch (node->filters.chain[i].op) {
+		case SDP_FILTER_OP_IS:
+			printk("IS ");
+			break;
 		case SDP_FILTER_OP_NOT:
 			printk("NOT ");
 			break;
-		default:
+		case SDP_FILTER_OP_AND:
+			printk("AND ");
+			break;
+		case SDP_FILTER_OP_AND_NOT:
+			printk("AND NOT ");
+			break;
+		case SDP_FILTER_OP_OR:
+			printk("OR ");
+			break;
+		case SDP_FILTER_OP_OR_NOT:
+			printk("OR NOT ");
+			break;
+		case SDP_FILTER_OP_XOR:
+			printk("XOR ");
+			break;
+		case SDP_FILTER_OP_XOR_NOT:
+			printk("XOR_NOT ");
 			break;
 		}
 
