@@ -28,7 +28,7 @@ extern "C" {
  *
  * @return int 0 on success, negative error code on failure.
  */
-int sdp_pm_process_ds(struct sdp_datasample *sample);
+int sdp_pm_process(struct sdp_datasample *sample);
 
 /**
  * @brief Polls the sample pool for any incoming sdp_datasamples to

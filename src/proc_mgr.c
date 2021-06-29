@@ -11,81 +11,7 @@
 
 static uint32_t g_sdp_pm_handle_counter = 0;
 
-/**
- * @brief Prints full details of the supplied processor node using printk.
- *
- * @param node The node to display.
- */
-static void sdp_pm_print_node_full(struct sdp_node *node)
-{
-	/* Filtering */
-	printk("  Filters: %d\n", node->filters.count);
-	for (uint8_t i = 0; i < node->filters.count; i++) {
-		printk("    #%d: ", i);
-
-		/* Operand */
-		switch (node->filters.chain[i].op) {
-		case SDP_FILTER_OP_IS:
-			printk("IS ");
-			break;
-		case SDP_FILTER_OP_NOT:
-			printk("NOT ");
-			break;
-		case SDP_FILTER_OP_AND:
-			printk("AND ");
-			break;
-		case SDP_FILTER_OP_AND_NOT:
-			printk("AND NOT ");
-			break;
-		case SDP_FILTER_OP_OR:
-			printk("OR ");
-			break;
-		case SDP_FILTER_OP_OR_NOT:
-			printk("OR NOT ");
-			break;
-		case SDP_FILTER_OP_XOR:
-			printk("XOR ");
-			break;
-		case SDP_FILTER_OP_XOR_NOT:
-			printk("XOR_NOT ");
-			break;
-		}
-
-		/* Exact match or bit-based */
-		if (node->filters.chain[i].exact_match) {
-			printk("exact match: 0x%08X\n", node->filters.chain[i].exact_match);
-			printk("exact match: 0x%08X", node->filters.chain[i].exact_match);
-			if (node->filters.chain[i].exact_match_mask) {
-				printk(" (mask 0x%08X)\n",
-				       node->filters.chain[i].exact_match_mask);
-			} else {
-				printk("\n");
-			}
-		} else {
-			printk("bit match: mask 0x%08X set 0x%08X cleared 0x%08X\n",
-			       node->filters.chain[i].bit_match.mask,
-			       node->filters.chain[i].bit_match.set,
-			       node->filters.chain[i].bit_match.cleared);
-		}
-	}
-
-	/* Callback handlers */
-	printk("  Handlers:\n");
-	printk("    evaluate: %s\n",
-	       node->callbacks.evaluate_handler == NULL ? "no" : "yes");
-	printk("    matched: %s\n",
-	       node->callbacks.matched_handler == NULL ? "no" : "yes");
-	printk("    start: %s\n",
-	       node->callbacks.start_handler == NULL ? "no" : "yes");
-	printk("    run: %s\n",
-	       node->callbacks.run_handler == NULL ? "no" : "yes");
-	printk("    stop: %s\n",
-	       node->callbacks.stop_handler == NULL ? "no" : "yes");
-	printk("    error: %s\n",
-	       node->callbacks.error_handler == NULL ? "no" : "yes");
-}
-
-int sdp_pm_process_ds(struct sdp_datasample *sample)
+int sdp_pm_process(struct sdp_datasample *sample)
 {
 	int rc = 0;
 
@@ -108,7 +34,7 @@ int sdp_pm_register(struct sdp_node *node, uint8_t *handle)
 	*handle = ++g_sdp_pm_handle_counter;
 
 	printk("Registering processor node %d:\n", *handle);
-	sdp_pm_print_node_full(node);
+	sdp_node_print(node);
 
 	return 0;
 }

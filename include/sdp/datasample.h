@@ -188,7 +188,7 @@ struct sdp_ds_header {
 	/** Src/Len (header lower word). */
 	union {
 		struct {
-			/** Data length, excluding the header. */
+			/** Payload length, excluding the header, including timestamp. */
 			uint16_t len;
 			struct {
 				/** Indicates this is a fragment of a larger packet. */
@@ -268,6 +268,13 @@ enum sdp_ds_timestamp {
 	/** 64-bit microsecond device uptime counter. */
 	SDP_DS_TIMESTAMP_UPTIME_US_64   = 5,
 };
+
+/**
+ * @brief Helper function to display the contents of the sdp_datasample.
+ *
+ * @param sample sdp_datasample to print.
+ */
+void sdp_ds_print(struct sdp_datasample *sample);
 
 #ifdef __cplusplus
 }

@@ -184,6 +184,13 @@ struct sdp_filter_chain {
 };
 
 /**
+ * @brief Prints the supplied filter chain using printk.
+ * 
+ * @param fc The sdsp_filter_chain to print.
+ */
+void sdp_filt_print(struct sdp_filter_chain *fc);
+
+/**
  * @brief Evaluates the supplied sdp_datasample against the supplied
  *        sdp_filter_chain to determine if there is a match.
  *

@@ -10,6 +10,59 @@
 
 #include <sys/printk.h>
 
+void sdp_filt_print(struct sdp_filter_chain *fc)
+{
+	printk("Filters: %d\n", fc->count);
+	for (uint8_t i = 0; i < fc->count; i++) {
+		printk("  #%d: ", i);
+
+		/* Operand */
+		switch (fc->chain[i].op) {
+		case SDP_FILTER_OP_IS:
+			printk("IS ");
+			break;
+		case SDP_FILTER_OP_NOT:
+			printk("NOT ");
+			break;
+		case SDP_FILTER_OP_AND:
+			printk("AND ");
+			break;
+		case SDP_FILTER_OP_AND_NOT:
+			printk("AND NOT ");
+			break;
+		case SDP_FILTER_OP_OR:
+			printk("OR ");
+			break;
+		case SDP_FILTER_OP_OR_NOT:
+			printk("OR NOT ");
+			break;
+		case SDP_FILTER_OP_XOR:
+			printk("XOR ");
+			break;
+		case SDP_FILTER_OP_XOR_NOT:
+			printk("XOR_NOT ");
+			break;
+		}
+
+		/* Exact match or bit-based */
+		if (fc->chain[i].exact_match) {
+			printk("exact match: 0x%08X\n", fc->chain[i].exact_match);
+			printk("exact match: 0x%08X", fc->chain[i].exact_match);
+			if (fc->chain[i].exact_match_mask) {
+				printk(" (mask 0x%08X)\n",
+				       fc->chain[i].exact_match_mask);
+			} else {
+				printk("\n");
+			}
+		} else {
+			printk("bit match: mask 0x%08X set 0x%08X cleared 0x%08X\n",
+			       fc->chain[i].bit_match.mask,
+			       fc->chain[i].bit_match.set,
+			       fc->chain[i].bit_match.cleared);
+		}
+	}
+}
+
 int sdp_filt_evaluate(struct sdp_filter_chain *fc,
 		      struct sdp_datasample *sample, int *match)
 {

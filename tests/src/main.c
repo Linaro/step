@@ -20,6 +20,9 @@ extern void test_filter_evaluate_match_bad(void);
 /* tests_proc.c */
 extern void test_proc_sample(void);
 
+/* tests_sample_pool.c */
+extern void test_sp_alloc(void);
+
 void test_main(void)
 {
 	ztest_test_suite(sdp_tests,
@@ -30,7 +33,8 @@ void test_main(void)
 		ztest_unit_test(test_filter_evaluate_fc_len),
 		ztest_unit_test(test_filter_evaluate_match_good),
 		ztest_unit_test(test_filter_evaluate_match_bad),
-		ztest_unit_test(test_proc_sample)
+		ztest_unit_test(test_proc_sample),
+		ztest_unit_test(test_sp_alloc)
 	);
 
 	/* Test suites. */

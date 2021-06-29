@@ -5,45 +5,73 @@
  */
 
 #include <zephyr.h>
-#include <sys/printk.h>
+#include <logging/log.h>
 #include <sdp/sample_pool.h>
 #include <sdp/datasample.h>
 
-/**
- * @brief Helper function to display the contents of the sdp_datasample.
- *
- * @param sample sdp_datasample to print.
- */
-static void sdp_sp_print_sample(struct sdp_datasample *sample)
+#define LOG_LEVEL LOG_LEVEL_DBG
+LOG_MODULE_REGISTER(main);
+
+#define SP_HEAP_SZ					2048
+
+K_FIFO_DEFINE(sp_fifo);
+K_HEAP_DEFINE(sp_elem_pool, SP_HEAP_SZ + 256);
+
+void sdp_sp_put(struct sdp_datasample *ds)
 {
-	printk("Filter:           0x%08X\n", sample->header.filter_bits);
-	printk("  data_type:      0x%02X (%u)\n", sample->header.filter.data_type, sample->header.filter.data_type);
-	printk("  ext_type:       0x%02X (%u)\n", sample->header.filter.ext_type, sample->header.filter.ext_type);
-	printk("  Flags:          0x%04X\n", sample->header.filter.flags_bits);
-	printk("    data_format:  %u\n", sample->header.filter.flags.data_format);
-	printk("    encoding:     %u\n", sample->header.filter.flags.encoding);
-	printk("    compression:  %u\n", sample->header.filter.flags.compression);
-	printk("    timestamp:    %u\n", sample->header.filter.flags.timestamp);
-	printk("    _rsvd:        %u\n", sample->header.filter.flags._rsvd);
-	printk("\n");
-	printk("SrcLen:           0x%08X\n", sample->header.srclen_bits);
-	printk("  len:            0x%04X (%u)\n", sample->header.srclen.len, sample->header.srclen.len);
-	printk("  fragment:       %u\n", sample->header.srclen.fragment);
-	printk("  _rsvd:          %u\n", sample->header.srclen._rsvd);
-	printk("  sourceid:       %u\n", sample->header.srclen.sourceid);
-	printk("\n");
-	if (sample->header.srclen.len) {
-		printk("Payload: ");
-		for (uint32_t i = 0; i < sample->header.srclen.len; i++) {
-			printk("%02X ", sample->payload[i]);
-		}
-		printk("\n");
-	}
+	k_fifo_put(&sp_fifo, ds);
 }
 
-int sdp_sp_add(struct sdp_datasample *sample)
+struct sdp_datasample *sdp_sp_get(void)
 {
-	sdp_sp_print_sample(sample);
+	return k_fifo_get(&sp_fifo, K_NO_WAIT);
+}
 
-	return 0;
+void sdp_sp_free(struct sdp_datasample *ds)
+{
+	k_heap_free(&sp_elem_pool, ds);
+}
+
+void sdp_sp_flush(void)
+{
+	struct sdp_datasample *ds;
+
+	do {
+		ds = sdp_sp_get();
+		if (ds) {
+			sdp_sp_free(ds);
+		}
+	} while (ds != NULL);
+}
+
+/* TODO: How to handle fragmentation over time due to var. length sample? */
+struct sdp_datasample *sdp_sp_alloc(size_t sz)
+{
+	struct sdp_datasample *ds;
+
+	/* TODO: Validate sz range. */
+
+	ds = k_heap_alloc(&sp_elem_pool,
+			  sizeof(struct sdp_datasample) + sz,
+			  K_NO_WAIT);
+	if (ds == NULL) {
+		LOG_ERR("datasample allocation failed!");
+		sdp_sp_flush();
+
+		ds = k_heap_alloc(&sp_elem_pool,
+				  sizeof(struct sdp_datasample),
+				  K_NO_WAIT);
+		if (ds == NULL) {
+			LOG_ERR("datasample memory corrupted.");
+			__ASSERT_NO_MSG(0);
+			return NULL;
+		}
+		return NULL;
+	}
+
+	/* Put ds in a sensible default state. */
+	memset(ds, 0, sizeof(struct sdp_datasample) + sz);
+	ds->header.srclen.len = sz;
+
+	return ds;
 }

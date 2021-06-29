@@ -136,6 +136,13 @@ struct sdp_node {
 	void *config;
 };
 
+/**
+ * @brief Prints full details of the supplied processor node using printk.
+ *
+ * @param node The node to display.
+ */
+void sdp_node_print(struct sdp_node *node);
+
 #ifdef __cplusplus
 }
 #endif
