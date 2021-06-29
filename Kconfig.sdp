@@ -28,4 +28,10 @@ config SDP_SHELL
 	help
 	  Enabling this option will make the 'sdp' shell command available.
 
+config SDP_SAMPLE_POOL_SIZE
+	int "Sample pool heap size (in bytes)"
+	default 2048
+	help
+	  Determines the heap size for the sample pool (in bytes).
+
 endif

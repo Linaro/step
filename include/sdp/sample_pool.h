@@ -52,7 +52,9 @@ void sdp_sp_flush(void);
 /**
  * @brief Allocates memory for a sdp_datasample from the sample pool's heap.
  * 
- * @param sz Payload size in bytes.
+ * @param sz Payload size in bytes. If the payload contents will be modified,
+ *           make sure to request the maximum required payload size, including
+ *           the optional timestamp value.
  * 
  * @return A pointer to the datasample, or NULL if sufficient memory could not
  *         be allocated from the heap.

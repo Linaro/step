@@ -1,0 +1,13 @@
+<mxfile>
+    <diagram id="ukEoStTESBqo43G2Qg1d" name="Page-1">
+        <mxGraphModel dx="1083" dy="531" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1169" math="0" shadow="0">
+            <root>
+                <mxCell id="0"/>
+                <mxCell id="1" parent="0"/>
+                <mxCell id="2" value="sequenceDiagram&#10;    DataSourceMgr -&gt;&gt; SamplePool: Requet sdp_datasample&#10;    SamplePool -&gt;&gt; SamplePool: Allocate memory from heap&#10;    SamplePool--&gt;&gt; DataSourceMgr: Return empty sdp_datasample&#10;    DataSourceMgr -&gt;&gt; DataSourceMgr: Fills sdp_datasample&#10;    DataSourceMgr -&gt;&gt; SamplePool: Queue sdp_datasample in FIFO&#10;    ProcessorMgr -&gt;&gt; SamplePool: Request sdp_datasample(s)&#10;    SamplePool --&gt;&gt; ProcessorMgr: Return sdp_datasample from FIFO&#10;    ProcessorMgr -&gt;&gt; ProcessorMgr: Process sdp_datasample(s)&#10;    ProcessorMgr -&gt;&gt; SamplePool: Free sdp_datasample&#10;    SamplePool -&gt;&gt; SamplePool: Frees sdp_datasample memory in heap&#10;&#10;" style="shadow=0;dashed=0;align=left;strokeWidth=1;shape=mxgraph.mermaid.abstract.mermaid;noLabel=1;" parent="1" vertex="1">
+                    <mxGeometry x="40" y="40" width="760" height="480" as="geometry"/>
+                </mxCell>
+            </root>
+        </mxGraphModel>
+    </diagram>
+</mxfile>
