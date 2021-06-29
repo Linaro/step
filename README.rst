@@ -34,7 +34,7 @@ this module by adding the following sections to ``zephyr/west.yml``:
    - name: linaro_sensor_pipeline
      remote: microbuilder
      path: modules/lib/sdp
-     revision: master
+     revision: main
 
 3. Save the file, and run ``west update`` from the project root to retrieve the
 latest version of the library from Github, or whatever ``revision`` was
