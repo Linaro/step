@@ -24,7 +24,7 @@ extern "C" {
 /**
  * @brief Processes the supplied sdp_datasample.
  *
- * @param sample Pointer to the sdp_datasample to parse/
+ * @param sample Pointer to the sdp_datasample to parse.
  *
  * @return int 0 on success, negative error code on failure.
  */

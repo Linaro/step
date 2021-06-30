@@ -136,5 +136,5 @@ struct sdp_datasample sdp_test_data_sample_dietemp = {
 	},
 
 	/* Die temperature in C plus 32-bit epoch timestamp. */
-	.payload = (uint8_t *)&sdp_test_data_dietemp_payload,
+	.payload = &sdp_test_data_dietemp_payload,
 };

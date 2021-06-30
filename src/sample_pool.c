@@ -43,33 +43,25 @@ void sdp_sp_flush(void)
 }
 
 /* TODO: How to handle fragmentation over time due to var. length sample? */
-struct sdp_datasample *sdp_sp_alloc(size_t sz)
+struct sdp_datasample *sdp_sp_alloc(uint16_t sz)
 {
 	struct sdp_datasample *ds;
-
-	/* TODO: Validate sz range. */
 
 	ds = k_heap_alloc(&sp_elem_pool,
 			  sizeof(struct sdp_datasample) + sz,
 			  K_NO_WAIT);
 	if (ds == NULL) {
 		LOG_ERR("datasample allocation failed!");
-		sdp_sp_flush();
-
-		ds = k_heap_alloc(&sp_elem_pool,
-				  sizeof(struct sdp_datasample),
-				  K_NO_WAIT);
-		if (ds == NULL) {
-			LOG_ERR("datasample memory corrupted.");
-			__ASSERT_NO_MSG(0);
-			return NULL;
-		}
 		return NULL;
 	}
 
-	/* Put ds in a sensible default state. */
 	memset(ds, 0, sizeof(struct sdp_datasample) + sz);
 	ds->header.srclen.len = sz;
+	if (sz) {
+		ds->payload = ds + sizeof(struct sdp_datasample);
+	} else {
+		ds->payload = NULL;
+	}
 
 	return ds;
 }

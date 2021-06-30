@@ -212,7 +212,7 @@ struct sdp_datasample {
 	struct sdp_ds_header header;
 
 	/** Payload contents. */
-	uint8_t *payload;
+	void *payload;
 };
 
 /** Payload data structure used. */

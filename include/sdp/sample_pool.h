@@ -59,7 +59,7 @@ void sdp_sp_flush(void);
  * @return A pointer to the datasample, or NULL if sufficient memory could not
  *         be allocated from the heap.
  */
-struct sdp_datasample *sdp_sp_alloc(size_t sz);
+struct sdp_datasample *sdp_sp_alloc(uint16_t sz);
 
 #ifdef __cplusplus
 }
