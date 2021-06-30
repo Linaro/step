@@ -34,4 +34,21 @@ config SDP_SAMPLE_POOL_SIZE
 	help
 	  Determines the heap size for the sample pool (in bytes).
 
+config SDP_FILTER_CACHE
+        bool "Enable filter evaluation caching"
+        default y
+        help
+          Enables caching of filter evaluation results when determining if a
+          processor or sink node should be assigned an incoming datasample.
+
+config SDP_FILTER_CACHE_DEPTH
+        int "Records to store in the filter evaluation cache FIFO."
+        default 20
+        help
+          Indicates the number of filter evaluations to maintain in the cache
+		  FIFO. If previously uncached values are generated, and the cache is
+		  full, the oldest value will be removed from the cache. Each cache
+		  entry requires 6 bytes of memory (filter value = 4, node id = 1,
+		  result = 1).
+
 endif
