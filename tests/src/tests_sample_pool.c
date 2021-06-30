@@ -18,6 +18,9 @@ void test_sp_alloc(void)
 	struct sdp_datasample *ref = &sdp_test_data_sample_dietemp;
 	uint16_t payload_len = sdp_test_data_sample_dietemp.header.srclen.len;
 
+	/* Setup the mutex. */
+	sdp_sp_init();
+
 	/* Allocate a datasample with an too large payload buffer. */
 	ds = sdp_sp_alloc(16384);
 	zassert_is_null(ds, NULL);
@@ -55,13 +58,45 @@ void test_sp_alloc(void)
 	/* Copy the test payload. */
 	memcpy(ds->payload, ref->payload, payload_len);
 
-	/* Compare header. */
-	zassert_mem_equal(&ds->header, &ref->header,
-			  sizeof(struct sdp_ds_header), NULL);
 
 	/* Compare payload. */
 	zassert_mem_equal(ds->payload, ref->payload, payload_len, NULL);
 
 	/* Free sample memory from pool heap. */
 	sdp_sp_free(ds);
+}
+
+void test_sp_fifo(void)
+{
+	struct sdp_datasample *src;
+	struct sdp_datasample *dst;
+	uint32_t payload = 0x12345678;
+
+	/* Check empty fifo. */
+	src = sdp_sp_get();
+	zassert_is_null(src, NULL);
+
+	/* Allocate a datasample. */
+	src = sdp_sp_alloc(sizeof payload);
+	zassert_not_null(src, NULL);
+	memcpy(src->payload, &payload, sizeof payload);
+	src->header.filter.data_type = SDP_DS_TYPE_LIGHT;
+	src->header.filter.ext_type = SDP_DS_EXT_TYPE_LIGHT_PHOTO_ILLUMINANCE;
+
+	/* Add to FIFO. */
+	sdp_sp_put(src);
+
+	/* Read back from FIFO. */
+	dst = sdp_sp_get();
+
+	/* Compare src and dst. */
+	zassert_mem_equal(src, dst,
+			  sizeof(struct sdp_datasample) + sizeof payload, NULL);
+
+	/* Free memory. */
+	sdp_sp_free(src);
+
+	/* FIFO should be empty. */
+	src = sdp_sp_get();
+	zassert_is_null(src, NULL);
 }

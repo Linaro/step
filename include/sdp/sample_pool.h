@@ -22,6 +22,13 @@ extern "C" {
 #endif
 
 /**
+ * @brief Initialises the sample pool.
+ * 
+ * @return int Returns 0 on success, negative error code on failure.
+ */
+int sdp_sp_init(void);
+
+/**
  * @brief Adds the specified sdp_datasample to the pool's FIFO.
  *
  * @param sample The sdp_datasample to add.
