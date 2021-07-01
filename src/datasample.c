@@ -30,12 +30,17 @@ void sdp_ds_print(struct sdp_datasample *sample)
 	printk("  len:            0x%04X (%u)\n", sample->header.srclen.len, sample->header.srclen.len);
 	printk("  fragment:       %u\n", sample->header.srclen.fragment);
 	printk("  _rsvd:          %u\n", sample->header.srclen._rsvd);
+	if (sample->header.srclen.samples) {
+		printk("  samples:        2^%u\n", sample->header.srclen.samples);
+	} else {
+		printk("  samples:        0 (1 sample)\n");
+	}
 	printk("  sourceid:       %u\n", sample->header.srclen.sourceid);
 	printk("\n");
 	if (sample->header.srclen.len) {
 		printk("Payload: ");
 		for (uint32_t i = 0; i < sample->header.srclen.len; i++) {
-			printk("%02X ", ((uint8_t*)sample->payload)[i]);
+			printk("%02X ", ((uint8_t *)sample->payload)[i]);
 		}
 		printk("\n");
 	}

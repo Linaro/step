@@ -49,12 +49,16 @@ void test_ds_check_header(void)
 	zassert_equal(sdp_test_data_sample_dietemp.header.unit.scale_factor,
 		      SDP_DS_SI_SCALE_NONE, NULL);
 
-	/* Paylod length in bytes. */
+	/* Payload length in bytes. */
 	zassert_equal(sdp_test_data_sample_dietemp.header.srclen.len, 8,
 		      NULL);
 
 	/* Partial payload packet? */
 	zassert_equal(sdp_test_data_sample_dietemp.header.srclen.fragment, 0,
+		      NULL);
+
+	/* Sample count. */
+	zassert_equal(sdp_test_data_sample_dietemp.header.srclen.samples, 0,
 		      NULL);
 
 	/* Source ID from the source manager registry. */

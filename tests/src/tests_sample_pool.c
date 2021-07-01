@@ -55,6 +55,7 @@ void test_sp_alloc(void)
 	ds->header.unit.ctype = ref->header.unit.ctype;
 	ds->header.unit.scale_factor = ref->header.unit.scale_factor;
 	ds->header.srclen.fragment = ref->header.srclen.fragment;
+	ds->header.srclen.samples = ref->header.srclen.samples;
 	ds->header.srclen.len = ref->header.srclen.len;
 	ds->header.srclen.sourceid = ref->header.srclen.sourceid;
 

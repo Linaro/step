@@ -141,6 +141,7 @@ struct sdp_datasample sdp_test_data_sample_dietemp = {
 		.srclen = {
 			.len = sizeof(sdp_test_data_dietemp_payload),
 			.fragment = 0,
+			.samples = 0,
 			.sourceid = 10,
 		},
 	},

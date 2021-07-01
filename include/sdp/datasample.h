@@ -11,7 +11,6 @@
 #include <sdp/datasample/base.h>
 #include <sdp/datasample/ext_color.h>
 #include <sdp/datasample/ext_light.h>
-#include <sdp/datasample/ext_number.h>
 #include <sdp/datasample/ext_temperature.h>
 #include <sdp/datasample/unit.h>
 
@@ -46,7 +45,7 @@
  * +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
  * |  Scale Factor |    C Type     |         SI Unit Type          | <- Unit
  * +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
- * |   Source ID   |  Reserved | F |        Payload Length         | <- SrcLen
+ * |   Source ID   | S Cnt | R | F |        Payload Length         | <- SrcLen
  * +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
  * |                                                               |
  * |                            Payload                            |
@@ -64,8 +63,8 @@
  *     |    |     |      |      +-------- Data Format (CBOR, etc.)
  *     |    |     |      +--------------- Encoding (BASE64, BASE45, etc.)
  *     |    |     +---------------------- Compression (ZLIB DEFLATE, LZ4, etc.)
- *     |    +---------------------------- Timestampp
- *     +--------------------------------- Reserved
+ *     |    +---------------------------- Timestamp
+ *     +--------------------------------- Reserved (version flag?)
  *
  * Filter
  * ------
@@ -89,15 +88,14 @@
  *
  *           0 = Raw binary data
  *
- *               A single data sample in binary format of the base and
- *               extended data type value supplied.
+ *               Raw, unformatted binary data using the specified C type.
  *
  *           1 = CBOR (Concise Binary Object Representation, rfc8949)
  * 
- *               The sample is encoded as CBOR records (rfc8949), which
+ *               The payload is encoded as a CBOR record(s) (rfc8949), which
  *               optionally allows the use of COSE (rfc8152) to sign and/or
  *               encrypt the CBOR record(s). For non-trivial data, this is the
- *               recommended data format to use.
+ *               recommended data format to use for complex use cases.
  *
  *           2..7 Reserved
  *
@@ -170,13 +168,43 @@
  *       Indicates that this is a packet fragment, and the contents should be
  *       appended to the previous packets from this source before being parsed.
  *
- *   o Reserved       [17:23]
+ *   o Reserved       [18:19]
+ * 
+ *       Must be set to 0.
+ * 
+ *   o Sample Count   [20:23]
  *
- *       Reserved
+ *       If more than one sample is present in the payload, this field can
+ *       be used to represent the number of sample's present. Value must be
+ *       example 2^n where n is the sample count, meaning:
+ * 
+ *       0 = 1 sample (default)     8 = 256 samples
+ *       1 = 2 samples              9 = 512 samples
+ *       2 = 4 samples              10 = 1024 samples
+ *       3 = 8 sammples             11 = 2048 samples
+ *       4 = 16 samples             12 = 4096 samples
+ *       5 = 32 samples             13 = 8192 samples
+ *       6 = 64 samples             14 = 16384 samples
+ *       7 = 128 samples            15 = 32768 samples
+ * 
+ *       If more than one sample is present, and the timestamp is enabled,
+ *       the timestamp value corresponds to the time when the first sample
+ *       was taken, and the interval between samples will need to be
+ *       communicated out-of-band.
+ * 
+ *       This field only has meaning when 'Data Format' is set to 0, meaning
+ *       unformatted data is present in the payload. When a specific data
+ *       format is used (CBOR, etc.), multiple samples should be indicated
+ *       using an appropriate mechanism in that data format, and this field
+ *       should be left at 0 to indicate that only one formatted payload is
+ *       present.
  *
  *   o Source ID      [24:31]
  *
- *       Source registry ID to correlate data with
+ *       Source registry ID to correlate data samples with. This allows for
+ *       additional information about the source driver to be retrieved via an
+ *       out-of-band channel. This may include min/max value range, sample
+ *       rate, gain settings, precision, model and driver number, etc.
  * </PRE>
  * 
  * @{
@@ -211,7 +239,7 @@ struct sdp_ds_header {
 					uint16_t compression : 3;
 					/** Timestamp format (1 = epoch32, 2 = epoch64). */
 					uint16_t timestamp : 3;
-					/** Reserved for future use. */
+					/** Reserved for future use. Must be set to 0. */
 					uint16_t _rsvd : 3;
 				} flags;
 				/** Flag bits (cbor, timestamp, etc.). */
@@ -260,8 +288,10 @@ struct sdp_ds_header {
 			struct {
 				/** Indicates this is a fragment of a larger packet. */
 				uint8_t fragment : 2;
-				/** Reserved for future used */
-				uint8_t _rsvd : 6;
+				/** Reserved for future use. Must be set to 0. */
+				uint8_t _rsvd : 2;
+				/** Sample count (2^n), 0 = 1 sample */
+				uint8_t samples : 4;
 			};
 			/** Data source registery ID associated with this sample. */
 			uint8_t sourceid;
