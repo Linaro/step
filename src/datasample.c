@@ -21,6 +21,11 @@ void sdp_ds_print(struct sdp_datasample *sample)
 	printk("    timestamp:    %u\n", sample->header.filter.flags.timestamp);
 	printk("    _rsvd:        %u\n", sample->header.filter.flags._rsvd);
 	printk("\n");
+	printk("Unit:             0x%08X\n", sample->header.unit_bits);
+	printk("  si_unit:        0x%04X (%u)\n", sample->header.unit.si_unit, sample->header.unit.si_unit);
+	printk("  ctype:          0x%02X (%u)\n", sample->header.unit.ctype, sample->header.unit.ctype);
+	printk("  scale_factor:   0x%02X (10^%d)\n", sample->header.unit.scale_factor, sample->header.unit.scale_factor);
+	printk("\n");
 	printk("SrcLen:           0x%08X\n", sample->header.srclen_bits);
 	printk("  len:            0x%04X (%u)\n", sample->header.srclen.len, sample->header.srclen.len);
 	printk("  fragment:       %u\n", sample->header.srclen.fragment);
@@ -30,7 +35,7 @@ void sdp_ds_print(struct sdp_datasample *sample)
 	if (sample->header.srclen.len) {
 		printk("Payload: ");
 		for (uint32_t i = 0; i < sample->header.srclen.len; i++) {
-			printk("%02X ", sample->payload[i]);
+			printk("%02X ", ((uint8_t*)sample->payload)[i]);
 		}
 		printk("\n");
 	}

@@ -12,7 +12,7 @@
 void sdp_node_print(struct sdp_node *node)
 {
 	/* Filter chain*/
-    sdp_filt_print(node->filters);
+    sdp_filt_print(&node->filters);
 
 	/* Callback handlers */
 	printk("Handlers:\n");

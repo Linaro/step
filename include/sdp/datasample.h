@@ -13,6 +13,7 @@
 #include <sdp/datasample/ext_light.h>
 #include <sdp/datasample/ext_number.h>
 #include <sdp/datasample/ext_temperature.h>
+#include <sdp/datasample/unit.h>
 
 /**
  * @defgroup DATASAMPLE Data Samples
@@ -22,11 +23,28 @@
  * <PRE>
  * Data Sample
  * ===========
+ * 
+ * Data samples consist of a measurement type (Base Type + Extended Type),
+ * represented in a specific SI unit (SI Unit Type), and implemented in a
+ * specific C type in memory (C Type).
+ * 
+ * There is an option to adjust the sample's scale in +/- 10^n steps (Scale
+ * Factor) from the default SI unit and scale indicated by the SI Unit Type.
+ * For example, if 'Ampere' is indicated as the SI unit, the sample could
+ * indicate that the value is in uA by setting the scale factor to -6.
+ *
+ * The Filter fields, which indicate the measurement type and certain config
+ * flag for the payload, is used to allow data sample consumers to 'subscribe'
+ * to samples of interest based on the value(s) present in this word.
+ * 
+ * Data samples have the following representation in memory:
  *
  *    3                   2                   1
  *  1 0 9 8 7 6 5 4 3 2 1 0 9 8 7 6 5 4 3 2 1 0 9 8 7 6 5 4 3 2 1 0
  * +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
- * |              Flags            |   Ext. Type   |   Base Type   | <- Filter
+ * |              Flags            |  Ext. M Type  |  Base M Type  | <- Filter
+ * +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+ * |  Scale Factor |    C Type     |         SI Unit Type          | <- Unit
  * +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
  * |   Source ID   |  Reserved | F |        Payload Length         | <- SrcLen
  * +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
@@ -51,17 +69,17 @@
  *
  * Filter
  * ------
- * Indicates data type for payload parsing, and to enable exact-match or
+ * Indicates measurement type for payload parsing, and to enable exact-match or
  * selective filtering of data samples by processor nodes or data sinks.
  *
- *   o Base Data Type [0:7] (Mandatory)
+ *   o Base Measurement Type [0:7] (Mandatory)
  *
- *     The base data type of the sample
+ *     The base measurement type of the sample
  *
- *   o Extended Data Type [8:15] (Optional)
+ *   o Extended Measurement Type [8:15] (Optional)
  *
- *     The extended data type of the sample. Exact meaning is specific to
- *     the base data type indicated.
+ *     The extended measurement type of the sample. Exact meaning is specific
+ *     to the base measurement type indicated.
  *
  *   o Flags [16:31] (Optional)
  *
@@ -117,6 +135,25 @@
  *       o Reserved [13:15]
  *
  *           Must be set to 0.
+ * Unit
+ * ----
+ * Indicates the SI unit, scale factor and underlying C type used to implement
+ * the specified base + extended measurement value.
+ *
+ *   o SI Unit Type [0:15] (Mandatory)
+ *
+ *     The base, derived or compound SI unit used to represent this sample.
+ *
+ *   o C Type [16:23] (Mandatory)
+ *
+ *     The underlying C type used to represent the sample in memory.
+ *
+ *   o Scale Factor [24:31] (Optional)
+ *
+ *     An optional 10^n scale factor from the default unit scale represented
+ *     by the SI Unit Type. If the default SI Unit Type is 'Ampere', for
+ *     example, a Scale Factor of -3 would indicate that this particular
+ *     data sample represents mA.
  *
  * SrcLen
  * ------
@@ -166,13 +203,13 @@ struct sdp_ds_header {
 			/** Flags */
 			union {
 				struct {
-					/** Data format used (0 = none, 1 = CBOR). */
+					/** Data format used (1 = CBOR). */
 					uint16_t data_format : 3;
-					/** Payload encoding used (0 = none, 1 = BASE64). */
+					/** Payload encoding used (1 = BASE64). */
 					uint16_t encoding : 4;
-					/** Compression algorithm used (0 = none, 1 = DEFLATE, 2 = LZ4). */
+					/** Compression algorithm used (1 = DEFLATE, 2 = LZ4). */
 					uint16_t compression : 3;
-					/** Timestamp format (0 = none, 1 = epoch32, 2 = epoch64). */
+					/** Timestamp format (1 = epoch32, 2 = epoch64). */
 					uint16_t timestamp : 3;
 					/** Reserved for future use. */
 					uint16_t _rsvd : 3;
@@ -181,8 +218,38 @@ struct sdp_ds_header {
 				uint16_t flags_bits;
 			};
 		} filter;
-		/** Filter bits. */
+		/** 32-bit representation of all Filter bits. */
 		uint32_t filter_bits;
+	};
+
+	/** Unit (header middle word). */
+	union {
+		struct {
+			/**
+			 * @brief The SI unit and default scale used for this measurement.
+			 * Must be a member of zsl_dt_unit_si.
+			 */
+			uint16_t si_unit;
+
+			/**
+			 * @brief The data type that this SI unit is represented by in C.
+			 * Must be a member of zsl_dt_unit_ctype.
+			 *
+			 * This field can be used to determine how many bytes are required
+			 * to represent this measurement value, and how to nterpret the
+			 * value in memory.
+			 */
+			uint8_t ctype;
+
+			/**
+			 * @brief The amount to scale the value up or down (10^n),
+			 * starting from the unit and scale indicated by si_unit.
+			 * Typically, but not necessarily a member of zsl_dt_unit_scale.
+			 */
+			int8_t scale_factor;
+		} unit;
+		/** 32-bit representation of si_unit, ctype and scale_factor. */
+		uint32_t unit_bits;
 	};
 
 	/** Src/Len (header lower word). */
@@ -199,7 +266,7 @@ struct sdp_ds_header {
 			/** Data source registery ID associated with this sample. */
 			uint8_t sourceid;
 		} srclen;
-		/** Src/Len bits. */
+		/** 32-bit representation of all Src/Len bits. */
 		uint32_t srclen_bits;
 	};
 };

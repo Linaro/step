@@ -113,7 +113,7 @@ struct {
 	uint32_t timestamp;
 } sdp_test_data_dietemp_payload = {
 	.temp_c = 32.0F,
-	.timestamp = 1624305803,	/* Monday, June 21, 2021 8:03:23 PM */
+	.timestamp = 1624305803,        /* Monday, June 21, 2021 8:03:23 PM */
 };
 
 /* Test die temp data sample, with timestamp. */
@@ -121,18 +121,28 @@ struct sdp_datasample sdp_test_data_sample_dietemp = {
 	/* Data sample metadata. */
 	.header = {
 		/* Filter word. */
-		.filter.data_type = SDP_DS_TYPE_TEMPERATURE,
-		.filter.ext_type = SDP_DS_EXT_TYPE_TEMP_DIE,
-		.filter.flags = {
-			.data_format = SDP_DS_FORMAT_NONE,
-			.encoding = SDP_DS_ENCODING_NONE,
-			.compression = SDP_DS_COMPRESSION_NONE,
-			.timestamp = SDP_DS_TIMESTAMP_EPOCH_32,
+		.filter = {
+			.data_type = SDP_DS_TYPE_TEMPERATURE,
+			.ext_type = SDP_DS_EXT_TYPE_TEMP_DIE,
+			.flags = {
+				.data_format = SDP_DS_FORMAT_NONE,
+				.encoding = SDP_DS_ENCODING_NONE,
+				.compression = SDP_DS_COMPRESSION_NONE,
+				.timestamp = SDP_DS_TIMESTAMP_EPOCH_32,
+			},
+		},
+		/* SI Unit word. */
+		.unit = {
+			.si_unit = SDP_DS_UNIT_SI_DEGREE_CELSIUS,
+			.ctype = SDP_DS_UNIT_CTYPE_IEEE754_FLOAT32,
+			.scale_factor = SDP_DS_SI_SCALE_NONE,
 		},
 		/* Source/Len word. */
-		.srclen.len = sizeof(sdp_test_data_dietemp_payload),
-		.srclen.fragment = 0,
-		.srclen.sourceid = 10,
+		.srclen = {
+			.len = sizeof(sdp_test_data_dietemp_payload),
+			.fragment = 0,
+			.sourceid = 10,
+		},
 	},
 
 	/* Die temperature in C plus 32-bit epoch timestamp. */

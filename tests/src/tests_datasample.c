@@ -37,6 +37,18 @@ void test_ds_check_header(void)
 	zassert_equal(sdp_test_data_sample_dietemp.header.filter.flags.timestamp,
 		      SDP_DS_TIMESTAMP_EPOCH_32, NULL);
 
+	/* SI unit type. */
+	zassert_equal(sdp_test_data_sample_dietemp.header.unit.si_unit,
+		      SDP_DS_UNIT_SI_DEGREE_CELSIUS, NULL);
+
+	/* Ctype. */
+	zassert_equal(sdp_test_data_sample_dietemp.header.unit.ctype,
+		      SDP_DS_UNIT_CTYPE_IEEE754_FLOAT32, NULL);
+
+	/* Scale factor. */
+	zassert_equal(sdp_test_data_sample_dietemp.header.unit.scale_factor,
+		      SDP_DS_SI_SCALE_NONE, NULL);
+
 	/* Paylod length in bytes. */
 	zassert_equal(sdp_test_data_sample_dietemp.header.srclen.len, 8,
 		      NULL);

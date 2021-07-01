@@ -51,13 +51,15 @@ void test_sp_alloc(void)
 	ds->header.filter.flags.data_format = ref->header.filter.flags.data_format;
 	ds->header.filter.flags.encoding = ref->header.filter.flags.encoding;
 	ds->header.filter.flags.timestamp = ref->header.filter.flags.timestamp;
+	ds->header.unit.si_unit = ref->header.unit.si_unit;
+	ds->header.unit.ctype = ref->header.unit.ctype;
+	ds->header.unit.scale_factor = ref->header.unit.scale_factor;
 	ds->header.srclen.fragment = ref->header.srclen.fragment;
 	ds->header.srclen.len = ref->header.srclen.len;
 	ds->header.srclen.sourceid = ref->header.srclen.sourceid;
 
 	/* Copy the test payload. */
 	memcpy(ds->payload, ref->payload, payload_len);
-
 
 	/* Compare payload. */
 	zassert_mem_equal(ds->payload, ref->payload, payload_len, NULL);
@@ -70,7 +72,7 @@ void test_sp_fifo(void)
 {
 	struct sdp_datasample *src;
 	struct sdp_datasample *dst;
-	uint32_t payload = 0x12345678;
+	float payload = 32.0F;
 
 	/* Check empty fifo. */
 	src = sdp_sp_get();
@@ -82,6 +84,9 @@ void test_sp_fifo(void)
 	memcpy(src->payload, &payload, sizeof payload);
 	src->header.filter.data_type = SDP_DS_TYPE_LIGHT;
 	src->header.filter.ext_type = SDP_DS_EXT_TYPE_LIGHT_PHOTO_ILLUMINANCE;
+	src->header.unit.si_unit = SDP_DS_UNIT_SI_LUX;
+	src->header.unit.ctype = SDP_DS_UNIT_CTYPE_IEEE754_FLOAT32;
+	src->header.unit.scale_factor = SDP_DS_SI_SCALE_NONE;
 
 	/* Add to FIFO. */
 	sdp_sp_put(src);
