@@ -11,11 +11,11 @@
 
 static uint32_t g_sdp_pm_handle_counter = 0;
 
-int sdp_pm_process(struct sdp_datasample *sample)
+int sdp_pm_process(struct sdp_measurement *mes)
 {
 	int rc = 0;
 
-	/* ToDo: Check what processor nodes can handle this ds. */
+	/* ToDo: Check what processor nodes can handle this measurement. */
 
 	return rc;
 }
@@ -24,7 +24,7 @@ int sdp_pm_poll(void)
 {
 	int rc = 0;
 
-	/* ToDo: Check sample pool for samples to process. */
+	/* ToDo: Check sample pool for measurements to process. */
 
 	return rc;
 }

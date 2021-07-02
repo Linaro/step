@@ -7,7 +7,7 @@
 #include <ztest.h>
 #include <sys/printk.h>
 #include <sdp/sdp.h>
-#include <sdp/datasample.h>
+#include <sdp/measurement/measurement.h>
 #include <sdp/node.h>
 #include "floatcheck.h"
 

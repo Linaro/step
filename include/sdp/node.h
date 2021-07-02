@@ -9,7 +9,7 @@
 
 #include <sdp/sdp.h>
 #include <sdp/filter.h>
-#include <sdp/datasample.h>
+#include <sdp/measurement/measurement.h>
 
 /**
  * @defgroup NODE Nodes
@@ -26,33 +26,33 @@ extern "C" {
  * @typedef sdp_node_callback_t
  * @brief Generic callback prototype for node implementations.
  *
- * @param sample    Pointer to the sdp_datasample being used.
+ * @param mes       Pointer to the sdp_measurement being used.
  * @param cfg       Pointer to the config struct/value being used.
  *
  * @return 0 on success, negative error code on failure
  */
-typedef int (*sdp_node_callback_t)(struct sdp_datasample *sample, void *cfg);
+typedef int (*sdp_node_callback_t)(struct sdp_measurement *mes, void *cfg);
 
 /**
  * @typedef sdp_node_evaluate_t
  * @brief Callback prototype for node filter evaluation.
  *
- * @param sample    Pointer to the sdp_datasample being used.
+ * @param mes       Pointer to the sdp_measurement being used.
  * @param cfg       Pointer to the config struct/value being used.
  *
  * @return 1 on a match, 0 on match failure.
  */
-typedef bool (*sdp_node_evaluate_t)(struct sdp_datasample *sample, void *cfg);
+typedef bool (*sdp_node_evaluate_t)(struct sdp_measurement *mes, void *cfg);
 
 /**
  * @typedef sdp_node_error_t
  * @brief Callback prototype when a node fails to successfully run.
  *
- * @param sample    Pointer to the sdp_datasample being used.
+ * @param mes       Pointer to the sdp_measurement being used.
  * @param cfg       Pointer to the config struct/value being used.
  * @param error     Negative error code produced during node execution.
  */
-typedef void (*sdp_node_error_t)(struct sdp_datasample *sample, void *cfg,
+typedef void (*sdp_node_error_t)(struct sdp_measurement *mes, void *cfg,
 				 int error);
 
 /**

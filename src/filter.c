@@ -6,7 +6,6 @@
 
 #include <errno.h>
 #include <sdp/filter.h>
-#include <sdp/datasample.h>
 
 #include <sys/printk.h>
 
@@ -64,19 +63,19 @@ void sdp_filt_print(struct sdp_filter_chain *fc)
 }
 
 int sdp_filt_evaluate(struct sdp_filter_chain *fc,
-		      struct sdp_datasample *sample, int *match)
+		      struct sdp_measurement *mes, int *match)
 {
 	int rc = 0;
 	int curr_eval, prev_eval;
 
 	*match = 0;
 
-	if ((fc == NULL) || (sample == NULL) || (fc->count == 0)) {
+	if ((fc == NULL) || (mes == NULL) || (fc->count == 0)) {
 		rc = -EINVAL;
 		goto err;
 	}
 
-	printk("Sample value: 0x%08X\n", sample->header.filter_bits);
+	printk("Sample value: 0x%08X\n", mes->header.filter_bits);
 
 	/* Iterate through filter chain. */
 	curr_eval = prev_eval = 0;

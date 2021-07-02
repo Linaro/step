@@ -8,7 +8,7 @@
 #define SDP_FILTER_H__
 
 #include <sdp/sdp.h>
-#include <sdp/datasample.h>
+#include <sdp/measurement/measurement.h>
 
 /**
  * @defgroup FILTER Filter Definitions
@@ -29,54 +29,54 @@ enum sdp_filter_op {
 	/**
 	 * @brief Filter evaluate must be logically true. Solely for use as
 	 *        the first operand in a filter chain.
-	 * 
+	 *
 	 * @note This is functionally identical to SDP_FILTER_AND_IS, with the
 	 *       assumption that the previous value is true.
 	 *
 	 * @note The first value in a filter chain MUST be either SDP_FILTER_OP_IS
 	 *       of SDP_FILTER_OP_NOT.
 	 */
-	SDP_FILTER_OP_IS = 0,
+	SDP_FILTER_OP_IS        = 0,
 
 	/**
 	 * @brief Filter evaluation must be logically false. Solely for use as
 	 *        the first operand in a filter chain.
-	 * 
+	 *
 	 * @note This is functionally identical to SDP_FILTER_AND_IS, with the
 	 *       assumption that the previous value is true.
 	 *
 	 * @note The first value in a filter chain MUST be either SDP_FILTER_OP_IS
 	 *       of SDP_FILTER_OP_NOT.
 	 */
-	SDP_FILTER_OP_NOT = 1,
+	SDP_FILTER_OP_NOT       = 1,
 
 	/**
 	 * @brief Previous operand AND current operand must resolve to being true,
 	 *        where the current filter evaluation is logically true. Solely for
 	 *        use in non-initial entries in a filter chain.
 	 */
-	SDP_FILTER_OP_AND = 2,
+	SDP_FILTER_OP_AND       = 2,
 
 	/**
 	 * @brief Previous operand AND current operand must resolve to being true,
 	 *        where the current filter evaluation is logically false. Solely for
 	 *        use in non-initial entries in a filter chain.
 	 */
-	SDP_FILTER_OP_AND_NOT = 3,
+	SDP_FILTER_OP_AND_NOT   = 3,
 
 	/**
 	 * @brief Previous operand OR current operand must resolve to being true,
 	 *        where the current filter evaluation is logically true. Solely for
 	 *        use in non-initial entries in a filter chain.
 	 */
-	SDP_FILTER_OP_OR = 4,
+	SDP_FILTER_OP_OR        = 4,
 
 	/**
 	 * @brief Previous operand OR current operand must resolve to being true,
 	 *        where the current filter evaluation is logically false. Solely for
 	 *        use in non-initial entries in a filter chain.
 	 */
-	SDP_FILTER_OP_OR_NOT = 5,
+	SDP_FILTER_OP_OR_NOT    = 5,
 
 	/**
 	 * @brief Exactly one of the previous operand OR current operand must
@@ -84,7 +84,7 @@ enum sdp_filter_op {
 	 *        logically true. Solely for use in non-initial entries in a filter
 	 *        chain.
 	 */
-	SDP_FILTER_OP_XOR = 6,
+	SDP_FILTER_OP_XOR       = 6,
 
 	/**
 	 * @brief Exactly one of the previous operand OR current operand must
@@ -92,7 +92,7 @@ enum sdp_filter_op {
 	 *        logically false. Solely for use in non-initial entries in a
 	 *        filter chain.
 	 */
-	SDP_FILTER_OP_XOR_NOT = 7,
+	SDP_FILTER_OP_XOR_NOT   = 7,
 };
 
 /**
@@ -116,7 +116,7 @@ struct sdp_filter {
 	/**
 	 * @brief Any bits set to 1 in this mask field will be ignored when
 	 *        determining if an exact match was found.
-	 * 
+	 *
 	 * @note This can be used to perfom and exact match only on the base and/or
 	 *       extended data type fields, for example.
 	 */
@@ -164,7 +164,7 @@ struct sdp_filter {
 
 /**
  * @brief An filter chain.
- * 
+ *
  * @note Entries in a filter chain are evaluated in a strictly linear
  *       left-to-right (or top-to-bottom) manner, where the sum of the
  *       previous operands is evaluated against the current filter entry.
@@ -185,23 +185,23 @@ struct sdp_filter_chain {
 
 /**
  * @brief Prints the supplied filter chain using printk.
- * 
+ *
  * @param fc The sdsp_filter_chain to print.
  */
 void sdp_filt_print(struct sdp_filter_chain *fc);
 
 /**
- * @brief Evaluates the supplied sdp_datasample against the supplied
+ * @brief Evaluates the supplied sdp_measurement against the supplied
  *        sdp_filter_chain to determine if there is a match.
  *
  * @param chain		The sdp_filter_chain to evaluable a match against
- * @param sample 	The sdp_datasample to evaluate a match with
+ * @param sample 	The sdp_measurement to evaluate a match with
  * @param match 	1 if the sdp_filter_chain matches, otherwise 0.
  *
  * @return int 		Zero on normal execution, otherwise a negative error code.
  */
 int sdp_filt_evaluate(struct sdp_filter_chain *chain,
-		      struct sdp_datasample *sample, int *match);
+		      struct sdp_measurement *sample, int *match);
 
 #ifdef __cplusplus
 }

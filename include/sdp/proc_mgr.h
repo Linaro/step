@@ -22,16 +22,16 @@ extern "C" {
 #endif
 
 /**
- * @brief Processes the supplied sdp_datasample.
+ * @brief Processes the supplied sdp_measurement.
  *
- * @param sample Pointer to the sdp_datasample to parse.
+ * @param sample Pointer to the sdp_measurement to parse.
  *
  * @return int 0 on success, negative error code on failure.
  */
-int sdp_pm_process(struct sdp_datasample *sample);
+int sdp_pm_process(struct sdp_measurement *sample);
 
 /**
- * @brief Polls the sample pool for any incoming sdp_datasamples to
+ * @brief Polls the sample pool for any incoming sdp_measurement(s) to
  *        process, and processes them on a first in, first processed basis.
  *
  * @return int 0 on success, negative error code on failure.
@@ -50,8 +50,8 @@ int sdp_pm_register(struct sdp_node *node, uint8_t *handle);
 
 /**
  * @brief Displays a list of registered processor nodes.
- * 
- * @return int 
+ *
+ * @return int
  */
 int sdp_pm_list(void);
 

@@ -7,7 +7,7 @@
 #include <zephyr.h>
 #include <logging/log.h>
 #include <sdp/sample_pool.h>
-#include <sdp/datasample.h>
+#include <sdp/measurement/measurement.h>
 
 #define LOG_LEVEL LOG_LEVEL_DBG
 LOG_MODULE_REGISTER(main);
@@ -22,59 +22,59 @@ int sdp_sp_init(void)
 	return k_mutex_init(&sdp_sp_alloc_mtx);
 }
 
-void sdp_sp_put(struct sdp_datasample *ds)
+void sdp_sp_put(struct sdp_measurement *mes)
 {
-	k_fifo_put(&sp_fifo, ds);
+	k_fifo_put(&sp_fifo, mes);
 }
 
-struct sdp_datasample *sdp_sp_get(void)
+struct sdp_measurement *sdp_sp_get(void)
 {
 	return k_fifo_get(&sp_fifo, K_NO_WAIT);
 }
 
-void sdp_sp_free(struct sdp_datasample *ds)
+void sdp_sp_free(struct sdp_measurement *mes)
 {
-	k_heap_free(&sp_elem_pool, ds);
+	k_heap_free(&sp_elem_pool, mes);
 }
 
 void sdp_sp_flush(void)
 {
-	struct sdp_datasample *ds;
+	struct sdp_measurement *mes;
 
 	do {
-		ds = sdp_sp_get();
-		if (ds) {
-			sdp_sp_free(ds);
+		mes = sdp_sp_get();
+		if (mes) {
+			sdp_sp_free(mes);
 		}
-	} while (ds != NULL);
+	} while (mes != NULL);
 }
 
 /* TODO: How to handle fragmentation over time due to var. length sample? */
 /* TODO: Add mutex on allocation. */
-struct sdp_datasample *sdp_sp_alloc(uint16_t sz)
+struct sdp_measurement *sdp_sp_alloc(uint16_t sz)
 {
-	struct sdp_datasample *ds;
+	struct sdp_measurement *mes;
 
 	k_mutex_lock(&sdp_sp_alloc_mtx, K_FOREVER);
-	ds = k_heap_alloc(&sp_elem_pool,
-			  sizeof(struct sdp_datasample) + sz,
-			  K_NO_WAIT);
+	mes = k_heap_alloc(&sp_elem_pool,
+			   sizeof(struct sdp_measurement) + sz,
+			   K_NO_WAIT);
 	k_mutex_unlock(&sdp_sp_alloc_mtx);
 
 	/* Make sure memory available. */
-	if (ds == NULL) {
-		LOG_ERR("datasample allocation failed!");
+	if (mes == NULL) {
+		LOG_ERR("measurement allocation failed!");
 		return NULL;
 	}
 
-	memset(ds, 0, sizeof(struct sdp_datasample) + sz);
-	ds->header.srclen.len = sz;
+	memset(mes, 0, sizeof(struct sdp_measurement) + sz);
+	mes->header.srclen.len = sz;
 	if (sz) {
 		/* Payload starts just after the sample struct. */
-		ds->payload = ds + sizeof(struct sdp_datasample);
+		mes->payload = mes + sizeof(struct sdp_measurement);
 	} else {
-		ds->payload = NULL;
+		mes->payload = NULL;
 	}
 
-	return ds;
+	return mes;
 }

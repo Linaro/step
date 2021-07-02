@@ -8,7 +8,7 @@
 #include <stdlib.h>
 #include <ctype.h>
 #include <shell/shell.h>
-#include <sdp/datasample.h>
+#include <sdp/measurement/measurement.h>
 
 #if CONFIG_SDP_SHELL
 
@@ -46,26 +46,26 @@ sdp_shell_cmd_test(const struct shell *shell, size_t argc, char **argv)
 		.timestamp = 1624305803, /* Monday, June 21, 2021 8:03:23 PM */
 	};
 
-	/* Test die temp data sample, with timestamp. */
-	struct sdp_datasample sdp_test_data_sample_dietemp = {
-		/* Data sample metadata. */
+	/* Test die temp measurement, with timestamp. */
+	struct sdp_measurement sdp_test_mes_dietemp = {
+		/* Measurement metadata. */
 		.header = {
 			/* Filter word. */
 			.filter = {
-				.data_type = SDP_DS_TYPE_TEMPERATURE,
-				.ext_type = SDP_DS_EXT_TYPE_TEMP_DIE,
+				.base_type = SDP_MES_TYPE_TEMPERATURE,
+				.ext_type = SDP_MES_EXT_TYPE_TEMP_DIE,
 				.flags = {
-					.data_format = SDP_DS_FORMAT_NONE,
-					.encoding = SDP_DS_ENCODING_NONE,
-					.compression = SDP_DS_COMPRESSION_NONE,
-					.timestamp = SDP_DS_TIMESTAMP_EPOCH_32,
+					.data_format = SDP_MES_FORMAT_NONE,
+					.encoding = SDP_MES_ENCODING_NONE,
+					.compression = SDP_MES_COMPRESSION_NONE,
+					.timestamp = SDP_MES_TIMESTAMP_EPOCH_32,
 				},
 			},
 			/* SI Unit word. */
 			.unit = {
-				.si_unit = SDP_DS_UNIT_SI_DEGREE_CELSIUS,
-				.ctype = SDP_DS_UNIT_CTYPE_IEEE754_FLOAT32,
-				.scale_factor = SDP_DS_SI_SCALE_NONE,
+				.si_unit = SDP_MES_UNIT_SI_DEGREE_CELSIUS,
+				.ctype = SDP_MES_UNIT_CTYPE_IEEE754_FLOAT32,
+				.scale_factor = SDP_MES_SI_SCALE_NONE,
 			},
 			/* Source/Len word. */
 			.srclen = {
@@ -79,7 +79,7 @@ sdp_shell_cmd_test(const struct shell *shell, size_t argc, char **argv)
 		.payload = &sdp_test_data_dietemp_payload,
 	};
 
-	sdp_ds_print(&sdp_test_data_sample_dietemp);
+	sdp_mes_print(&sdp_test_mes_dietemp);
 
 	return 0;
 }

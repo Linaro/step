@@ -20,7 +20,7 @@ void test_filter_evaluate_fc_null(void)
 	/* Filter chain null */
 	rc = sdp_filt_evaluate(
 		NULL,
-		&sdp_test_data_sample_dietemp,
+		&sdp_test_mes_dietemp,
 		&match);
 	zassert_equal(rc, -EINVAL, NULL);
 
@@ -28,12 +28,12 @@ void test_filter_evaluate_fc_null(void)
 	zassert_equal(match, 0, NULL);
 }
 
-void test_filter_evaluate_ds_null(void)
+void test_filter_evaluate_mes_null(void)
 {
 	int rc = 0;
 	int match;
 
-	/* Filter chain null */
+	/* Message null */
 	rc = sdp_filt_evaluate(
 		&(sdp_test_data_pnode.filters),
 		NULL,
@@ -50,12 +50,13 @@ void test_filter_evaluate_fc_len(void)
 	int match;
 
 	int old_count = sdp_test_data_pnode.filters.count;
+
 	sdp_test_data_pnode.filters.count = 0;
 
 	/* Filter chain len = 0 */
 	rc = sdp_filt_evaluate(
 		&(sdp_test_data_pnode.filters),
-		&sdp_test_data_sample_dietemp,
+		&sdp_test_mes_dietemp,
 		&match);
 
 	/* Reset count. */
@@ -73,7 +74,7 @@ void test_filter_evaluate_match_good(void)
 	/* Evaluate the die temp sample against the test processor node. */
 	rc = sdp_filt_evaluate(
 		&(sdp_test_data_pnode.filters),
-		&sdp_test_data_sample_dietemp,
+		&sdp_test_mes_dietemp,
 		&match);
 	zassert_equal(rc, 0, NULL);
 

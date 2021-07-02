@@ -5,8 +5,8 @@ zephyr_include_directories(include)
 
 zephyr_library()
 zephyr_library_sources(
-    src/datasample.c
     src/filter.c
+    src/measurement.c
     src/node.c
     src/proc_mgr.c
     src/sample_pool.c

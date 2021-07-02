@@ -1,10 +1,10 @@
 <mxfile>
     <diagram id="yjHHtUhdv3cXF0v27rw7" name="Page-1">
-        <mxGraphModel dx="693" dy="326" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="0" pageScale="1" pageWidth="827" pageHeight="1169" math="0" shadow="0">
+        <mxGraphModel dx="2193" dy="838" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="0" pageScale="1" pageWidth="827" pageHeight="1169" math="0" shadow="0">
             <root>
                 <mxCell id="0"/>
                 <mxCell id="1" parent="0"/>
-                <mxCell id="2" value="Datasample&lt;br&gt;.filter = ABCD" style="shape=parallelogram;perimeter=parallelogramPerimeter;whiteSpace=wrap;html=1;fixedSize=1;" parent="1" vertex="1">
+                <mxCell id="2" value="Measurement&lt;br&gt;.filter = ABCD" style="shape=parallelogram;perimeter=parallelogramPerimeter;whiteSpace=wrap;html=1;fixedSize=1;" parent="1" vertex="1">
                     <mxGeometry x="200" y="40" width="120" height="60" as="geometry"/>
                 </mxCell>
                 <mxCell id="6" value="Exists in&lt;br&gt;cache?" style="rhombus;whiteSpace=wrap;html=1;" parent="1" vertex="1">
@@ -59,7 +59,7 @@
                         <mxPoint x="430" y="560" as="targetPoint"/>
                     </mxGeometry>
                 </mxCell>
-                <mxCell id="31" value="Filter Manager&lt;br&gt;Receives&lt;br&gt;Datasample" style="rounded=1;whiteSpace=wrap;html=1;" parent="1" vertex="1">
+                <mxCell id="31" value="Filter Manager&lt;br&gt;Receives&lt;br&gt;Measurement" style="rounded=1;whiteSpace=wrap;html=1;" parent="1" vertex="1">
                     <mxGeometry x="360" y="40" width="120" height="60" as="geometry"/>
                 </mxCell>
                 <mxCell id="32" value="Cache&lt;br&gt;Enabled?" style="rhombus;whiteSpace=wrap;html=1;" parent="1" vertex="1">
@@ -153,7 +153,7 @@
                         <mxPoint x="-20" y="-70" as="offset"/>
                     </mxGeometry>
                 </mxCell>
-                <mxCell id="51" value="" style="endArrow=classic;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="10" target="8">
+                <mxCell id="51" value="" style="endArrow=classic;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" parent="1" source="10" target="8" edge="1">
                     <mxGeometry width="50" height="50" relative="1" as="geometry">
                         <mxPoint x="440" y="450" as="sourcePoint"/>
                         <mxPoint x="410" y="460" as="targetPoint"/>

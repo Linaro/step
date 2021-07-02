@@ -7,7 +7,7 @@
 #include <ztest.h>
 #include <sdp/sdp.h>
 #include <sdp/filter.h>
-#include <sdp/datasample.h>
+#include <sdp/measurement/measurement.h>
 #include <sdp/node.h>
 #include "data.h"
 
@@ -20,7 +20,7 @@ struct sdp_test_data_pnode_cb_stats {
 	uint32_t error;
 } sdp_test_data_cb_stats = { 0 };
 
-bool node_evaluate(struct sdp_datasample *sample, void *cfg)
+bool node_evaluate(struct sdp_measurement *mes, void *cfg)
 {
 	/* Overrides the filter engine when evaluating this node. */
 	sdp_test_data_cb_stats.evaluate++;
@@ -28,7 +28,7 @@ bool node_evaluate(struct sdp_datasample *sample, void *cfg)
 	return true;
 }
 
-bool node_matched(struct sdp_datasample *sample, void *cfg)
+bool node_matched(struct sdp_measurement *mes, void *cfg)
 {
 	/* Fires when the filter engine has indicated a match for this node. */
 	sdp_test_data_cb_stats.matched++;
@@ -36,7 +36,7 @@ bool node_matched(struct sdp_datasample *sample, void *cfg)
 	return true;
 }
 
-int node_start(struct sdp_datasample *sample, void *cfg)
+int node_start(struct sdp_measurement *mes, void *cfg)
 {
 	/* Fires before the node runs. */
 	sdp_test_data_cb_stats.start++;
@@ -44,7 +44,7 @@ int node_start(struct sdp_datasample *sample, void *cfg)
 	return 0;
 }
 
-int node_run(struct sdp_datasample *sample, void *cfg)
+int node_run(struct sdp_measurement *mes, void *cfg)
 {
 	/* Node logic implementation. */
 	sdp_test_data_cb_stats.run++;
@@ -52,7 +52,7 @@ int node_run(struct sdp_datasample *sample, void *cfg)
 	return 0;
 }
 
-int node_stop(struct sdp_datasample *sample, void *cfg)
+int node_stop(struct sdp_measurement *mes, void *cfg)
 {
 	/* Fires when the node has been successfully run. */
 	sdp_test_data_cb_stats.stop++;
@@ -60,7 +60,7 @@ int node_stop(struct sdp_datasample *sample, void *cfg)
 	return 0;
 }
 
-void node_error(struct sdp_datasample *sample, void *cfg, int error)
+void node_error(struct sdp_measurement *mes, void *cfg, int error)
 {
 	/* Fires when an error occurs running this node. */
 	sdp_test_data_cb_stats.error++;
@@ -73,13 +73,13 @@ struct sdp_node sdp_test_data_pnode = {
 		.count = 3,
 		.chain = (struct sdp_filter[]){
 			{
-				.exact_match = SDP_DS_TYPE_TEMPERATURE,
+				.exact_match = SDP_MES_TYPE_TEMPERATURE,
 				.exact_match_mask = 0xFFFF0000,
 			},
 			{
 				.op = SDP_FILTER_OP_OR,
-				.exact_match = SDP_DS_TYPE_TEMPERATURE +
-					       (SDP_DS_EXT_TYPE_TEMP_DIE << 8),
+				.exact_match = SDP_MES_TYPE_TEMPERATURE +
+					       (SDP_MES_EXT_TYPE_TEMP_DIE << 8),
 				.exact_match_mask = 0xFFFF0000,
 			},
 			{
@@ -116,26 +116,26 @@ struct {
 	.timestamp = 1624305803,        /* Monday, June 21, 2021 8:03:23 PM */
 };
 
-/* Test die temp data sample, with timestamp. */
-struct sdp_datasample sdp_test_data_sample_dietemp = {
-	/* Data sample metadata. */
+/* Test die temp measurement, with timestamp. */
+struct sdp_measurement sdp_test_mes_dietemp = {
+	/* Measurement metadata. */
 	.header = {
 		/* Filter word. */
 		.filter = {
-			.data_type = SDP_DS_TYPE_TEMPERATURE,
-			.ext_type = SDP_DS_EXT_TYPE_TEMP_DIE,
+			.base_type = SDP_MES_TYPE_TEMPERATURE,
+			.ext_type = SDP_MES_EXT_TYPE_TEMP_DIE,
 			.flags = {
-				.data_format = SDP_DS_FORMAT_NONE,
-				.encoding = SDP_DS_ENCODING_NONE,
-				.compression = SDP_DS_COMPRESSION_NONE,
-				.timestamp = SDP_DS_TIMESTAMP_EPOCH_32,
+				.data_format = SDP_MES_FORMAT_NONE,
+				.encoding = SDP_MES_ENCODING_NONE,
+				.compression = SDP_MES_COMPRESSION_NONE,
+				.timestamp = SDP_MES_TIMESTAMP_EPOCH_32,
 			},
 		},
 		/* SI Unit word. */
 		.unit = {
-			.si_unit = SDP_DS_UNIT_SI_DEGREE_CELSIUS,
-			.ctype = SDP_DS_UNIT_CTYPE_IEEE754_FLOAT32,
-			.scale_factor = SDP_DS_SI_SCALE_NONE,
+			.si_unit = SDP_MES_UNIT_SI_DEGREE_CELSIUS,
+			.ctype = SDP_MES_UNIT_CTYPE_IEEE754_FLOAT32,
+			.scale_factor = SDP_MES_SI_SCALE_NONE,
 		},
 		/* Source/Len word. */
 		.srclen = {
