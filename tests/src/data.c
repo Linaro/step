@@ -134,8 +134,8 @@ struct sdp_measurement sdp_test_mes_dietemp = {
 		/* SI Unit word. */
 		.unit = {
 			.si_unit = SDP_MES_UNIT_SI_DEGREE_CELSIUS,
-			.ctype = SDP_MES_UNIT_CTYPE_IEEE754_FLOAT32,
 			.scale_factor = SDP_MES_SI_SCALE_NONE,
+			.ctype = SDP_MES_UNIT_CTYPE_IEEE754_FLOAT32,
 		},
 		/* Source/Len word. */
 		.srclen = {

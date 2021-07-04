@@ -124,7 +124,7 @@ Measurements make use of the following header, with a 12-byte overhead:
    +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
    |              Flags            |  Ext. M Type  |  Base M Type  | <- Filter
    +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-   |  Scale Factor |    C Type     |         SI Unit Type          | <- Unit
+   |     C Type    | Scale Factor  |         SI Unit Type          | <- Unit
    +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
    |   Source ID   | S Cnt | R | F |        Payload Length         | <- SrcLen
    +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+

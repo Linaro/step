@@ -43,7 +43,7 @@
  * +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
  * |              Flags            |  Ext. M Type  |  Base M Type  | <- Filter
  * +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
- * |  Scale Factor |    C Type     |         SI Unit Type          | <- Unit
+ * |     C Type    | Scale Factor  |         SI Unit Type          | <- Unit
  * +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
  * |   Source ID   | S Cnt | R | F |        Payload Length         | <- SrcLen
  * +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
@@ -144,16 +144,16 @@
  *
  *     The base, derived or compound SI unit used to represent this measurement.
  *
- *   o C Type [16:23] (Mandatory)
- *
- *     The underlying C type used to represent the measurement in memory.
- *
- *   o Scale Factor [24:31] (Optional)
+ *   o Scale Factor [16:23] (Optional)
  *
  *     An optional 10^n scale factor from the default unit scale represented
  *     by the SI Unit Type. If the default SI Unit Type is 'Ampere', for
  *     example, a Scale Factor of -3 would indicate that this particular
  *     measurement represents mA.
+ *
+ *   o C Type [24:31] (Mandatory)
+ *
+ *     The underlying C type used to represent the measurement in memory.
  *
  * SrcLen
  * ------
@@ -262,6 +262,13 @@ struct sdp_mes_header {
 			uint16_t si_unit;
 
 			/**
+			 * @brief The amount to scale the measurement value up or down
+			 * (10^n), starting from the unit and scale indicated by si_unit.
+			 * Typically, but not necessarily a member of sdp_mes_unit_scale.
+			 */
+			int8_t scale_factor;
+			
+			/**
 			 * @brief The data type that this SI unit is represented by in C.
 			 * Must be a member of sdp_mes_unit_ctype.
 			 *
@@ -270,13 +277,6 @@ struct sdp_mes_header {
 			 * value in memory.
 			 */
 			uint8_t ctype;
-
-			/**
-			 * @brief The amount to scale the measurement value up or down
-			 * (10^n), starting from the unit and scale indicated by si_unit.
-			 * Typically, but not necessarily a member of sdp_mes_unit_scale.
-			 */
-			int8_t scale_factor;
 		} unit;
 		/** 32-bit representation of si_unit, ctype and scale_factor. */
 		uint32_t unit_bits;

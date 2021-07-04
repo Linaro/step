@@ -23,8 +23,8 @@ void sdp_mes_print(struct sdp_measurement *mes)
 	printk("\n");
 	printk("Unit:             0x%08X\n", mes->header.unit_bits);
 	printk("  si_unit:        0x%04X (%u)\n", mes->header.unit.si_unit, mes->header.unit.si_unit);
-	printk("  ctype:          0x%02X (%u)\n", mes->header.unit.ctype, mes->header.unit.ctype);
 	printk("  scale_factor:   0x%02X (10^%d)\n", mes->header.unit.scale_factor, mes->header.unit.scale_factor);
+	printk("  ctype:          0x%02X (%u)\n", mes->header.unit.ctype, mes->header.unit.ctype);
 	printk("\n");
 	printk("SrcLen:           0x%08X\n", mes->header.srclen_bits);
 	printk("  len:            0x%04X (%u)\n", mes->header.srclen.len, mes->header.srclen.len);
