@@ -11,14 +11,8 @@
 #include <sdp/node.h>
 #include "data.h"
 
-struct sdp_test_data_pnode_cb_stats {
-	uint32_t evaluate;
-	uint32_t matched;
-	uint32_t start;
-	uint32_t run;
-	uint32_t stop;
-	uint32_t error;
-} sdp_test_data_cb_stats = { 0 };
+/* Track callback entry statistics. */
+struct sdp_test_data_procnode_cb_stats sdp_test_data_cb_stats = { 0 };
 
 bool node_evaluate(struct sdp_measurement *mes, void *cfg)
 {
@@ -67,28 +61,26 @@ void node_error(struct sdp_measurement *mes, void *cfg, int error)
 }
 
 /* Test processor node. */
-struct sdp_node sdp_test_data_pnode = {
+struct sdp_node sdp_test_data_procnode = {
 	/* Matches if DS filter field = 0x26 OR 0x226 AND bit 26 is set. */
 	.filters = {
 		.count = 3,
 		.chain = (struct sdp_filter[]){
 			{
-				.exact_match = SDP_MES_TYPE_TEMPERATURE,
-				.exact_match_mask = 0xFFFF0000,
+				.match = SDP_MES_TYPE_TEMPERATURE,
+				.ignore_mask = 0xFFFF0000,
 			},
 			{
 				.op = SDP_FILTER_OP_OR,
-				.exact_match = SDP_MES_TYPE_TEMPERATURE +
+				.match = SDP_MES_TYPE_TEMPERATURE +
 					       (SDP_MES_EXT_TYPE_TEMP_DIE << 8),
-				.exact_match_mask = 0xFFFF0000,
+				.ignore_mask = 0xFFFF0000,
 			},
 			{
+				/* Make sure timestamp (bits 26-28) = EPOCH32 */
 				.op = SDP_FILTER_OP_AND,
-				.bit_match = {
-					/* Bit 26 = EPOCH32 timestamp */
-					.mask = 0xFBFFFFFF,
-					.set = (1 << 26),
-				}
+				.match = (SDP_MES_TIMESTAMP_EPOCH_32 << 26),
+				.ignore_mask = ~(0x7 << 26),
 			},
 		},
 	},
@@ -125,23 +117,17 @@ struct sdp_measurement sdp_test_mes_dietemp = {
 			.base_type = SDP_MES_TYPE_TEMPERATURE,
 			.ext_type = SDP_MES_EXT_TYPE_TEMP_DIE,
 			.flags = {
-				.data_format = SDP_MES_FORMAT_NONE,
-				.encoding = SDP_MES_ENCODING_NONE,
-				.compression = SDP_MES_COMPRESSION_NONE,
 				.timestamp = SDP_MES_TIMESTAMP_EPOCH_32,
 			},
 		},
 		/* SI Unit word. */
 		.unit = {
 			.si_unit = SDP_MES_UNIT_SI_DEGREE_CELSIUS,
-			.scale_factor = SDP_MES_SI_SCALE_NONE,
 			.ctype = SDP_MES_UNIT_CTYPE_IEEE754_FLOAT32,
 		},
 		/* Source/Len word. */
 		.srclen = {
 			.len = sizeof(sdp_test_data_dietemp_payload),
-			.fragment = 0,
-			.samples = 0,
 			.sourceid = 10,
 		},
 	},

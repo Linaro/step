@@ -38,98 +38,114 @@ void sdp_filt_print(struct sdp_filter_chain *fc)
 		case SDP_FILTER_OP_XOR:
 			printk("XOR ");
 			break;
-		case SDP_FILTER_OP_XOR_NOT:
-			printk("XOR_NOT ");
-			break;
 		}
 
-		/* Exact match or bit-based */
-		if (fc->chain[i].exact_match) {
-			printk("exact match: 0x%08X\n", fc->chain[i].exact_match);
-			printk("exact match: 0x%08X", fc->chain[i].exact_match);
-			if (fc->chain[i].exact_match_mask) {
-				printk(" (mask 0x%08X)\n",
-				       fc->chain[i].exact_match_mask);
-			} else {
-				printk("\n");
-			}
+		printk("exact match: 0x%08X", fc->chain[i].match);
+		if (fc->chain[i].ignore_mask) {
+			printk(" (mask 0x%08X)\n",
+			       fc->chain[i].ignore_mask);
 		} else {
-			printk("bit match: mask 0x%08X set 0x%08X cleared 0x%08X\n",
-			       fc->chain[i].bit_match.mask,
-			       fc->chain[i].bit_match.set,
-			       fc->chain[i].bit_match.cleared);
+			printk("\n");
 		}
 	}
 }
 
-int sdp_filt_evaluate(struct sdp_filter_chain *fc,
-		      struct sdp_measurement *mes, int *match)
+/**
+ * @brief Evaluates a single filter record.
+ *
+ * @param f			The filter to evaluate.
+ * @param mes		The sdp_measurement to evaluate against.
+ * @param prev		Sum of the previous match results.
+ * @param match		1 if a match occurred, otherwise.
+ */
+static void sdp_filt_evaluate_filter(struct sdp_filter *f,
+				     struct sdp_measurement *mes, int prev, int *match)
+{
+	int curr_eval = 0;
+	uint32_t mes_cmp = mes->header.filter_bits;
+	uint32_t f_cmp = f->match;
+
+	*match = 0;
+
+	/* Mask out any ignored bits. */
+	if (f->ignore_mask) {
+		mes_cmp &= ~(f->ignore_mask);
+		f_cmp &= ~(f->ignore_mask);
+	}
+
+	/* Equality check. */
+	curr_eval = (mes_cmp == f_cmp ? 1 : 0);
+
+	/* Operand evaluation against prev result(s). */
+	switch (f->op) {
+	case SDP_FILTER_OP_IS:
+		*match = curr_eval ? 1 : 0;
+		break;
+	case SDP_FILTER_OP_NOT:
+		*match = curr_eval ? 0 : 1;
+		break;
+	case SDP_FILTER_OP_AND:
+		*match = (curr_eval & prev) ? 1 : 0;
+		break;
+	case SDP_FILTER_OP_AND_NOT:
+		*match = (prev && !curr_eval) ? 1 : 0;
+		break;
+	case SDP_FILTER_OP_OR:
+		*match = (prev || curr_eval) ? 1 : 0;
+		break;
+	case SDP_FILTER_OP_OR_NOT:
+		*match = (prev || !curr_eval) ? 1 : 0;
+		break;
+	case SDP_FILTER_OP_XOR:
+		*match = (prev != curr_eval) ? 1 : 0;
+		break;
+	}
+}
+
+int sdp_filt_evaluate(struct sdp_filter_chain *fc, struct sdp_measurement *mes,
+		      int *match)
 {
 	int rc = 0;
 	int curr_eval, prev_eval;
 
-	*match = 0;
+	*match = curr_eval = prev_eval = 0;
 
-	if ((fc == NULL) || (mes == NULL) || (fc->count == 0)) {
+	/* Make sure we have a measurement. */
+	if (mes == NULL) {
+		rc = -EINVAL;
+		goto err;
+	}
+  
+	/* Count = 0 or fc = NULL means accept all measurements. */
+	if ((fc == NULL) || (fc->count == 0)) {
+		rc = 0;
+		*match = 1;
+		goto bail;
+	}
+
+	/* Make sure we start the chain with IS or NOT operands. */
+	if ((fc->chain[0].op != SDP_FILTER_OP_IS) &&
+	    (fc->chain[0].op != SDP_FILTER_OP_NOT)) {
 		rc = -EINVAL;
 		goto err;
 	}
 
-	printk("Sample value: 0x%08X\n", mes->header.filter_bits);
+	/* Iterate through filter chain, tracking previous + current results. */
+	for (uint32_t i = 0; i < fc->count; i++) {
+		curr_eval = 0;
 
-	/* Iterate through filter chain. */
-	curr_eval = prev_eval = 0;
-	for (uint32_t i = 0; i < fc->count; i++)
-	{
-		printk("Evaluating filter #%d - ", i);
+		/* Evalute current filter. */
+		sdp_filt_evaluate_filter(&(fc->chain[i]), mes,
+					 prev_eval, &curr_eval);
 
-		/* Operand */
-		switch (fc->chain[i].op) {
-		case SDP_FILTER_OP_IS:
-			printk("IS ");
-			break;
-		case SDP_FILTER_OP_NOT:
-			printk("NOT ");
-			break;
-		case SDP_FILTER_OP_AND:
-			printk("AND ");
-			break;
-		case SDP_FILTER_OP_AND_NOT:
-			printk("AND NOT ");
-			break;
-		case SDP_FILTER_OP_OR:
-			printk("OR ");
-			break;
-		case SDP_FILTER_OP_OR_NOT:
-			printk("OR NOT ");
-			break;
-		case SDP_FILTER_OP_XOR:
-			printk("XOR ");
-			break;
-		case SDP_FILTER_OP_XOR_NOT:
-			printk("XOR_NOT ");
-			break;
-		}
-
-		/* Exact match or bit-based */
-		if (fc->chain[i].exact_match) {
-			printk("exact match: 0x%08X", fc->chain[i].exact_match);
-			if (fc->chain[i].exact_match_mask) {
-				printk(" (mask 0x%08X)\n", fc->chain[i].exact_match_mask);
-			} else {
-				printk("\n");
-			}
-		} else {
-			printk("bit match: mask 0x%08X set 0x%08X cleared 0x%08X\n",
-			       fc->chain[i].bit_match.mask,
-			       fc->chain[i].bit_match.set,
-			       fc->chain[i].bit_match.cleared);
-		}
+		/* Store results for comparison against next filter. */
+		prev_eval = curr_eval;
 	}
 
-	/* For now, always pass unless we encounter an error. */
-	*match = 1;
+	/* If final instance of curr_eval == 1, we have a match. */
+	*match = curr_eval;
 
 err:
+bail:
 	return rc;
 }

@@ -24,10 +24,13 @@ extern "C" {
 /**
  * @brief Logical operand used between the current and
  *        previous filter values in a filter chain.
+ *
+ * @note The first value in a filter chain MUST be either SDP_FILTER_OP_IS
+ *       of SDP_FILTER_OP_NOT.
  */
 enum sdp_filter_op {
 	/**
-	 * @brief Filter evaluate must be logically true. Solely for use as
+	 * @brief Filter evaluation must be logically true. Solely for use as
 	 *        the first operand in a filter chain.
 	 *
 	 * @note This is functionally identical to SDP_FILTER_AND_IS, with the
@@ -85,14 +88,6 @@ enum sdp_filter_op {
 	 *        chain.
 	 */
 	SDP_FILTER_OP_XOR       = 6,
-
-	/**
-	 * @brief Exactly one of the previous operand OR current operand must
-	 *        resolve to being true, where the current filter evaluation is
-	 *        logically false. Solely for use in non-initial entries in a
-	 *        filter chain.
-	 */
-	SDP_FILTER_OP_XOR_NOT   = 7,
 };
 
 /**
@@ -105,13 +100,10 @@ struct sdp_filter {
 	enum sdp_filter_op op;
 
 	/**
-	 * @brief The data sample's filter value must exactly match this value.
-	 *
-	 * @note This value has a higher priority than the 'bit_match' fields, and
-	 *       an exact_match will cause the filter engine to skip parsing the
-	 *       'bit_match' fields.
+	 * @brief The measurement's filter value must exactly match this value,
+	 *        taking into account any bits excluded via ignore_mask.
 	 */
-	uint32_t exact_match;
+	uint32_t match;
 
 	/**
 	 * @brief Any bits set to 1 in this mask field will be ignored when
@@ -120,50 +112,14 @@ struct sdp_filter {
 	 * @note This can be used to perfom and exact match only on the base and/or
 	 *       extended data type fields, for example.
 	 */
-	uint32_t exact_match_mask;
-
-	/**
-	 * @brief When an exact match isn't required, the bit fields can be
-	 *        used to pattern match based on mask, set and cleared bit values.
-	 */
-	struct {
-		/**
-		 * @brief Any bits in the mask field set to '1' will be ignored, and
-		 *        considered to have a positive match. Only '0' bits will be
-		 *        evaluated for a match.
-		 *
-		 * @note This value has a higher priority that the 'set' and 'cleared'
-		 *       fields. Any masked bits set in those fields will be ignored
-		 *       when evaluating a potential match.
-		 */
-		uint32_t mask;
-
-		/**
-		 * @brief All bits set to '1' here will match if they are also '1' in
-		 *        the data sample's filter field.
-		 *
-		 * @note In the case of both 'set' and 'cleared' being enabled
-		 *       for the same bit, the bit will be considered as a positive
-		 *       match regardless of it's value. This is the same effect as
-		 *       setting the bit in the 'mask' field.
-		 */
-		uint32_t set;
-
-		/**
-		 * @brief All bits set to '1' here will match if they are also '0' in
-		 *        the data sample's filter field.
-		 *
-		 * @note In the case of both 'set' and 'cleared' being enabled
-		 *       for the same bit, the bit will be considered as a positive
-		 *       match regardless of it's value. This is the same effect as
-		 *       setting the bit in the 'mask' field.
-		 */
-		uint32_t cleared;
-	} bit_match;
+	uint32_t ignore_mask;
 };
 
 /**
- * @brief An filter chain.
+ * @brief A filter chain.
+ *
+ * Set 'count' to 0 or 'chain' to NULL to indicate that this is a catch-all
+ * filter that should match on any valid incoming measurement.
  *
  * @note Entries in a filter chain are evaluated in a strictly linear
  *       left-to-right (or top-to-bottom) manner, where the sum of the
@@ -174,11 +130,17 @@ struct sdp_filter {
 struct sdp_filter_chain {
 	/**
 	 * @brief The number of filters supplied in 'chain'.
+	 *
+	 * If this value is 0, it will be interpretted as a catch-all indicator,
+	 * matching on all measurements.
 	 */
 	uint32_t count;
 
 	/**
 	 * @brief Pointer to an array of 'count' len of individual filters.
+	 *
+	 * If this value is NULL, it will be interpretted as a catch-all indicator,
+	 * matching on all measurements.
 	 */
 	struct sdp_filter *chain;
 };
@@ -191,17 +153,17 @@ struct sdp_filter_chain {
 void sdp_filt_print(struct sdp_filter_chain *fc);
 
 /**
- * @brief Evaluates the supplied sdp_measurement against the supplied
- *        sdp_filter_chain to determine if there is a match.
+ * @brief Evaluates the supplied sdp_measurement against the sdp_filter_chain
+ *        to determine if there is a match.
  *
- * @param chain		The sdp_filter_chain to evaluable a match against
- * @param sample 	The sdp_measurement to evaluate a match with
- * @param match 	1 if the sdp_filter_chain matches, otherwise 0.
+ * @param fc		The sdp_filter_chain to evalute for a match.
+ * @param mes 		The sdp_measurement to evaluate a match against.
+ * @param match 	1 if the node's filter chain matches, otherwise 0.
  *
  * @return int 		Zero on normal execution, otherwise a negative error code.
  */
-int sdp_filt_evaluate(struct sdp_filter_chain *chain,
-		      struct sdp_measurement *sample, int *match);
+int sdp_filt_evaluate(struct sdp_filter_chain *fc, struct sdp_measurement *mes,
+		      int *match);
 
 #ifdef __cplusplus
 }

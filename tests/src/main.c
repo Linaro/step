@@ -14,6 +14,7 @@ extern void test_mes_check_payload(void);
 extern void test_filter_evaluate_fc_null(void);
 extern void test_filter_evaluate_mes_null(void);
 extern void test_filter_evaluate_fc_len(void);
+extern void test_filter_evaluate_fc_bad_op0(void);
 extern void test_filter_evaluate_match_good(void);
 extern void test_filter_evaluate_match_bad(void);
 
@@ -32,6 +33,7 @@ void test_main(void)
 		ztest_unit_test(test_filter_evaluate_fc_null),
 		ztest_unit_test(test_filter_evaluate_mes_null),
 		ztest_unit_test(test_filter_evaluate_fc_len),
+		ztest_unit_test(test_filter_evaluate_fc_bad_op0),
 		ztest_unit_test(test_filter_evaluate_match_good),
 		ztest_unit_test(test_filter_evaluate_match_bad),
 		ztest_unit_test(test_proc_sample),
