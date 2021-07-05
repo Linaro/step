@@ -99,7 +99,7 @@ A high-level overview of the system is shown here:
 .. raw:: html
 
    <p align="center">
-     <img src="doc/SensorDataPipeline.png" align="center" alt="Basic Architecture">
+     <img src="doc/Overview.png" align="center" alt="Basic Workflow">
    </p>
 
 Measurement Values
@@ -249,5 +249,5 @@ enabling **filter caching**, which works as follows:
 .. raw:: html
 
    <p align="center">
-     <img src="doc/FilterEngine.png" align="center" alt="Filter Engine Caching">
+     <img src="doc/FilterEngineCache.png" align="center" alt="Filter Engine Caching">
    </p>
