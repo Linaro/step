@@ -221,6 +221,24 @@
 extern "C" {
 #endif
 
+/* Mask values for use with the filter word. */
+#define SDP_MES_MASK_FULL_TYPE_POS   (0)
+#define SDP_MES_MASK_FULL_TYPE       (0xFFFF << SDP_MES_MASK_FULL_TYPE_POS)
+#define SDP_MES_MASK_BASE_TYPE_POS   (0)
+#define SDP_MES_MASK_BASE_TYPE       (0xFF << SDP_MES_MASK_BASE_TYPE_POS)
+#define SDP_MES_MASK_EXT_TYPE_POS    (8)
+#define SDP_MES_MASK_EXT_TYPE        (0xFF << SDP_MES_MASK_EXT_TYPE_POS)
+#define SDP_MES_MASK_FLAGS_POS       (16)
+#define SDP_MES_MASK_FLAGS           (0xFFFF << SDP_MES_MASK_FLAGS_POS)
+#define SDP_MES_MASK_FORMAT_POS      (16)
+#define SDP_MES_MASK_FORMAT          (0x7 << SDP_MES_MASK_FORMAT_POS)
+#define SDP_MES_MASK_ENCODING_POS    (19)
+#define SDP_MES_MASK_ENCODING        (0xF << SDP_MES_MASK_ENCODING_POS)
+#define SDP_MES_MASK_COMPRESSION_POS (23)
+#define SDP_MES_MASK_COMPRESSION     (0x7 << SDP_MES_MASK_COMPRESSION_POS)
+#define SDP_MES_MASK_TIMESTAMP_POS   (26)
+#define SDP_MES_MASK_TIMESTAMP       (0x7 << SDP_MES_MASK_TIMESTAMP_POS)
+
 /** Measurement header. All fields in little endian. */
 struct sdp_mes_header {
 	/** Filter (header upper word). */
@@ -267,7 +285,7 @@ struct sdp_mes_header {
 			 * Typically, but not necessarily a member of sdp_mes_unit_scale.
 			 */
 			int8_t scale_factor;
-			
+
 			/**
 			 * @brief The data type that this SI unit is represented by in C.
 			 * Must be a member of sdp_mes_unit_ctype.
@@ -340,16 +358,6 @@ enum sdp_mes_compression {
 	SDP_MES_COMPRESSION_LZ4         = 1,
 };
 
-/** Packet fragments. */
-enum sdp_mes_fragment {
-	/** No a fragment (complete payload). */
-	SDP_MES_FRAGMENT_NONE           = 0,
-	/** Non-final fragment in a larger payload. */
-	SDP_MES_FRAGMENT_PARTIAL        = 1,
-	/** Final fragment in the larger payload. */
-	SDP_MES_FRAGMENT_FINAL          = 2,
-};
-
 /** Optional timestamp format used. */
 enum sdp_mes_timestamp {
 	/** No timestamp included. */
@@ -364,6 +372,16 @@ enum sdp_mes_timestamp {
 	SDP_MES_TIMESTAMP_UPTIME_MS_64  = 4,
 	/** 64-bit microsecond device uptime counter. */
 	SDP_MES_TIMESTAMP_UPTIME_US_64  = 5,
+};
+
+/** Packet fragments. */
+enum sdp_mes_fragment {
+	/** No a fragment (complete payload). */
+	SDP_MES_FRAGMENT_NONE           = 0,
+	/** Non-final fragment in a larger payload. */
+	SDP_MES_FRAGMENT_PARTIAL        = 1,
+	/** Final fragment in the larger payload. */
+	SDP_MES_FRAGMENT_FINAL          = 2,
 };
 
 /**

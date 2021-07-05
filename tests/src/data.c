@@ -68,19 +68,21 @@ struct sdp_node sdp_test_data_procnode = {
 		.chain = (struct sdp_filter[]){
 			{
 				.match = SDP_MES_TYPE_TEMPERATURE,
-				.ignore_mask = 0xFFFF0000,
+				.ignore_mask = ~SDP_MES_MASK_FULL_TYPE, /* 0xFFFF0000 */
 			},
 			{
 				.op = SDP_FILTER_OP_OR,
 				.match = SDP_MES_TYPE_TEMPERATURE +
-					       (SDP_MES_EXT_TYPE_TEMP_DIE << 8),
-				.ignore_mask = 0xFFFF0000,
+					 (SDP_MES_EXT_TYPE_TEMP_DIE <<
+					  SDP_MES_MASK_EXT_TYPE_POS),
+				.ignore_mask = ~SDP_MES_MASK_FULL_TYPE, /* 0xFFFF0000 */
 			},
 			{
 				/* Make sure timestamp (bits 26-28) = EPOCH32 */
 				.op = SDP_FILTER_OP_AND,
-				.match = (SDP_MES_TIMESTAMP_EPOCH_32 << 26),
-				.ignore_mask = ~(0x7 << 26),
+				.match = (SDP_MES_TIMESTAMP_EPOCH_32 <<
+					  SDP_MES_MASK_TIMESTAMP_POS),
+				.ignore_mask = ~SDP_MES_MASK_TIMESTAMP, /* 0xE3FFFFFF */
 			},
 		},
 	},
