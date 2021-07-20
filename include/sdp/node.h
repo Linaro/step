@@ -134,6 +134,11 @@ struct sdp_node {
 	 *        by the implementing module.
 	 */
 	void *config;
+
+	/**
+	 * @brief Next node in the node chain. Set to NULL if none.
+	 */
+	struct sdp_node *next;
 };
 
 /**

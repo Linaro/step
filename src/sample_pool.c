@@ -50,7 +50,6 @@ void sdp_sp_flush(void)
 }
 
 /* TODO: How to handle fragmentation over time due to var. length sample? */
-/* TODO: Add mutex on allocation. */
 struct sdp_measurement *sdp_sp_alloc(uint16_t sz)
 {
 	struct sdp_measurement *mes;

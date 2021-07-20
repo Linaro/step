@@ -8,9 +8,68 @@
 #include <stdlib.h>
 #include <ctype.h>
 #include <shell/shell.h>
+#include <sdp/node.h>
 #include <sdp/measurement/measurement.h>
 
 #if CONFIG_SDP_SHELL
+
+struct sdp_test_data_procnode_cb_stats {
+	uint32_t evaluate;
+	uint32_t matched;
+	uint32_t start;
+	uint32_t run;
+	uint32_t stop;
+	uint32_t error;
+};
+
+/* Track callback entry statistics. */
+struct sdp_test_data_procnode_cb_stats sdp_test_data_cb_stats = { 0 };
+
+bool node_evaluate(struct sdp_measurement *mes, void *cfg)
+{
+	/* Overrides the filter engine when evaluating this node. */
+	sdp_test_data_cb_stats.evaluate++;
+
+	return true;
+}
+
+bool node_matched(struct sdp_measurement *mes, void *cfg)
+{
+	/* Fires when the filter engine has indicated a match for this node. */
+	sdp_test_data_cb_stats.matched++;
+
+	return true;
+}
+
+int node_start(struct sdp_measurement *mes, void *cfg)
+{
+	/* Fires before the node runs. */
+	sdp_test_data_cb_stats.start++;
+
+	return 0;
+}
+
+int node_run(struct sdp_measurement *mes, void *cfg)
+{
+	/* Node logic implementation. */
+	sdp_test_data_cb_stats.run++;
+
+	return 0;
+}
+
+int node_stop(struct sdp_measurement *mes, void *cfg)
+{
+	/* Fires when the node has been successfully run. */
+	sdp_test_data_cb_stats.stop++;
+
+	return 0;
+}
+
+void node_error(struct sdp_measurement *mes, void *cfg, int error)
+{
+	/* Fires when an error occurs running this node. */
+	sdp_test_data_cb_stats.error++;
+}
 
 static int
 sdp_shell_invalid_arg(const struct shell *shell, char *arg_name)
@@ -32,7 +91,7 @@ sdp_shell_cmd_version(const struct shell *shell, size_t argc, char **argv)
 }
 
 static int
-sdp_shell_cmd_test(const struct shell *shell, size_t argc, char **argv)
+sdp_shell_cmd_test_msg(const struct shell *shell, size_t argc, char **argv)
 {
 	ARG_UNUSED(argc);
 	ARG_UNUSED(argv);
@@ -84,13 +143,100 @@ sdp_shell_cmd_test(const struct shell *shell, size_t argc, char **argv)
 	return 0;
 }
 
+static int
+sdp_shell_cmd_test_proc(const struct shell *shell, size_t argc, char **argv)
+{
+	ARG_UNUSED(argc);
+	ARG_UNUSED(argv);
+
+	/* Processor node chain. */
+	struct sdp_node sdp_test_data_procnode_chain_data[] = {
+		/* Processor node 0. */
+		{
+			/* Temperature filter. */
+			.filters = {
+				.count = 3,
+				.chain = (struct sdp_filter[]){
+					{
+						.match = SDP_MES_TYPE_TEMPERATURE,
+						.ignore_mask = ~SDP_MES_MASK_FULL_TYPE, /* 0xFFFF0000 */
+					},
+					{
+						.op = SDP_FILTER_OP_OR,
+						.match = SDP_MES_TYPE_TEMPERATURE +
+							 (SDP_MES_EXT_TYPE_TEMP_DIE <<
+							  SDP_MES_MASK_EXT_TYPE_POS),
+						.ignore_mask = ~SDP_MES_MASK_FULL_TYPE, /* 0xFFFF0000 */
+					},
+					{
+						/* Make sure timestamp (bits 26-28) = EPOCH32 */
+						.op = SDP_FILTER_OP_AND,
+						.match = (SDP_MES_TIMESTAMP_EPOCH_32 <<
+							  SDP_MES_MASK_TIMESTAMP_POS),
+						.ignore_mask = ~SDP_MES_MASK_TIMESTAMP, /* 0xE3FFFFFF */
+					},
+				},
+			},
+
+			/* Callbacks */
+			.callbacks = {
+				.evaluate_handler = node_evaluate,
+				.matched_handler = node_matched,
+				.start_handler = node_start,
+				.stop_handler = node_stop,
+				.run_handler = node_run,
+				.error_handler = node_error,
+			},
+
+			/* Config settings */
+			.config = NULL,
+
+			/* Point to next processor node in chain. */
+			.next = &sdp_test_data_procnode_chain_data[1]
+		},
+		/* Processor node 1. */
+		{
+			/* Catch all filter. First filter is enough. */
+			.filters = {
+				.count = 0
+			},
+
+			/* Callbacks */
+			.callbacks = {
+				.evaluate_handler = node_evaluate,
+				.matched_handler = node_matched,
+				.start_handler = node_start,
+				.stop_handler = node_stop,
+				.run_handler = node_run,
+				.error_handler = node_error,
+			},
+
+			/* Config settings */
+			.config = NULL,
+
+			/* End of the chain. */
+			.next = NULL
+		}
+	};
+
+	/* Pointer to node chain. */
+	struct sdp_node *sdp_test_data_procnode_chain =
+		sdp_test_data_procnode_chain_data;
+
+	sdp_node_print(sdp_test_data_procnode_chain);
+
+	return 0;
+}
+
 /* Subcommand array for "sdp" (level 1). */
 SHELL_STATIC_SUBCMD_SET_CREATE(
 	sub_sdp,
 	/* 'version' command handler. */
 	SHELL_CMD(version, NULL, "library version", sdp_shell_cmd_version),
-	/* 'test' command handler. */
-	SHELL_CMD(test, NULL, "test command", sdp_shell_cmd_test),
+	/* 'msg' command handler. */
+	SHELL_CMD(msg, NULL, "dump sample message", sdp_shell_cmd_test_msg),
+	/* 'proc' command handler. */
+	SHELL_CMD(proc, NULL, "dump processor node", sdp_shell_cmd_test_proc),
 
 	/* Array terminator. */
 	SHELL_SUBCMD_SET_END

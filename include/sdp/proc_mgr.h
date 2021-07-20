@@ -49,6 +49,15 @@ int sdp_pm_poll(void);
 int sdp_pm_register(struct sdp_node *node, uint8_t *handle);
 
 /**
+ * @brief Unregisters an existing processor node.
+ *
+ * @param handle    The handle the node has been registered under.
+ *
+ * @return int  0 on success, negative error code on failure.
+ */
+int sdp_pm_remove(uint8_t handle);
+
+/**
  * @brief Displays a list of registered processor nodes.
  *
  * @return int

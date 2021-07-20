@@ -60,7 +60,67 @@ void node_error(struct sdp_measurement *mes, void *cfg, int error)
 	sdp_test_data_cb_stats.error++;
 }
 
-/* Test processor node. */
+/* Processor node chain. */
+static struct sdp_node sdp_test_data_procnode_chain_data[] = {
+	/* Processor node 0. */
+	{
+		/* Temperature filter. */
+		.filters = {
+			.count = 1,
+			.chain = (struct sdp_filter[]){
+				{
+					.match = SDP_MES_TYPE_TEMPERATURE,
+					.ignore_mask = ~SDP_MES_MASK_FULL_TYPE, /* 0xFFFF0000 */
+				},
+			},
+		},
+
+		/* Callbacks */
+		.callbacks = {
+			.evaluate_handler = node_evaluate,
+			.matched_handler = node_matched,
+			.start_handler = node_start,
+			.stop_handler = node_stop,
+			.run_handler = node_run,
+			.error_handler = node_error,
+		},
+
+		/* Config settings */
+		.config = NULL,
+
+		/* Point to next processor node in chain. */
+		.next = &sdp_test_data_procnode_chain_data[1]
+	},
+	/* Processor node 1. */
+	{
+		/* Catch all filter. First filter is enough. */
+		.filters = {
+			.count = 0
+		},
+
+		/* Callbacks */
+		.callbacks = {
+			.evaluate_handler = node_evaluate,
+			.matched_handler = node_matched,
+			.start_handler = node_start,
+			.stop_handler = node_stop,
+			.run_handler = node_run,
+			.error_handler = node_error,
+		},
+
+		/* Config settings */
+		.config = NULL,
+
+		/* End of the chain. */
+		.next = NULL
+	}
+};
+
+/* Pointer to node chain. */
+struct sdp_node *sdp_test_data_procnode_chain =
+	sdp_test_data_procnode_chain_data;
+
+/* Single processor node. */
 struct sdp_node sdp_test_data_procnode = {
 	/* Matches if DS filter field = 0x26 OR 0x226 AND bit 26 is set. */
 	.filters = {
@@ -68,21 +128,21 @@ struct sdp_node sdp_test_data_procnode = {
 		.chain = (struct sdp_filter[]){
 			{
 				.match = SDP_MES_TYPE_TEMPERATURE,
-				.ignore_mask = ~SDP_MES_MASK_FULL_TYPE, /* 0xFFFF0000 */
+				.ignore_mask = ~SDP_MES_MASK_FULL_TYPE,         /* 0xFFFF0000 */
 			},
 			{
 				.op = SDP_FILTER_OP_OR,
 				.match = SDP_MES_TYPE_TEMPERATURE +
 					 (SDP_MES_EXT_TYPE_TEMP_DIE <<
 					  SDP_MES_MASK_EXT_TYPE_POS),
-				.ignore_mask = ~SDP_MES_MASK_FULL_TYPE, /* 0xFFFF0000 */
+				.ignore_mask = ~SDP_MES_MASK_FULL_TYPE,         /* 0xFFFF0000 */
 			},
 			{
 				/* Make sure timestamp (bits 26-28) = EPOCH32 */
 				.op = SDP_FILTER_OP_AND,
 				.match = (SDP_MES_TIMESTAMP_EPOCH_32 <<
 					  SDP_MES_MASK_TIMESTAMP_POS),
-				.ignore_mask = ~SDP_MES_MASK_TIMESTAMP, /* 0xE3FFFFFF */
+				.ignore_mask = ~SDP_MES_MASK_TIMESTAMP,         /* 0xE3FFFFFF */
 			},
 		},
 	},
@@ -99,6 +159,9 @@ struct sdp_node sdp_test_data_procnode = {
 
 	/* Config settings */
 	.config = (void *)0x12345678,
+
+	/* Not a chain. */
+	.next = NULL
 };
 
 /* Die temperature with 32-bit timestamp payload. */
@@ -107,7 +170,7 @@ struct {
 	uint32_t timestamp;
 } sdp_test_data_dietemp_payload = {
 	.temp_c = 32.0F,
-	.timestamp = 1624305803,        /* Monday, June 21, 2021 8:03:23 PM */
+	.timestamp = 1624305803,         /* Monday, June 21, 2021 8:03:23 PM */
 };
 
 /* Test die temp measurement, with timestamp. */
