@@ -21,6 +21,9 @@ void test_sp_alloc(void)
 	/* Setup the mutex. */
 	sdp_sp_init();
 
+	/* Flush the fifo. */
+	sdp_sp_flush();
+
 	/* Allocate a datasample with an too large payload buffer. */
 	mes = sdp_sp_alloc(16384);
 	zassert_is_null(mes, NULL);
@@ -41,6 +44,7 @@ void test_sp_alloc(void)
 
 	/* Make sure payload is empty. */
 	for (size_t i = 0; i < payload_len; i++) {
+		printf("%02X ", ((uint8_t *)mes->payload)[i]);
 		zassert_true(((uint8_t *)mes->payload)[i] == 0, NULL);
 	}
 
@@ -75,6 +79,12 @@ void test_sp_fifo(void)
 	struct sdp_measurement *dst;
 	float payload = 32.0F;
 
+	/* Setup the mutex. */
+	sdp_sp_init();
+
+	/* Flush the fifo. */
+	sdp_sp_flush();
+
 	/* Check empty fifo. */
 	src = sdp_sp_get();
 	zassert_is_null(src, NULL);
@@ -94,6 +104,7 @@ void test_sp_fifo(void)
 
 	/* Read back from FIFO. */
 	dst = sdp_sp_get();
+	zassert_not_null(dst, NULL);
 
 	/* Compare src and dst. */
 	zassert_mem_equal(src, dst,

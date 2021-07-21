@@ -51,4 +51,22 @@ config SDP_FILTER_CACHE_DEPTH
 		  entry requires 6 bytes of memory (filter value = 4, node id = 1,
 		  result = 1).
 
+config SDP_PROC_NODE_LIMIT
+	int "Maximum number of processor nodes that can be registered."
+	default 32
+	range 1 255
+	help
+	  Determines the maximum number of processor nodes than can be registered
+	  in the processor manager. Requires SDP_PROC_NODE_LIMIT * 12 bytes memory.
+
+config SDP_PROC_MGR_POLL_RATE
+	int "Rate in Hz to poll the measurement pool."
+	default 10
+	range 0 100
+	help
+	  Determines the rate, in Hz, that the processor node manager should poll
+	  the measurement sample pool for new, unprocessed messages. Setting this
+	  to 0 will disable automatic polling, requiring measurements to be
+	  manually removed from the pool and sent to the sdp_pm_process function.
+
 endif

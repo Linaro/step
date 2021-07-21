@@ -6,7 +6,7 @@
 
 #include <ztest.h>
 
-/* tests_datasample.c */
+/* tests_meas.c */
 extern void test_mes_check_header(void);
 extern void test_mes_check_payload(void);
 

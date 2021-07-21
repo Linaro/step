@@ -119,6 +119,12 @@ struct sdp_node_callbacks {
  */
 struct sdp_node {
 	/**
+	 * @brief An optional display name for this processor node. Must be
+	 *        NULL-terrminated.
+	 */
+	char *name;
+
+	/**
 	 * @brief The filter chain use to determine matches for this node.
 	 */
 	struct sdp_filter_chain filters;
@@ -130,8 +136,8 @@ struct sdp_node {
 
 	/**
 	 * @brief Config settings for the node. The exact struct or
-	 *        value(s) defined here are node-specific and defined
-	 *        by the implementing module.
+	 *        value(s) defined here are node-specific and implementation
+	 *        defined.
 	 */
 	void *config;
 

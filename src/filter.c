@@ -11,6 +11,10 @@
 
 void sdp_filt_print(struct sdp_filter_chain *fc)
 {
+	if (fc->count == 0) {
+		return;
+	}
+	
 	printk("Filters: %d\n", fc->count);
 	for (uint8_t i = 0; i < fc->count; i++) {
 		printk("  #%d: ", i);

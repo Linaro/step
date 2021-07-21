@@ -14,7 +14,7 @@
 /* Track callback entry statistics. */
 struct sdp_test_data_procnode_cb_stats sdp_test_data_cb_stats = { 0 };
 
-bool node_evaluate(struct sdp_measurement *mes, void *cfg)
+bool data_node_evaluate(struct sdp_measurement *mes, void *cfg)
 {
 	/* Overrides the filter engine when evaluating this node. */
 	sdp_test_data_cb_stats.evaluate++;
@@ -22,7 +22,7 @@ bool node_evaluate(struct sdp_measurement *mes, void *cfg)
 	return true;
 }
 
-bool node_matched(struct sdp_measurement *mes, void *cfg)
+bool data_node_matched(struct sdp_measurement *mes, void *cfg)
 {
 	/* Fires when the filter engine has indicated a match for this node. */
 	sdp_test_data_cb_stats.matched++;
@@ -30,7 +30,7 @@ bool node_matched(struct sdp_measurement *mes, void *cfg)
 	return true;
 }
 
-int node_start(struct sdp_measurement *mes, void *cfg)
+int data_node_start(struct sdp_measurement *mes, void *cfg)
 {
 	/* Fires before the node runs. */
 	sdp_test_data_cb_stats.start++;
@@ -38,7 +38,7 @@ int node_start(struct sdp_measurement *mes, void *cfg)
 	return 0;
 }
 
-int node_run(struct sdp_measurement *mes, void *cfg)
+int data_node_run(struct sdp_measurement *mes, void *cfg)
 {
 	/* Node logic implementation. */
 	sdp_test_data_cb_stats.run++;
@@ -46,7 +46,7 @@ int node_run(struct sdp_measurement *mes, void *cfg)
 	return 0;
 }
 
-int node_stop(struct sdp_measurement *mes, void *cfg)
+int data_node_stop(struct sdp_measurement *mes, void *cfg)
 {
 	/* Fires when the node has been successfully run. */
 	sdp_test_data_cb_stats.stop++;
@@ -54,7 +54,7 @@ int node_stop(struct sdp_measurement *mes, void *cfg)
 	return 0;
 }
 
-void node_error(struct sdp_measurement *mes, void *cfg, int error)
+void data_node_error(struct sdp_measurement *mes, void *cfg, int error)
 {
 	/* Fires when an error occurs running this node. */
 	sdp_test_data_cb_stats.error++;
@@ -64,25 +64,43 @@ void node_error(struct sdp_measurement *mes, void *cfg, int error)
 static struct sdp_node sdp_test_data_procnode_chain_data[] = {
 	/* Processor node 0. */
 	{
+		.name = "Temperature chain",
+
 		/* Temperature filter. */
 		.filters = {
-			.count = 1,
+			.count = 3,
 			.chain = (struct sdp_filter[]){
 				{
+					/* Temperature (base type). */
 					.match = SDP_MES_TYPE_TEMPERATURE,
-					.ignore_mask = ~SDP_MES_MASK_FULL_TYPE, /* 0xFFFF0000 */
+					.ignore_mask = ~SDP_MES_MASK_FULL_TYPE,
+				},
+				{
+					/* Die temperature. */
+					.op = SDP_FILTER_OP_OR,
+					.match = SDP_MES_TYPE_TEMPERATURE +
+						 (SDP_MES_EXT_TYPE_TEMP_DIE <<
+						  SDP_MES_MASK_EXT_TYPE_POS),
+					.ignore_mask = ~SDP_MES_MASK_FULL_TYPE,
+				},
+				{
+					/* Make sure timestamp (bits 26-28) = EPOCH32 */
+					.op = SDP_FILTER_OP_AND,
+					.match = (SDP_MES_TIMESTAMP_EPOCH_32 <<
+						  SDP_MES_MASK_TIMESTAMP_POS),
+					.ignore_mask = ~SDP_MES_MASK_TIMESTAMP,
 				},
 			},
 		},
 
 		/* Callbacks */
 		.callbacks = {
-			.evaluate_handler = node_evaluate,
-			.matched_handler = node_matched,
-			.start_handler = node_start,
-			.stop_handler = node_stop,
-			.run_handler = node_run,
-			.error_handler = node_error,
+			.evaluate_handler = NULL,
+			.matched_handler = data_node_matched,
+			.start_handler = data_node_start,
+			.stop_handler = data_node_stop,
+			.run_handler = data_node_run,
+			.error_handler = data_node_error,
 		},
 
 		/* Config settings */
@@ -93,19 +111,16 @@ static struct sdp_node sdp_test_data_procnode_chain_data[] = {
 	},
 	/* Processor node 1. */
 	{
-		/* Catch all filter. First filter is enough. */
-		.filters = {
-			.count = 0
-		},
+		.name = "Secondary node",
 
 		/* Callbacks */
 		.callbacks = {
-			.evaluate_handler = node_evaluate,
-			.matched_handler = node_matched,
-			.start_handler = node_start,
-			.stop_handler = node_stop,
-			.run_handler = node_run,
-			.error_handler = node_error,
+			.evaluate_handler = data_node_evaluate,
+			.matched_handler = data_node_matched,
+			.start_handler = data_node_start,
+			.stop_handler = data_node_stop,
+			.run_handler = data_node_run,
+			.error_handler = data_node_error,
 		},
 
 		/* Config settings */
@@ -122,15 +137,18 @@ struct sdp_node *sdp_test_data_procnode_chain =
 
 /* Single processor node. */
 struct sdp_node sdp_test_data_procnode = {
+	.name = "Temperature",
 	/* Matches if DS filter field = 0x26 OR 0x226 AND bit 26 is set. */
 	.filters = {
 		.count = 3,
 		.chain = (struct sdp_filter[]){
 			{
+				/* Temperature (base type). */
 				.match = SDP_MES_TYPE_TEMPERATURE,
 				.ignore_mask = ~SDP_MES_MASK_FULL_TYPE,         /* 0xFFFF0000 */
 			},
 			{
+				/* Die temperature. */
 				.op = SDP_FILTER_OP_OR,
 				.match = SDP_MES_TYPE_TEMPERATURE +
 					 (SDP_MES_EXT_TYPE_TEMP_DIE <<
@@ -138,7 +156,7 @@ struct sdp_node sdp_test_data_procnode = {
 				.ignore_mask = ~SDP_MES_MASK_FULL_TYPE,         /* 0xFFFF0000 */
 			},
 			{
-				/* Make sure timestamp (bits 26-28) = EPOCH32 */
+				/* Make sure timestamp (bits 26-28) = EPOCH32. */
 				.op = SDP_FILTER_OP_AND,
 				.match = (SDP_MES_TIMESTAMP_EPOCH_32 <<
 					  SDP_MES_MASK_TIMESTAMP_POS),
@@ -149,12 +167,12 @@ struct sdp_node sdp_test_data_procnode = {
 
 	/* Callbacks */
 	.callbacks = {
-		.evaluate_handler = node_evaluate,
-		.matched_handler = node_matched,
-		.start_handler = node_start,
-		.stop_handler = node_stop,
-		.run_handler = node_run,
-		.error_handler = node_error,
+		.evaluate_handler = data_node_evaluate,
+		.matched_handler = data_node_matched,
+		.start_handler = data_node_start,
+		.stop_handler = data_node_stop,
+		.run_handler = data_node_run,
+		.error_handler = data_node_error,
 	},
 
 	/* Config settings */

@@ -18,6 +18,7 @@ struct sdp_test_data_procnode_cb_stats {
 	uint32_t error;
 };
 
+extern struct sdp_node *sdp_test_data_procnode_chain;
 extern struct sdp_node sdp_test_data_procnode;
 extern struct sdp_measurement sdp_test_mes_dietemp;
 extern struct sdp_test_data_procnode_cb_stats sdp_test_data_cb_stats;

@@ -16,6 +16,10 @@ void sdp_node_print(struct sdp_node *node)
 	while (node != NULL) {
 		printk("Node #%d\n", count);
 		printk("-------\n");
+		/* Name. */
+		if (node->name != NULL) {
+			printk("Name: %s\n", node->name);
+		}
 
 		/* Filter chain. */
 		sdp_filt_print(&node->filters);
