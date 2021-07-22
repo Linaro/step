@@ -22,6 +22,54 @@ extern "C" {
 #endif
 
 /**
+ * @brief Registers a new processor node.
+ *
+ * This function registers a processor node or node chain, such that it will be
+ * evaluated when processing incoming measurements.
+ *
+ * Since processor nodes can be destructive, and operate on the input
+ * measurement directly, they can be assigned a priority value (@ref pri),
+ * where a higher number indicates higher priority. Nodes will be inserted into
+ * the linked list from highest to lowest priority, and nodes with the
+ * same priority level will be inserted sequentionally in the order they are
+ * registered.
+ *
+ * Non-destructive nodes should be placed first (at a higher priority), before
+ * processing the measurement in destructive nodes later in the processing
+ * pipeline.
+ *
+ * @param node      The processor node to register with the manager.
+ * @param pri       The priority level for this node (larger = higher priority).
+ * @param handle    The handle the node has been registered under.
+ *
+ * @return int  0 on success, negative error code on failure.
+ */
+int sdp_pm_register(struct sdp_node *node, uint8_t pri, uint8_t *handle);
+
+/**
+ * @brief Initialises the timer thread used to periodically poll for queued
+ *        measurements.
+ * 
+ * @return int 0 on success, negative error code on failure.
+ */
+int sdp_pm_resume(void);
+
+/**
+ * @brief Stops the timer thread used to periodically poll for queued
+ *        measurements.
+ * 
+ * @return int 0 on success, negative error code on failure.
+ */
+int sdp_pm_suspend(void);
+
+/**
+ * @brief Clears the registry, and resets the manager to it's default state.
+ *
+ * @return int  0 on success, negative error code on failure.
+ */
+int sdp_pm_clear(void);
+
+/**
  * @brief Processes the supplied @ref sdp_measurement using the current
  *        processor node registry, consuming the measurement and optionally
  *        releasing it from shared memory when completed.
@@ -57,38 +105,13 @@ int sdp_pm_process(struct sdp_measurement *mes, int *matches, bool free);
 int sdp_pm_poll(int *mcnt, bool free);
 
 /**
- * @brief Registers a new processor node.
- *
- * This function registers a processor node or node chain, such that it will be
- * evaluated when processing incoming measurements.
- *
- * Since processor nodes can be destructive, and operate on the input
- * measurement directly, they can be assigned a priority value (@ref pri),
- * where a higher number indicates higher priority. Nodes will be inserted into
- * the linked list from highest to lowest priority, and nodes with the
- * same priority level will be inserted sequentionally in the order they are
- * registered.
- *
- * Non-destructive nodes should be placed first (at a higher priority), before
- * processing the measurement in destructive nodes later in the processing
- * pipeline.
- *
- * @param node      The processor node to register with the manager.
- * @param pri       The priority level for this node (larger = higher priority).
- * @param handle    The handle the node has been registered under.
- *
- * @return int  0 on success, negative error code on failure.
- */
-int sdp_pm_register(struct sdp_node *node, uint8_t pri, uint8_t *handle);
-
-/**
  * @brief Disables a registered processor node.
  *
  * @param handle    The handle the node has been registered under.
  *
  * @return int  0 on success, negative error code on failure.
  */
-int sdp_pm_disable(uint8_t handle);
+int sdp_pm_disable_node(uint8_t handle);
 
 /**
  * @brief Enables a registered processor node.
@@ -97,14 +120,7 @@ int sdp_pm_disable(uint8_t handle);
  *
  * @return int  0 on success, negative error code on failure.
  */
-int sdp_pm_enable(uint8_t handle);
-
-/**
- * @brief Clears the registry, and resets the manager to it's default state.
- *
- * @return int  0 on success, negative error code on failure.
- */
-int sdp_pm_clear(void);
+int sdp_pm_enable_node(uint8_t handle);
 
 /**
  * @brief Displays a list of registered processor nodes in the order which

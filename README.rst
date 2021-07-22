@@ -41,14 +41,12 @@ Building and Running
 
 This application can be built and executed on QEMU as follows:
 
-.. zephyr-app-commands::
-   :zephyr-app: modules/lib/sdp/samples/shell
-   :host-os: unix
-   :board: qemu_cortex_m3
-   :goals: run
-   :compact:
+.. code-block:: console
 
-To build for another board, change "qemu_cortex_m3" above to that board's name.
+   $ west build -p auto -b qemu_cortex_m3 modules/lib/sdp/samples/shell/ -t run
+
+To build for another board, change ``qemu_cortex_m3`` above to that board's
+name, and remove the ``-t run`` appendix.
 
 Sample Output
 =============
@@ -59,7 +57,6 @@ Sample Output
 
 Exit QEMU by pressing :kbd:`CTRL+A` :kbd:`x`.
 
-
 Running Unit Tests
 ==================
 
@@ -68,7 +65,7 @@ To run the unit tests for this module, you can run ``twister`` via:
 .. code-block:: console
 
    $ cd $ZEPHYR_BASE
-   $ ./scripts/twister --inline-logs \
+   $ twister --inline-logs \
      -p qemu_cortex_m3 \
      -T ../modules/lib/sdp/tests
 

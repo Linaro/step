@@ -1,3 +1,7 @@
+# Copyright (c) 2021 Linaro
+#
+# SPDX-License-Identifier: Apache-2.0
+
 if(CONFIG_SDP)
 zephyr_interface_library_named(SDP)
 

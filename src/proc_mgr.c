@@ -10,14 +10,10 @@
 #include <sys/printk.h>
 #include <sys/slist.h>
 #include <sdp/proc_mgr.h>
-#include <sdp/filter.h>
 #include <sdp/sample_pool.h>
 
 #define LOG_LEVEL LOG_LEVEL_DBG
 LOG_MODULE_REGISTER(proc_mgr);
-
-/* Initialize the slist */
-static sys_slist_t pm_node_slist = SYS_SLIST_STATIC_INIT(&pm_node_slist);
 
 /**
  * @brief Struct used to represent a @ref sdp_node in the registry.
@@ -51,9 +47,114 @@ struct sdp_pm_node_record {
 	} flags;
 };
 
-/* Processor node registry. */
-static struct sdp_pm_node_record sdp_pm_nodes[CONFIG_SDP_PROC_NODE_LIMIT];
+/* Processor node registry. This static array provides a fixed location in
+ * memory for individual records in the processor node registry, along with
+ * any relevant meta-data required when evaluating them. */
+static struct sdp_pm_node_record sdp_pm_nodes[CONFIG_SDP_PROC_MGR_NODE_LIMIT];
 static uint32_t sdp_pm_handle_counter = 0;
+
+/* Node registry linked list. This ordered list contains a reference
+ * to every registered processor node or node chain, in the order which
+ * they should be evaluated. The 'process' function traverses this list. */
+static sys_slist_t pm_node_slist = SYS_SLIST_STATIC_INIT(&pm_node_slist);
+
+/* Create the polling thread if sample rate > 0. */
+#if (CONFIG_SDP_PROC_MGR_POLL_RATE > 0)
+static void sdp_pm_poll_thread(bool free);
+K_THREAD_DEFINE(sdp_pm_tid, CONFIG_SDP_PROC_MGR_STACK_SIZE,
+		sdp_pm_poll_thread, 1, NULL, NULL,
+		CONFIG_SDP_PROC_MGR_PRIORITY, 0, 0);
+#endif
+
+/* Registry should be locked during processing or when modifying it. */
+K_MUTEX_DEFINE(sdp_pm_reg_access);
+
+int sdp_pm_register(struct sdp_node *node, uint8_t pri, uint8_t *handle)
+{
+	int rc = 0;
+
+	/* Lock registry access during registration. */
+	k_mutex_lock(&sdp_pm_reg_access, K_FOREVER);
+
+	/* Assign and increment the handle counter. */
+	*handle = sdp_pm_handle_counter++;
+
+	if (*handle >= CONFIG_SDP_PROC_MGR_NODE_LIMIT) {
+		sdp_pm_handle_counter--;
+		*handle = 0;
+		rc = -ENOMEM;
+		goto err;
+	}
+
+	LOG_DBG("Registering node/chain (handle = %02d)", *handle);
+
+	/* Prep the memory slot for the processor node record. */
+	memset(&sdp_pm_nodes[*handle], 0, sizeof(struct sdp_pm_node_record));
+	sdp_pm_nodes[*handle].node = node;
+	sdp_pm_nodes[*handle].priority = pri;
+	sdp_pm_nodes[*handle].handle = *handle;
+	sdp_pm_nodes[*handle].flags.enabled = 1;
+
+	/* Append the processor node record to the registry linked list. */
+	/* ToDo: Make sure nodes are registered in order of priority. */
+	sys_slist_append(&pm_node_slist, &(sdp_pm_nodes[*handle].snode));
+
+err:
+	/* Release the registry lock. */
+	k_mutex_unlock(&sdp_pm_reg_access);
+
+	return rc;
+}
+
+int sdp_pm_resume(void)
+{
+	int rc = 0;
+
+#if (CONFIG_SDP_PROC_MGR_POLL_RATE > 0)
+	k_thread_resume(sdp_pm_tid);
+#endif
+
+	return rc;
+}
+
+int sdp_pm_suspend(void)
+{
+	int rc = 0;
+
+#if (CONFIG_SDP_PROC_MGR_POLL_RATE > 0)
+	k_thread_suspend(sdp_pm_tid);
+#endif
+
+	return rc;
+}
+
+int sdp_pm_clear(void)
+{
+	int rc = 0;
+
+	/* Lock registry access during clear. */
+	k_mutex_lock(&sdp_pm_reg_access, K_FOREVER);
+
+	LOG_DBG("Resetting processor node registry");
+
+	/* ToDo: Clear match cache. */
+
+	/* Reset the handle counter. */
+	sdp_pm_handle_counter = 0;
+
+	/* Free the node record placeholders. */
+	for (uint8_t i = 0; i < CONFIG_SDP_PROC_MGR_NODE_LIMIT - 1; i++) {
+		memset(&sdp_pm_nodes[i], 0, sizeof(struct sdp_pm_node_record));
+	}
+
+	/* Reset the linked list. */
+	sys_slist_init(&pm_node_slist);
+
+	/* Release the registry lock. */
+	k_mutex_unlock(&sdp_pm_reg_access);
+
+	return rc;
+}
 
 int sdp_pm_process(struct sdp_measurement *mes, int *matches, bool free)
 {
@@ -66,6 +167,9 @@ int sdp_pm_process(struct sdp_measurement *mes, int *matches, bool free)
 	if (matches != NULL) {
 		*matches = 0;
 	}
+
+	/* Lock registry access during init. */
+	k_mutex_lock(&sdp_pm_reg_access, K_FOREVER);
 
 	if (sys_slist_is_empty(&pm_node_slist)) {
 		LOG_DBG("No processor nodes registered");
@@ -95,14 +199,14 @@ int sdp_pm_process(struct sdp_measurement *mes, int *matches, bool free)
 
 			/* Execute processor node chain on match. */
 			if (match) {
-				/* Fire individual nodes in the node chain. */
+				/* Sequentially fire each node in the node chain. */
 				do {
 					/* Call start handler if requested. */
 					if (n->callbacks.start_handler != NULL) {
 						n->callbacks.start_handler(mes, n->config);
 					}
 
-					/* Execute the current node. */
+					/* Execute the main node processor. */
 					if (n->callbacks.run_handler != NULL) {
 						n->callbacks.run_handler(mes, n->config);
 					}
@@ -125,15 +229,17 @@ int sdp_pm_process(struct sdp_measurement *mes, int *matches, bool free)
 	}
 
 abort:
-	/* Free measurement from shared memory. */
+	/* Free measurement from shared memory if requested. */
 	if (free) {
 		sdp_sp_free(mes);
 	}
 
+	/* Release the registry lock. */
+	k_mutex_unlock(&sdp_pm_reg_access);
+
 	return rc;
 }
 
-/* TODO: Setup timer for poll function using CONFIG_SDP_PROC_MGR_POLL_RATE. */
 int sdp_pm_poll(int *mcnt, bool free)
 {
 	int rc = 0;
@@ -162,62 +268,50 @@ err:
 	return rc;
 }
 
-int sdp_pm_register(struct sdp_node *node, uint8_t pri, uint8_t *handle)
+/**
+ * @brief Polling handler if automatic polling is requested.
+ * 
+ * @param free Whether to free measurement from heap memory once processed.
+ */
+static void sdp_pm_poll_thread(bool free)
+{
+	while (1) {
+		sdp_pm_poll(NULL, free);
+		k_msleep(1000 / CONFIG_SDP_PROC_MGR_POLL_RATE);
+	}
+}
+
+int sdp_pm_disable_node(uint8_t handle)
 {
 	int rc = 0;
 
-	*handle = sdp_pm_handle_counter++;
+	LOG_DBG("Disabling processor node %d:", handle);
 
-	if (*handle >= CONFIG_SDP_PROC_NODE_LIMIT) {
-		handle = NULL;
-		rc = -ENOMEM;
+	if (handle > sdp_pm_handle_counter) {
+		LOG_ERR("Invalid handle: %d", handle);
+		rc = -EINVAL;
 		goto err;
 	}
-
-	LOG_DBG("Registering node/chain (handle = %02d)\n", *handle);
-
-	memset(&sdp_pm_nodes[*handle], 0, sizeof(struct sdp_pm_node_record));
-	sdp_pm_nodes[*handle].node = node;
-	sdp_pm_nodes[*handle].priority = pri;
-	sdp_pm_nodes[*handle].handle = *handle;
-	sdp_pm_nodes[*handle].flags.enabled = 1;
-
-	/* ToDo: Make sure nodes are registered in order of priority. */
-	sys_slist_append(&pm_node_slist, &(sdp_pm_nodes[*handle].snode));
+	sdp_pm_nodes[handle].flags.enabled = 0;
 
 err:
 	return rc;
 }
 
-int sdp_pm_disable(uint8_t handle)
-{
-	LOG_DBG("Disabling processor node %d:\n", handle);
-
-	return 0;
-}
-
-int sdp_pm_enable(uint8_t handle)
-{
-	LOG_DBG("Enabling processor node %d:\n", handle);
-
-	return 0;
-}
-
-int sdp_pm_clear(void)
+int sdp_pm_enable_node(uint8_t handle)
 {
 	int rc = 0;
 
-	LOG_DBG("Resetting processor node registry\n");
+	LOG_DBG("Enabling processor node %d:", handle);
 
-	/* ToDo: Clear match cache. */
-
-	sdp_pm_handle_counter = 0;
-	for (uint8_t i = 0; i < CONFIG_SDP_PROC_NODE_LIMIT - 1; i++) {
-		memset(&sdp_pm_nodes[i], 0, sizeof(struct sdp_pm_node_record));
+	if (handle > sdp_pm_handle_counter) {
+		LOG_ERR("Invalid handle: %d", handle);
+		rc = -EINVAL;
+		goto err;
 	}
+	sdp_pm_nodes[handle].flags.enabled = 1;
 
-	sys_slist_init(&pm_node_slist);
-
+err:
 	return rc;
 }
 

@@ -10,6 +10,7 @@
 #include <shell/shell.h>
 #include <sdp/node.h>
 #include <sdp/measurement/measurement.h>
+#include <sdp/sample_pool.h>
 #include <sdp/proc_mgr.h>
 
 #if CONFIG_SDP_SHELL
@@ -146,24 +147,13 @@ struct sdp_node *sdp_test_data_procnode_chain =
 static int
 sdp_shell_invalid_arg(const struct shell *shell, char *arg_name)
 {
-	shell_print(shell, "Error: invalid argument \"%s\"\n", arg_name);
+	shell_print(shell, "Error: invalid argument \"%s\"", arg_name);
 
 	return -EINVAL;
 }
 
 static int
-sdp_shell_cmd_version(const struct shell *shell, size_t argc, char **argv)
-{
-	ARG_UNUSED(argc);
-	ARG_UNUSED(argv);
-
-	shell_print(shell, "%s", "0.0.0");
-
-	return 0;
-}
-
-static int
-sdp_shell_cmd_test_msg(const struct shell *shell, size_t argc, char **argv)
+sdp_shell_cmd_test_pub(const struct shell *shell, size_t argc, char **argv)
 {
 	ARG_UNUSED(argc);
 	ARG_UNUSED(argv);
@@ -210,11 +200,30 @@ sdp_shell_cmd_test_msg(const struct shell *shell, size_t argc, char **argv)
 		.payload = &sdp_test_data_dietemp_payload,
 	};
 
-	int matches;
+#if (CONFIG_SDP_PROC_MGR_POLL_RATE > 0)
+	/* Let the polling thread do all the work. */
+	struct sdp_measurement *mes;
 
+	/* Allocate memory for measurement. */
+	mes = sdp_sp_alloc(sdp_test_mes_dietemp.header.srclen.len);
+
+	/* Copy test data into heap-based measurement instance. */
+	memcpy(&(mes->header), &(sdp_test_mes_dietemp.header),
+	       sizeof(struct sdp_mes_header));
+	memcpy(mes->payload, sdp_test_mes_dietemp.payload,
+	       sdp_test_mes_dietemp.header.srclen.len);
+
+	/* Assign measurement to FIFO. */
+	sdp_sp_put(mes);
+#else
+	/* Manually process the measurement when no polling thread is present. */
+	int matches;
 	sdp_pm_process(&sdp_test_mes_dietemp, &matches, false);
-	printk("%d match(es) during processing.\n", matches);
-	// sdp_mes_print(&sdp_test_mes_dietemp);
+	shell_print(shell,
+		    "%d match(es) during processing.", matches);
+#endif
+
+	shell_print(shell, "Run 'sdp stats' for results.");
 
 	return 0;
 }
@@ -231,7 +240,6 @@ sdp_shell_cmd_test_proc(const struct shell *shell, size_t argc, char **argv)
 
 	sdp_pm_register(sdp_test_data_procnode_chain, 0, &handle);
 
-	// sdp_node_print(sdp_test_data_procnode_chain);
 	sdp_pm_list();
 
 	return 0;
@@ -243,12 +251,12 @@ sdp_shell_cmd_test_stats(const struct shell *shell, size_t argc, char **argv)
 	ARG_UNUSED(argc);
 	ARG_UNUSED(argv);
 
-	printk("evaluate: %d\n", sdp_test_data_cb_stats.evaluate);
-	printk("matched:  %d\n", sdp_test_data_cb_stats.matched);
-	printk("start:    %d\n", sdp_test_data_cb_stats.start);
-	printk("run:      %d\n", sdp_test_data_cb_stats.run);
-	printk("stop:     %d\n", sdp_test_data_cb_stats.stop);
-	printk("error:    %d\n", sdp_test_data_cb_stats.error);
+	shell_print(shell, "evaluate: %d", sdp_test_data_cb_stats.evaluate);
+	shell_print(shell, "matched:  %d", sdp_test_data_cb_stats.matched);
+	shell_print(shell, "start:    %d", sdp_test_data_cb_stats.start);
+	shell_print(shell, "run:      %d", sdp_test_data_cb_stats.run);
+	shell_print(shell, "stop:     %d", sdp_test_data_cb_stats.stop);
+	shell_print(shell, "error:    %d", sdp_test_data_cb_stats.error);
 
 	return 0;
 }
@@ -256,12 +264,10 @@ sdp_shell_cmd_test_stats(const struct shell *shell, size_t argc, char **argv)
 /* Subcommand array for "sdp" (level 1). */
 SHELL_STATIC_SUBCMD_SET_CREATE(
 	sub_sdp,
-	/* 'version' command handler. */
-	SHELL_CMD(version, NULL, "Library version", sdp_shell_cmd_version),
-	/* 'msg' command handler. */
-	SHELL_CMD(msg, NULL, "Process test message", sdp_shell_cmd_test_msg),
 	/* 'proc' command handler. */
-	SHELL_CMD(proc, NULL, "Populate processor registry", sdp_shell_cmd_test_proc),
+	SHELL_CMD(proc, NULL, "Populate proc. registry", sdp_shell_cmd_test_proc),
+	/* 'msg' command handler. */
+	SHELL_CMD(pub, NULL, "Publish a measurement", sdp_shell_cmd_test_pub),
 	/* 'stats' command handler. */
 	SHELL_CMD(stats, NULL, "Prints processing stats", sdp_shell_cmd_test_stats),
 

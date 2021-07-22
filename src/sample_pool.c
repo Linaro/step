@@ -31,8 +31,6 @@ struct sdp_measurement *sdp_sp_get(void)
 
 void sdp_sp_free(struct sdp_measurement *mes)
 {
-	k_heap_free(&sdp_elem_pool, mes);
-
 	/* Track memory consumption.
 	 * Note that Zephyr's heap stores records in blocks of 8 bytes memory, so
 	 * there is some additional overhead when a record isn't an exact multiple
@@ -40,6 +38,9 @@ void sdp_sp_free(struct sdp_measurement *mes)
 	sdp_sp_bytes_allocated -= mes->header.srclen.len +
 				  sizeof(struct sdp_measurement) + ((mes->header.srclen.len +
 								     sizeof(struct sdp_measurement)) % 8);
+
+	/* Free memory in heap. */
+	k_heap_free(&sdp_elem_pool, mes);
 }
 
 void sdp_sp_flush(void)
