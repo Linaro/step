@@ -13,7 +13,7 @@
 LOG_MODULE_REGISTER(sample_pool);
 
 K_FIFO_DEFINE(sdp_fifo);
-K_HEAP_DEFINE(sdp_elem_pool, CONFIG_SDP_SAMPLE_POOL_SIZE);
+K_HEAP_DEFINE(sdp_elem_pool, CONFIG_SDP_POOL_SIZE);
 K_MUTEX_DEFINE(sdp_sp_alloc_mtx);
 
 /* Variable to track the number of bytes currently allocated. */

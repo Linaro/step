@@ -24,32 +24,33 @@ if SDP
 
 config SDP_SHELL
 	bool "Enable the 'sdp' shell command"
+	default n
 	depends on SHELL
 	help
 	  Enabling this option will make the 'sdp' shell command available.
 
-config SDP_SAMPLE_POOL_SIZE
-	int "Sample pool heap size (in bytes)"
+config SDP_POOL_SIZE
+	int "Measurement pool heap size (in bytes)"
 	default 2048
 	help
-	  Determines the heap size for the sample pool (in bytes).
+	  Determines the heap size for the measurement pool (in bytes).
 
 config SDP_FILTER_CACHE
-        bool "Enable filter evaluation caching"
-        default y
-        help
-          Enables caching of filter evaluation results when determining if a
-          processor or sink node should be assigned an incoming datasample.
+	bool "Enable filter evaluation caching"
+	default y
+	help
+		Enables caching of filter evaluation results when determining if a
+		processor or sink node should be assigned an incoming datasample.
 
 config SDP_FILTER_CACHE_DEPTH
-        int "Records to store in the filter evaluation cache FIFO."
-        default 20
-        help
-          Indicates the number of filter evaluations to maintain in the cache
-		  FIFO. If previously uncached values are generated, and the cache is
-		  full, the oldest value will be removed from the cache. Each cache
-		  entry requires 6 bytes of memory (filter value = 4, node id = 1,
-		  result = 1).
+	int "Records to store in the filter evaluation cache FIFO."
+	default 20
+	help
+		Indicates the number of filter evaluations to maintain in the cache
+		FIFO. If previously uncached values are generated, and the cache is
+		full, the oldest value will be removed from the cache. Each cache
+		entry requires 6 bytes of memory (filter value = 4, node id = 1,
+		result = 1).
 
 config SDP_PROC_NODE_LIMIT
 	int "Maximum number of processor nodes that can be registered."

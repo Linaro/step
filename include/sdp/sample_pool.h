@@ -73,7 +73,7 @@ struct sdp_measurement *sdp_sp_alloc(uint16_t sz);
  * @note  This value does not take into account the memory taken up by the
  *        @ref k_heap struct, which also comes from the heap memory allocation.
  *        Actual memory available for records is limited to
- *        'CONFIG_SDP_SAMPLE_POOL_SIZE - sizeof(struct k_heap)'.
+ *        'CONFIG_SDP_POOL_SIZE - sizeof(struct k_heap)'.
  * 
  * @return int32_t The number of bytes currently allocated.
  */

@@ -81,7 +81,7 @@ void test_sp_alloc_limit(void)
 {
 	int rec_size = sizeof(struct sdp_measurement) +
 		       (sizeof(struct sdp_measurement) % 8);
-	int max_samples = (CONFIG_SDP_SAMPLE_POOL_SIZE - sizeof(struct k_heap)) /
+	int max_samples = (CONFIG_SDP_POOL_SIZE - sizeof(struct k_heap)) /
 			  rec_size;
 	struct sdp_measurement *mes;
 
