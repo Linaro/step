@@ -22,13 +22,6 @@ extern "C" {
 #endif
 
 /**
- * @brief Initialises the sample pool.
- *
- * @return int Returns 0 on success, negative error code on failure.
- */
-int sdp_sp_init(void);
-
-/**
  * @brief Adds the specified sdp_measurement to the pool's FIFO.
  *
  * @param mes The sdp_measurement to add.
@@ -68,6 +61,23 @@ void sdp_sp_flush(void);
  *         be allocated from the heap.
  */
 struct sdp_measurement *sdp_sp_alloc(uint16_t sz);
+
+/**
+ * @brief Returns the number of bytes currently allocated from the sample
+ *        pool's heap memory
+ * 
+ * @note  Records must be aligned on an 8-byte boundary with Zephyr's heap
+ *        implementation, so this value may be larger than expected when
+ *        unaligned records are allocated from the heap memory pool.
+ * 
+ * @note  This value does not take into account the memory taken up by the
+ *        @ref k_heap struct, which also comes from the heap memory allocation.
+ *        Actual memory available for records is limited to
+ *        'CONFIG_SDP_SAMPLE_POOL_SIZE - sizeof(struct k_heap)'.
+ * 
+ * @return int32_t The number of bytes currently allocated.
+ */
+int32_t sdp_sp_bytes_alloc(void);
 
 #ifdef __cplusplus
 }

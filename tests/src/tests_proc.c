@@ -31,10 +31,6 @@ void test_proc_sample(void)
 	memset(&sdp_test_data_cb_stats, 0,
 	       sizeof(struct sdp_test_data_procnode_cb_stats));
 
-	/* Init sample pool. */
-	rc = sdp_sp_init();
-	zassert_equal(rc, 0, NULL);
-
 	/* Allocate memory for measurement. */
 	mes = sdp_sp_alloc(sdp_test_mes_dietemp.header.srclen.len);
 	zassert_not_null(mes, NULL);

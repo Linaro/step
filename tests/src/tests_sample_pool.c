@@ -5,7 +5,6 @@
  */
 
 #include <ztest.h>
-#include <sys/printk.h>
 #include <sdp/sdp.h>
 #include <sdp/measurement/measurement.h>
 #include <sdp/sample_pool.h>
@@ -17,9 +16,6 @@ void test_sp_alloc(void)
 	struct sdp_measurement *mes;
 	struct sdp_measurement *ref = &sdp_test_mes_dietemp;
 	uint16_t payload_len = sdp_test_mes_dietemp.header.srclen.len;
-
-	/* Setup the mutex. */
-	sdp_sp_init();
 
 	/* Flush the fifo. */
 	sdp_sp_flush();
@@ -33,18 +29,25 @@ void test_sp_alloc(void)
 	zassert_not_null(mes, NULL);
 	zassert_true(mes->header.srclen.len == 0, NULL);
 	zassert_is_null(mes->payload, NULL);
+	zassert_true(sdp_sp_bytes_alloc() ==
+		     sizeof(struct sdp_measurement) +
+		     (sizeof(struct sdp_measurement) % 8), NULL);
 	sdp_sp_free(mes);
+	zassert_true(sdp_sp_bytes_alloc() == 0, NULL);
 
 	/* Allocate a datasample with an appropriate payload buffer. */
 	mes = sdp_sp_alloc(payload_len);
 	zassert_not_null(mes, NULL);
+	zassert_true(sdp_sp_bytes_alloc() ==
+		     sizeof(struct sdp_measurement) + payload_len +
+		     ((sizeof(struct sdp_measurement) + payload_len) % 8),
+		     NULL);
 
 	/* Check payload len. */
 	zassert_true(mes->header.srclen.len == payload_len, NULL);
 
 	/* Make sure payload is empty. */
 	for (size_t i = 0; i < payload_len; i++) {
-		printf("%02X ", ((uint8_t *)mes->payload)[i]);
 		zassert_true(((uint8_t *)mes->payload)[i] == 0, NULL);
 	}
 
@@ -71,6 +74,37 @@ void test_sp_alloc(void)
 
 	/* Free sample memory from pool heap. */
 	sdp_sp_free(mes);
+	zassert_true(sdp_sp_bytes_alloc() == 0, NULL);
+}
+
+void test_sp_alloc_limit(void)
+{
+	int rec_size = sizeof(struct sdp_measurement) +
+		       (sizeof(struct sdp_measurement) % 8);
+	int max_samples = (CONFIG_SDP_SAMPLE_POOL_SIZE - sizeof(struct k_heap)) /
+			  rec_size;
+	struct sdp_measurement *mes;
+
+	/* Flush the heap. */
+	sdp_sp_flush();
+	zassert_true(sdp_sp_bytes_alloc() == 0, NULL);
+
+	/* Fill the buffer to the limit. */
+	for (int i = 0; i < max_samples - 1; i++) {
+		mes = sdp_sp_alloc(0);
+		zassert_not_null(mes, NULL);
+		sdp_sp_put(mes);
+	}
+	zassert_true(sdp_sp_bytes_alloc() == rec_size * (max_samples - 1), NULL);
+
+	/* Try to allocate one more sample. */
+	mes = sdp_sp_alloc(0);
+	zassert_is_null(mes, NULL);
+	zassert_true(sdp_sp_bytes_alloc() == rec_size * (max_samples - 1), NULL);
+
+	/* Flush heap memory. */
+	sdp_sp_flush();
+	zassert_true(sdp_sp_bytes_alloc() == 0, NULL);
 }
 
 void test_sp_fifo(void)
@@ -78,9 +112,6 @@ void test_sp_fifo(void)
 	struct sdp_measurement *src;
 	struct sdp_measurement *dst;
 	float payload = 32.0F;
-
-	/* Setup the mutex. */
-	sdp_sp_init();
 
 	/* Flush the fifo. */
 	sdp_sp_flush();
@@ -92,6 +123,9 @@ void test_sp_fifo(void)
 	/* Allocate a datasample. */
 	src = sdp_sp_alloc(sizeof payload);
 	zassert_not_null(src, NULL);
+	zassert_true(sdp_sp_bytes_alloc() ==
+		     sizeof(struct sdp_measurement) + sizeof payload +
+		     ((sizeof(struct sdp_measurement) + sizeof payload) % 8), NULL);
 	memcpy(src->payload, &payload, sizeof payload);
 	src->header.filter.base_type = SDP_MES_TYPE_LIGHT;
 	src->header.filter.ext_type = SDP_MES_EXT_TYPE_LIGHT_PHOTO_ILLUMINANCE;
@@ -112,6 +146,7 @@ void test_sp_fifo(void)
 
 	/* Free memory. */
 	sdp_sp_free(src);
+	zassert_true(sdp_sp_bytes_alloc() == 0, NULL);
 
 	/* FIFO should be empty. */
 	src = sdp_sp_get();

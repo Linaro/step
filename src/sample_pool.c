@@ -14,19 +14,13 @@ LOG_MODULE_REGISTER(main);
 
 K_FIFO_DEFINE(sdp_fifo);
 K_HEAP_DEFINE(sdp_elem_pool, CONFIG_SDP_SAMPLE_POOL_SIZE);
+K_MUTEX_DEFINE(sdp_sp_alloc_mtx);
 
-struct k_mutex sdp_sp_alloc_mtx;
-
-/* ToDo: Add variable to track the number of bytes currently allocated. */
-
-int sdp_sp_init(void)
-{
-	return k_mutex_init(&sdp_sp_alloc_mtx);
-}
+/* Variable to track the number of bytes currently allocated. */
+static int32_t sdp_sp_bytes_allocated = 0;
 
 void sdp_sp_put(struct sdp_measurement *mes)
 {
-	/* Alloc avoids the need to allocate a leading word in the mes struct. */
 	k_fifo_put(&sdp_fifo, mes);
 }
 
@@ -38,6 +32,14 @@ struct sdp_measurement *sdp_sp_get(void)
 void sdp_sp_free(struct sdp_measurement *mes)
 {
 	k_heap_free(&sdp_elem_pool, mes);
+
+	/* Track memory consumption.
+	 * Note that Zephyr's heap stores records in blocks of 8 bytes memory, so
+	 * there is some additional overhead when a record isn't an exact multiple
+	 * of 8 bytes long. */
+	sdp_sp_bytes_allocated -= mes->header.srclen.len +
+				  sizeof(struct sdp_measurement) + ((mes->header.srclen.len +
+								     sizeof(struct sdp_measurement)) % 8);
 }
 
 void sdp_sp_flush(void)
@@ -45,6 +47,9 @@ void sdp_sp_flush(void)
 	struct sdp_measurement *mes;
 
 	do {
+		/* ToDo: This is problematic since it only frees samples that have
+		 * been pushed to the FIFO. Measurements allocated from heap but never
+		 * pushed to the FIFO will not be freed. */
 		mes = sdp_sp_get();
 		if (mes) {
 			sdp_sp_free(mes);
@@ -52,7 +57,6 @@ void sdp_sp_flush(void)
 	} while (mes != NULL);
 }
 
-/* TODO: How to handle fragmentation over time due to var. length sample? */
 struct sdp_measurement *sdp_sp_alloc(uint16_t sz)
 {
 	struct sdp_measurement *mes;
@@ -63,12 +67,20 @@ struct sdp_measurement *sdp_sp_alloc(uint16_t sz)
 			   K_NO_WAIT);
 	k_mutex_unlock(&sdp_sp_alloc_mtx);
 
-	/* Make sure memory available. */
+	/* Make sure memory is available. */
 	if (mes == NULL) {
 		LOG_ERR("memory allocation failed!");
 		return NULL;
 	}
 
+	/* Track memory consumption.
+	 * Note that Zephyr's heap stores records in blocks of 8 bytes memory, so
+	 * there is some additional overhead when a record isn't an exact multiple
+	 * of 8 bytes long. */
+	sdp_sp_bytes_allocated += sz + sizeof(struct sdp_measurement) +
+				  ((sz + sizeof(struct sdp_measurement)) % 8);
+
+	/* Put the allocated struct in default state, and setup payload pointer. */
 	memset(mes, 0, sizeof(struct sdp_mes_header));
 	mes->header.srclen.len = sz;
 	mes->payload = NULL;
@@ -79,4 +91,9 @@ struct sdp_measurement *sdp_sp_alloc(uint16_t sz)
 	}
 
 	return mes;
+}
+
+int32_t sdp_sp_bytes_alloc(void)
+{
+	return sdp_sp_bytes_allocated;
 }
