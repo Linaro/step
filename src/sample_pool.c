@@ -10,7 +10,7 @@
 #include <sdp/measurement/measurement.h>
 
 #define LOG_LEVEL LOG_LEVEL_DBG
-LOG_MODULE_REGISTER(main);
+LOG_MODULE_REGISTER(sample_pool);
 
 K_FIFO_DEFINE(sdp_fifo);
 K_HEAP_DEFINE(sdp_elem_pool, CONFIG_SDP_SAMPLE_POOL_SIZE);

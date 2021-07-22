@@ -121,7 +121,7 @@ struct sdp_node sdp_test_data_procnode_chain_data[] = {
 	},
 	/* Processor node 1. */
 	{
-		.name = "Secondary temp processor"
+		.name = "Secondary temp processor",
 		/* Callbacks */
 		.callbacks = {
 			.matched_handler = node_matched,

@@ -6,11 +6,15 @@
 
 #include <zephyr.h>
 #include <string.h>
+#include <logging/log.h>
 #include <sys/printk.h>
 #include <sys/slist.h>
 #include <sdp/proc_mgr.h>
 #include <sdp/filter.h>
 #include <sdp/sample_pool.h>
+
+#define LOG_LEVEL LOG_LEVEL_DBG
+LOG_MODULE_REGISTER(proc_mgr);
 
 /* Initialize the slist */
 static sys_slist_t pm_node_slist = SYS_SLIST_STATIC_INIT(&pm_node_slist);
@@ -64,7 +68,7 @@ int sdp_pm_process(struct sdp_measurement *mes, int *matches, bool free)
 	}
 
 	if (sys_slist_is_empty(&pm_node_slist)) {
-		printk("No processor nodes registered.\n");
+		LOG_DBG("No processor nodes registered");
 		goto abort;
 	}
 
@@ -170,8 +174,7 @@ int sdp_pm_register(struct sdp_node *node, uint8_t pri, uint8_t *handle)
 		goto err;
 	}
 
-	printk("Registering node/chain (handle = %02d)\n", *handle);
-	// sdp_node_print(node);
+	LOG_DBG("Registering node/chain (handle = %02d)\n", *handle);
 
 	memset(&sdp_pm_nodes[*handle], 0, sizeof(struct sdp_pm_node_record));
 	sdp_pm_nodes[*handle].node = node;
@@ -188,14 +191,14 @@ err:
 
 int sdp_pm_disable(uint8_t handle)
 {
-	printk("Disabling processor node %d:\n", handle);
+	LOG_DBG("Disabling processor node %d:\n", handle);
 
 	return 0;
 }
 
 int sdp_pm_enable(uint8_t handle)
 {
-	printk("Enabling processor node %d:\n", handle);
+	LOG_DBG("Enabling processor node %d:\n", handle);
 
 	return 0;
 }
@@ -204,7 +207,7 @@ int sdp_pm_clear(void)
 {
 	int rc = 0;
 
-	printk("Resetting processor node registry\n");
+	LOG_DBG("Resetting processor node registry\n");
 
 	/* ToDo: Clear match cache. */
 
@@ -239,6 +242,7 @@ int sdp_pm_list(void)
 			printk(" [%s]", n->name);
 			n = n->next;
 		} while (n != NULL);
+		printk("\n");
 	}
 
 abort:
