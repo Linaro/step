@@ -153,6 +153,36 @@ sdp_shell_invalid_arg(const struct shell *shell, char *arg_name)
 }
 
 static int
+sdp_shell_cmd_test_list(const struct shell *shell, size_t argc, char **argv)
+{
+	ARG_UNUSED(argc);
+	ARG_UNUSED(argv);
+
+	sdp_pm_list();
+
+	return 0;
+}
+
+static int
+sdp_shell_cmd_test_reg(const struct shell *shell, size_t argc, char **argv)
+{
+	ARG_UNUSED(argc);
+	ARG_UNUSED(argv);
+
+	uint8_t handle = 0;
+
+	sdp_pm_clear();
+
+	sdp_pm_register(sdp_test_data_procnode_chain, 5, &handle);
+	sdp_pm_register(sdp_test_data_procnode_chain, 2, &handle);
+	sdp_pm_register(sdp_test_data_procnode_chain, 6, &handle);
+	sdp_pm_register(sdp_test_data_procnode_chain, 1, &handle);
+	sdp_pm_register(sdp_test_data_procnode_chain, 2, &handle);
+
+	return 0;
+}
+
+static int
 sdp_shell_cmd_test_pub(const struct shell *shell, size_t argc, char **argv)
 {
 	ARG_UNUSED(argc);
@@ -229,23 +259,6 @@ sdp_shell_cmd_test_pub(const struct shell *shell, size_t argc, char **argv)
 }
 
 static int
-sdp_shell_cmd_test_proc(const struct shell *shell, size_t argc, char **argv)
-{
-	ARG_UNUSED(argc);
-	ARG_UNUSED(argv);
-
-	uint8_t handle = 0;
-
-	sdp_pm_clear();
-
-	sdp_pm_register(sdp_test_data_procnode_chain, 0, &handle);
-
-	sdp_pm_list();
-
-	return 0;
-}
-
-static int
 sdp_shell_cmd_test_stats(const struct shell *shell, size_t argc, char **argv)
 {
 	ARG_UNUSED(argc);
@@ -261,15 +274,30 @@ sdp_shell_cmd_test_stats(const struct shell *shell, size_t argc, char **argv)
 	return 0;
 }
 
+static int
+sdp_shell_cmd_test_pool(const struct shell *shell, size_t argc, char **argv)
+{
+	ARG_UNUSED(argc);
+	ARG_UNUSED(argv);
+
+	shell_print(shell, "%d bytes used from pool",
+		sdp_sp_bytes_alloc());
+
+	return 0;
+}
 /* Subcommand array for "sdp" (level 1). */
 SHELL_STATIC_SUBCMD_SET_CREATE(
 	sub_sdp,
-	/* 'proc' command handler. */
-	SHELL_CMD(proc, NULL, "Populate proc. registry", sdp_shell_cmd_test_proc),
-	/* 'msg' command handler. */
+	/* 'list' command handler. */
+	SHELL_CMD(list, NULL, "Display proc. registry", sdp_shell_cmd_test_list),
+	/* 'reg' command handler. */
+	SHELL_CMD(reg, NULL, "Populate proc. registry", sdp_shell_cmd_test_reg),
+	/* 'pub' command handler. */
 	SHELL_CMD(pub, NULL, "Publish a measurement", sdp_shell_cmd_test_pub),
 	/* 'stats' command handler. */
 	SHELL_CMD(stats, NULL, "Prints processing stats", sdp_shell_cmd_test_stats),
+	/* 'pool' command handler. */
+	SHELL_CMD(pool, NULL, "Bytes used in meas. pool", sdp_shell_cmd_test_pool),
 
 	/* Array terminator. */
 	SHELL_SUBCMD_SET_END

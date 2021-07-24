@@ -72,6 +72,9 @@ K_MUTEX_DEFINE(sdp_pm_reg_access);
 int sdp_pm_register(struct sdp_node *node, uint8_t pri, uint8_t *handle)
 {
 	int rc = 0;
+	struct sdp_pm_node_record *pnode;
+	struct sdp_pm_node_record *tmp;
+	struct sdp_pm_node_record *prev, *match;
 
 	/* Lock registry access during registration. */
 	k_mutex_lock(&sdp_pm_reg_access, K_FOREVER);
@@ -86,7 +89,7 @@ int sdp_pm_register(struct sdp_node *node, uint8_t pri, uint8_t *handle)
 		goto err;
 	}
 
-	LOG_DBG("Registering node/chain (handle = %02d)", *handle);
+	LOG_DBG("Registering node/chain (handle %02d, pri %02d)", *handle, pri);
 
 	/* Prep the memory slot for the processor node record. */
 	memset(&sdp_pm_nodes[*handle], 0, sizeof(struct sdp_pm_node_record));
@@ -95,9 +98,30 @@ int sdp_pm_register(struct sdp_node *node, uint8_t pri, uint8_t *handle)
 	sdp_pm_nodes[*handle].handle = *handle;
 	sdp_pm_nodes[*handle].flags.enabled = 1;
 
-	/* Append the processor node record to the registry linked list. */
-	/* ToDo: Make sure nodes are registered in order of priority. */
-	sys_slist_append(&pm_node_slist, &(sdp_pm_nodes[*handle].snode));
+	/* Find the correct insertion point based on priority. */
+	match = prev = NULL;
+	SYS_SLIST_FOR_EACH_CONTAINER_SAFE(&pm_node_slist, pnode, tmp, snode) {
+		if ((match == NULL) && (pri > pnode->priority)) {
+			match = pnode;
+		}
+		/* If no match, track current node for next iteration. */
+		if (match == NULL) {
+			prev = pnode;
+		}
+	}
+
+	/* Insert new node record in appropriate position based on priority. */
+	if ((match != NULL) && (prev == NULL)) {
+		/* Prepend before sole record. */
+		sys_slist_prepend(&pm_node_slist, &(sdp_pm_nodes[*handle].snode));
+	} else if (match != NULL) {
+		/* Insert before first lower priority record. */
+		sys_slist_insert(&pm_node_slist,
+				 &(prev->snode), &(sdp_pm_nodes[*handle].snode));
+	} else {
+		/* Insert at the end. */
+		sys_slist_append(&pm_node_slist, &(sdp_pm_nodes[*handle].snode));
+	}
 
 err:
 	/* Release the registry lock. */
@@ -270,7 +294,7 @@ err:
 
 /**
  * @brief Polling handler if automatic polling is requested.
- * 
+ *
  * @param free Whether to free measurement from heap memory once processed.
  */
 static void sdp_pm_poll_thread(bool free)
@@ -329,7 +353,7 @@ int sdp_pm_list(void)
 
 	/* Cycle through registered nodes. */
 	SYS_SLIST_FOR_EACH_CONTAINER_SAFE(&pm_node_slist, pnode, tmp, snode) {
-		printk("  %02d:", pnode->handle);
+		printk("  %02d (pri:%02d):", pnode->handle, pnode->priority);
 		struct sdp_node *n = pnode->node;
 
 		do {

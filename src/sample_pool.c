@@ -47,15 +47,20 @@ void sdp_sp_flush(void)
 {
 	struct sdp_measurement *mes;
 
+	/* ToDo: This is problematic since it only frees samples that have
+	 * been pushed to the FIFO. Measurements allocated from heap but never
+	 * pushed to the FIFO will not be freed. */
 	do {
-		/* ToDo: This is problematic since it only frees samples that have
-		 * been pushed to the FIFO. Measurements allocated from heap but never
-		 * pushed to the FIFO will not be freed. */
 		mes = sdp_sp_get();
 		if (mes) {
 			sdp_sp_free(mes);
 		}
 	} while (mes != NULL);
+
+	/* Warn if any memory is still consumed after flusing the meas. heap. */
+	if (sdp_sp_bytes_allocated) {
+		LOG_DBG("%d bytes left after flushing!", sdp_sp_bytes_allocated);
+	}
 }
 
 struct sdp_measurement *sdp_sp_alloc(uint16_t sz)
