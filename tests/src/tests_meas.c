@@ -69,8 +69,8 @@ void test_mes_check_header(void)
 void test_mes_check_payload(void)
 {
 	struct payload {
-		float temp_c;
 		uint32_t timestamp;
+		float temp_c;
 	} payload;
 
 	/* Check payload length. */
@@ -82,9 +82,9 @@ void test_mes_check_payload(void)
 	       sdp_test_mes_dietemp.payload,
 	       sdp_test_mes_dietemp.header.srclen.len);
 
-	/* Verify temperature. */
-	zassert_true(val_is_equal(payload.temp_c, 32.0F, 0.0001), NULL);
-
 	/* Verify timestamp. */
 	zassert_equal(payload.timestamp, 1624305803, NULL);
+
+	/* Verify temperature. */
+	zassert_true(val_is_equal(payload.temp_c, 32.0F, 0.0001), NULL);
 }

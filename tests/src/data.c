@@ -184,11 +184,11 @@ struct sdp_node sdp_test_data_procnode = {
 
 /* Die temperature with 32-bit timestamp payload. */
 struct {
-	float temp_c;
 	uint32_t timestamp;
+	float temp_c;
 } sdp_test_data_dietemp_payload = {
-	.temp_c = 32.0F,
 	.timestamp = 1624305803,         /* Monday, June 21, 2021 8:03:23 PM */
+	.temp_c = 32.0F,
 };
 
 /* Test die temp measurement, with timestamp. */

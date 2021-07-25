@@ -47,11 +47,11 @@
  * +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
  * |   Source ID   | S Cnt | R | F |        Payload Length         | <- SrcLen
  * +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+ * |                      Timestamp (optional)                     |
+ * +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
  * |                                                               |
  * |                            Payload                            |
  * |                                                               |
- * +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
- * |                      Timestamp (optional)                     |
  * +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
  *
  *            1
@@ -119,10 +119,8 @@
  *       o Timestamp      [10:12]
  *
  *           Indicates that a timestamp of the specified format is appended at
- *           the end of the record. The length of the timestamp is INCLUDED in
- *           the packet's 'payload length' field. Timestamp size should only be
- *           considered when 'Partial' is 0, meaning that this is the final
- *           packet in the payload and contains the timestamp value.
+ *           the start of the payload. The length of the timestamp is INCLUDED
+ *           in the packet's 'payload length' field.
  *
  *           0 = None
  *           1 = Unix Epoch 32-bit
