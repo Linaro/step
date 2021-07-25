@@ -79,19 +79,19 @@ int sdp_pm_register(struct sdp_node *node, uint8_t pri, uint8_t *handle)
 	/* Lock registry access during registration. */
 	k_mutex_lock(&sdp_pm_reg_access, K_FOREVER);
 
-	/* Assign and increment the handle counter. */
-	*handle = sdp_pm_handle_counter++;
-
-	if (*handle >= CONFIG_SDP_PROC_MGR_NODE_LIMIT) {
-		sdp_pm_handle_counter--;
+	if (sdp_pm_handle_counter == CONFIG_SDP_PROC_MGR_NODE_LIMIT) {
 		*handle = 0;
 		rc = -ENOMEM;
+		LOG_ERR("Registration failed: node limit reached");
 		goto err;
 	}
 
+	/* Assign and increment the handle counter. */
+	*handle = sdp_pm_handle_counter++;
+
 	LOG_DBG("Registering node/chain (handle %02d, pri %02d)", *handle, pri);
 
-	/* Prep the memory slot for the processor node record. */
+	/* Clear the processor node record placeholder. */
 	memset(&sdp_pm_nodes[*handle], 0, sizeof(struct sdp_pm_node_record));
 	sdp_pm_nodes[*handle].node = node;
 	sdp_pm_nodes[*handle].priority = pri;
@@ -156,10 +156,10 @@ int sdp_pm_clear(void)
 {
 	int rc = 0;
 
+	LOG_DBG("Resetting processor node registry");
+
 	/* Lock registry access during clear. */
 	k_mutex_lock(&sdp_pm_reg_access, K_FOREVER);
-
-	LOG_DBG("Resetting processor node registry");
 
 	/* ToDo: Clear match cache. */
 
@@ -188,6 +188,7 @@ int sdp_pm_process(struct sdp_measurement *mes, int *matches, bool free)
 	struct sdp_pm_node_record *tmp;
 	struct sdp_node *n;
 
+	/* Track the number of filter matches in node registry. */
 	if (matches != NULL) {
 		*matches = 0;
 	}
@@ -195,8 +196,9 @@ int sdp_pm_process(struct sdp_measurement *mes, int *matches, bool free)
 	/* Lock registry access during init. */
 	k_mutex_lock(&sdp_pm_reg_access, K_FOREVER);
 
+	/* No nodes registered ... warn that sample will be lost. */
 	if (sys_slist_is_empty(&pm_node_slist)) {
-		LOG_DBG("No processor node(s) registered");
+		LOG_WRN("Measurement lost: no processor node(s) registered");
 		goto abort;
 	}
 
@@ -292,6 +294,7 @@ err:
 	return rc;
 }
 
+#if (CONFIG_SDP_PROC_MGR_POLL_RATE > 0)
 /**
  * @brief Polling handler if automatic polling is requested.
  *
@@ -304,6 +307,7 @@ static void sdp_pm_poll_thread(bool free)
 		k_sleep(K_MSEC(1000 / CONFIG_SDP_PROC_MGR_POLL_RATE));
 	}
 }
+#endif
 
 int sdp_pm_disable_node(uint8_t handle)
 {

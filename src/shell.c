@@ -153,7 +153,7 @@ sdp_shell_invalid_arg(const struct shell *shell, char *arg_name)
 }
 
 static int
-sdp_shell_cmd_test_reg(const struct shell *shell, size_t argc, char **argv)
+sdp_shell_cmd_test_list(const struct shell *shell, size_t argc, char **argv)
 {
 	ARG_UNUSED(argc);
 	ARG_UNUSED(argv);
@@ -164,26 +164,34 @@ sdp_shell_cmd_test_reg(const struct shell *shell, size_t argc, char **argv)
 }
 
 static int
-sdp_shell_cmd_test_pop(const struct shell *shell, size_t argc, char **argv)
+sdp_shell_cmd_test_add(const struct shell *shell, size_t argc, char **argv)
 {
 	ARG_UNUSED(argc);
 	ARG_UNUSED(argv);
 
 	uint8_t handle = 0;
 
-	sdp_pm_clear();
-
-	sdp_pm_register(sdp_test_data_procnode_chain, 5, &handle);
-	sdp_pm_register(sdp_test_data_procnode_chain, 2, &handle);
-	sdp_pm_register(sdp_test_data_procnode_chain, 6, &handle);
-	sdp_pm_register(sdp_test_data_procnode_chain, 1, &handle);
-	sdp_pm_register(sdp_test_data_procnode_chain, 2, &handle);
+	/* Append a new instance of the node chain. */
+	sdp_pm_register(sdp_test_data_procnode_chain, 0, &handle);
+	sdp_node_print(sdp_test_data_procnode_chain);
 
 	return 0;
 }
 
 static int
-sdp_shell_cmd_test_push(const struct shell *shell, size_t argc, char **argv)
+sdp_shell_cmd_test_clr(const struct shell *shell, size_t argc, char **argv)
+{
+	ARG_UNUSED(argc);
+	ARG_UNUSED(argv);
+
+	/* Reset the processor node registry. */
+	sdp_pm_clear();
+
+	return 0;
+}
+
+static int
+sdp_shell_cmd_test_msg(const struct shell *shell, size_t argc, char **argv)
 {
 	ARG_UNUSED(argc);
 	ARG_UNUSED(argv);
@@ -253,7 +261,8 @@ sdp_shell_cmd_test_push(const struct shell *shell, size_t argc, char **argv)
 		    "%d match(es) during processing.", matches);
 #endif
 
-	shell_print(shell, "Published 1 easurement.");
+	shell_print(shell, "Published 1 measurement:");
+	sdp_mes_print(&sdp_test_mes_dietemp);
 
 	return 0;
 }
@@ -287,12 +296,14 @@ sdp_shell_cmd_test_pool(const struct shell *shell, size_t argc, char **argv)
 /* Subcommand array for "sdp" (level 1). */
 SHELL_STATIC_SUBCMD_SET_CREATE(
 	sub_sdp,
-	/* 'reg' command handler. */
-	SHELL_CMD(reg, NULL, "Display proc. registry", sdp_shell_cmd_test_reg),
-	/* 'pop' command handler. */
-	SHELL_CMD(pop, NULL, "Populate proc. registry", sdp_shell_cmd_test_pop),
-	/* 'push' command handler. */
-	SHELL_CMD(push, NULL, "Publish a measurement", sdp_shell_cmd_test_push),
+	/* 'list' command handler. */
+	SHELL_CMD(list, NULL, "Display proc. registry", sdp_shell_cmd_test_list),
+	/* 'add' command handler. */
+	SHELL_CMD(add, NULL, "Populate proc. registry", sdp_shell_cmd_test_add),
+	/* 'clr' command handler. */
+	SHELL_CMD(clr, NULL, "Clear proc. registry", sdp_shell_cmd_test_clr),
+	/* 'msg' command handler. */
+	SHELL_CMD(msg, NULL, "Publish a measurement", sdp_shell_cmd_test_msg),
 	/* 'stats' command handler. */
 	SHELL_CMD(stats, NULL, "Display processing stats", sdp_shell_cmd_test_stats),
 	/* 'pool' command handler. */

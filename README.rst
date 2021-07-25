@@ -53,7 +53,14 @@ Sample Output
 
 .. code-block:: console
 
-   TODO
+   *** Booting Zephyr OS build zephyr-v2.6.0-536-g89212a7fbf5f  ***
+   Type 'sdp help' for command options.
+   
+    1.) Populate the processor registry: sdp add
+    2.) Publish measurement(s):          sdp msg
+    3.) Check results:                   sdp stats
+   
+    uart:~$ sdp add
 
 Exit QEMU by pressing :kbd:`CTRL+A` :kbd:`x`.
 
