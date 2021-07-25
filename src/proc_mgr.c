@@ -196,7 +196,7 @@ int sdp_pm_process(struct sdp_measurement *mes, int *matches, bool free)
 	k_mutex_lock(&sdp_pm_reg_access, K_FOREVER);
 
 	if (sys_slist_is_empty(&pm_node_slist)) {
-		LOG_DBG("No processor nodes registered");
+		LOG_DBG("No processor node(s) registered");
 		goto abort;
 	}
 
@@ -301,7 +301,7 @@ static void sdp_pm_poll_thread(bool free)
 {
 	while (1) {
 		sdp_pm_poll(NULL, free);
-		k_msleep(1000 / CONFIG_SDP_PROC_MGR_POLL_RATE);
+		k_sleep(K_MSEC(1000 / CONFIG_SDP_PROC_MGR_POLL_RATE));
 	}
 }
 

@@ -79,6 +79,12 @@ struct sdp_measurement *sdp_sp_alloc(uint16_t sz);
  */
 int32_t sdp_sp_bytes_alloc(void);
 
+/**
+ * @brief Prints the contents of the statistics struct. Useful for debug
+ *        purposes to detect memory leaks, etc.
+ */
+void sdp_sp_print_stats(void);
+
 #ifdef __cplusplus
 }
 #endif

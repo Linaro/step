@@ -153,7 +153,7 @@ sdp_shell_invalid_arg(const struct shell *shell, char *arg_name)
 }
 
 static int
-sdp_shell_cmd_test_list(const struct shell *shell, size_t argc, char **argv)
+sdp_shell_cmd_test_reg(const struct shell *shell, size_t argc, char **argv)
 {
 	ARG_UNUSED(argc);
 	ARG_UNUSED(argv);
@@ -164,7 +164,7 @@ sdp_shell_cmd_test_list(const struct shell *shell, size_t argc, char **argv)
 }
 
 static int
-sdp_shell_cmd_test_reg(const struct shell *shell, size_t argc, char **argv)
+sdp_shell_cmd_test_pop(const struct shell *shell, size_t argc, char **argv)
 {
 	ARG_UNUSED(argc);
 	ARG_UNUSED(argv);
@@ -183,7 +183,7 @@ sdp_shell_cmd_test_reg(const struct shell *shell, size_t argc, char **argv)
 }
 
 static int
-sdp_shell_cmd_test_pub(const struct shell *shell, size_t argc, char **argv)
+sdp_shell_cmd_test_push(const struct shell *shell, size_t argc, char **argv)
 {
 	ARG_UNUSED(argc);
 	ARG_UNUSED(argv);
@@ -253,7 +253,7 @@ sdp_shell_cmd_test_pub(const struct shell *shell, size_t argc, char **argv)
 		    "%d match(es) during processing.", matches);
 #endif
 
-	shell_print(shell, "Run 'sdp stats' for results.");
+	shell_print(shell, "Published 1 easurement.");
 
 	return 0;
 }
@@ -280,24 +280,23 @@ sdp_shell_cmd_test_pool(const struct shell *shell, size_t argc, char **argv)
 	ARG_UNUSED(argc);
 	ARG_UNUSED(argv);
 
-	shell_print(shell, "%d bytes used from pool",
-		sdp_sp_bytes_alloc());
+	sdp_sp_print_stats();
 
 	return 0;
 }
 /* Subcommand array for "sdp" (level 1). */
 SHELL_STATIC_SUBCMD_SET_CREATE(
 	sub_sdp,
-	/* 'list' command handler. */
-	SHELL_CMD(list, NULL, "Display proc. registry", sdp_shell_cmd_test_list),
 	/* 'reg' command handler. */
-	SHELL_CMD(reg, NULL, "Populate proc. registry", sdp_shell_cmd_test_reg),
-	/* 'pub' command handler. */
-	SHELL_CMD(pub, NULL, "Publish a measurement", sdp_shell_cmd_test_pub),
+	SHELL_CMD(reg, NULL, "Display proc. registry", sdp_shell_cmd_test_reg),
+	/* 'pop' command handler. */
+	SHELL_CMD(pop, NULL, "Populate proc. registry", sdp_shell_cmd_test_pop),
+	/* 'push' command handler. */
+	SHELL_CMD(push, NULL, "Publish a measurement", sdp_shell_cmd_test_push),
 	/* 'stats' command handler. */
-	SHELL_CMD(stats, NULL, "Prints processing stats", sdp_shell_cmd_test_stats),
+	SHELL_CMD(stats, NULL, "Display processing stats", sdp_shell_cmd_test_stats),
 	/* 'pool' command handler. */
-	SHELL_CMD(pool, NULL, "Bytes used in meas. pool", sdp_shell_cmd_test_pool),
+	SHELL_CMD(pool, NULL, "Display meas. pool stats", sdp_shell_cmd_test_pool),
 
 	/* Array terminator. */
 	SHELL_SUBCMD_SET_END
