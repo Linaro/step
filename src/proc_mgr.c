@@ -11,6 +11,7 @@
 #include <sys/slist.h>
 #include <sdp/proc_mgr.h>
 #include <sdp/sample_pool.h>
+#include <sdp/cache.h>
 
 #define LOG_LEVEL LOG_LEVEL_DBG
 LOG_MODULE_REGISTER(proc_mgr);
@@ -161,7 +162,10 @@ int sdp_pm_clear(void)
 	/* Lock registry access during clear. */
 	k_mutex_lock(&sdp_pm_reg_access, K_FOREVER);
 
-	/* ToDo: Clear match cache. */
+#if CONFIG_SDP_FILTER_CACHE
+	/* Clear match cache. */
+	sdp_cache_clear();
+#endif
 
 	/* Reset the handle counter. */
 	sdp_pm_handle_counter = 0;
@@ -184,6 +188,7 @@ int sdp_pm_process(struct sdp_measurement *mes, int *matches, bool free)
 {
 	int rc = 0;
 	int match = 0;
+	int cached = 0;
 	struct sdp_pm_node_record *pnode;
 	struct sdp_pm_node_record *tmp;
 	struct sdp_node *n;
@@ -193,7 +198,7 @@ int sdp_pm_process(struct sdp_measurement *mes, int *matches, bool free)
 		*matches = 0;
 	}
 
-	/* Lock registry access during init. */
+	/* Lock registry access during processing. */
 	k_mutex_lock(&sdp_pm_reg_access, K_FOREVER);
 
 	/* No nodes registered ... warn that sample will be lost. */
@@ -208,19 +213,30 @@ int sdp_pm_process(struct sdp_measurement *mes, int *matches, bool free)
 		if (pnode->flags.enabled) {
 			n = pnode->node;
 
+#if CONFIG_SDP_FILTER_CACHE
+			/* Check filter cache for cached match results. */
+			cached = sdp_cache_check(mes->header.filter_bits,
+						 pnode->handle, &match);
+#endif
 			/* Evaluate filter match. */
-			/* ToDo: Implement filter cache mechanism. */
-			if (n->callbacks.evaluate_handler != NULL) {
-				/* Use the node's evaluate callback to determine match. */
-				match = n->callbacks.evaluate_handler(mes, n->config);
-			} else {
-				/* Standard evaluation against the node's filter chain. */
-				rc = sdp_filt_evaluate(&(n->filters), mes, &match);
-			}
+			if (!cached) {
+				if (n->callbacks.evaluate_handler != NULL) {
+					/* Use the node's evaluate callback to determine match. */
+					match = n->callbacks.evaluate_handler(mes, n->config);
+				} else {
+					/* Standard evaluation against the node's filter chain. */
+					rc = sdp_filt_evaluate(&(n->filters), mes, &match);
+				}
 
-			/* Call matched handler if requested, can negate match value. */
-			if (match && (n->callbacks.matched_handler != NULL)) {
-				match = n->callbacks.matched_handler(mes, n->config);
+				/* Call matched handler if requested, can negate match value. */
+				if (match && (n->callbacks.matched_handler != NULL)) {
+					match = n->callbacks.matched_handler(mes, n->config);
+				}
+
+#if CONFIG_SDP_FILTER_CACHE
+				/* Add match results to cache. */
+				sdp_cache_add(mes->header.filter_bits, pnode->handle, match);
+#endif
 			}
 
 			/* Execute processor node chain on match. */
@@ -238,7 +254,7 @@ int sdp_pm_process(struct sdp_measurement *mes, int *matches, bool free)
 					}
 
 					/* Call stop handler if requested. */
-					if (match && (n->callbacks.stop_handler != NULL)) {
+					if (n->callbacks.stop_handler != NULL) {
 						n->callbacks.stop_handler(mes, n->config);
 					}
 
@@ -252,6 +268,12 @@ int sdp_pm_process(struct sdp_measurement *mes, int *matches, bool free)
 				*matches += 1;
 			}
 		}
+	}
+
+	/* No matches ... warn that sample will be lost. */
+	/* ToDo: This will only be caught if matches != NULL ... change logic. */
+	if ((matches != NULL) && (*matches == 0)) {
+		LOG_WRN("Measurement lost: no processor node(s) matched");
 	}
 
 abort:
@@ -302,8 +324,10 @@ err:
  */
 static void sdp_pm_poll_thread(bool free)
 {
+	int matches = 0;
+
 	while (1) {
-		sdp_pm_poll(NULL, free);
+		sdp_pm_poll(&matches, free);
 		k_sleep(K_MSEC(1000 / CONFIG_SDP_PROC_MGR_POLL_RATE));
 	}
 }

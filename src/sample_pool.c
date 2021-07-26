@@ -17,7 +17,7 @@ K_FIFO_DEFINE(sdp_fifo);
 K_HEAP_DEFINE(sdp_elem_pool, CONFIG_SDP_POOL_SIZE);
 K_MUTEX_DEFINE(sdp_sp_alloc_mtx);
 
-/* SDP statistics */
+/* Sample pool statistics */
 struct sdp_sp_stats {
 	int32_t bytes_alloc;
 	uint32_t bytes_alloc_total;

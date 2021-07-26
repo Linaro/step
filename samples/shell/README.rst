@@ -54,7 +54,7 @@ The **LPCXpresso55S69** from NXP is used below:
     $ ninja
     $ ninja flash
 
-To do the same thing using ``west`, run:
+To do the same thing using ``west``, run:
 
 .. code-block:: console
 
@@ -71,7 +71,7 @@ This application will normally output text resembling the following:
     Type 'sdp help' for command options.
 
     1.) Populate the processor registry: sdp add
-    2.) Publish measurement(s):          sdp msg
+    2.) Publish measurement(s):          sdp pub
     3.) Check results:                   sdp stats
 
     uart:~$ sdp add
@@ -104,7 +104,7 @@ This application will normally output text resembling the following:
     End of chain: yes
 
     [01:19:25.420,000] <dbg> proc_mgr.sdp_pm_register: Registering node/chain (handle 00, pri 00)
-    uart:~$ sdp msg
+    uart:~$ sdp pub
     Published 1 measurement:
     Filter:           0x04000229
     base_type:      0x29 (41)

@@ -41,16 +41,20 @@ config SDP_FILTER_CACHE
 	help
 		Enables caching of filter evaluation results when determining if a
 		processor or sink node should be assigned an incoming datasample.
+		Enabling filter evaluation caching may help avoid expensive reptitive
+		'evaluate' calls.
 
 config SDP_FILTER_CACHE_DEPTH
 	int "Records to store in the filter evaluation cache FIFO."
-	default 20
+	default 16
 	help
 		Indicates the number of filter evaluations to maintain in the cache
-		FIFO. If previously uncached values are generated, and the cache is
-		full, the oldest value will be removed from the cache. Each cache
-		entry requires 6 bytes of memory (filter value = 4, node id = 1,
-		result = 1).
+		FIFO. If previously uncached values are encountered, and the cache is
+		full, the least recently used value will be removed from the cache.
+		Each cache entry requires 20 bytes of memory. The ideal cache size is
+		the number of processor nodes (or node chains) in the registry,
+		multiplied by the number of unique measurement 'filter' values to be
+		processed.
 
 config SDP_PROC_MGR_NODE_LIMIT
 	int "Maximum number of processor nodes that can be registered."

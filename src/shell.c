@@ -12,6 +12,7 @@
 #include <sdp/measurement/measurement.h>
 #include <sdp/sample_pool.h>
 #include <sdp/proc_mgr.h>
+#include <sdp/cache.h>
 
 #if CONFIG_SDP_SHELL
 
@@ -191,7 +192,7 @@ sdp_shell_cmd_test_clr(const struct shell *shell, size_t argc, char **argv)
 }
 
 static int
-sdp_shell_cmd_test_msg(const struct shell *shell, size_t argc, char **argv)
+sdp_shell_cmd_test_pub(const struct shell *shell, size_t argc, char **argv)
 {
 	ARG_UNUSED(argc);
 	ARG_UNUSED(argv);
@@ -293,6 +294,23 @@ sdp_shell_cmd_test_pool(const struct shell *shell, size_t argc, char **argv)
 
 	return 0;
 }
+
+#if CONFIG_SDP_FILTER_CACHE
+static int
+sdp_shell_cmd_test_cache(const struct shell *shell, size_t argc, char **argv)
+{
+	ARG_UNUSED(argc);
+	ARG_UNUSED(argv);
+
+	shell_print(shell, "Cache slots:\n");
+	sdp_cache_print();
+	shell_print(shell, "\nStats:\n");
+	sdp_cache_print_stats();
+
+	return 0;
+}
+#endif
+
 /* Subcommand array for "sdp" (level 1). */
 SHELL_STATIC_SUBCMD_SET_CREATE(
 	sub_sdp,
@@ -302,12 +320,16 @@ SHELL_STATIC_SUBCMD_SET_CREATE(
 	SHELL_CMD(add, NULL, "Populate proc. registry", sdp_shell_cmd_test_add),
 	/* 'clr' command handler. */
 	SHELL_CMD(clr, NULL, "Clear proc. registry", sdp_shell_cmd_test_clr),
-	/* 'msg' command handler. */
-	SHELL_CMD(msg, NULL, "Publish a measurement", sdp_shell_cmd_test_msg),
+	/* 'pub' command handler. */
+	SHELL_CMD(pub, NULL, "Publish a measurement", sdp_shell_cmd_test_pub),
 	/* 'stats' command handler. */
 	SHELL_CMD(stats, NULL, "Display processing stats", sdp_shell_cmd_test_stats),
 	/* 'pool' command handler. */
 	SHELL_CMD(pool, NULL, "Display meas. pool stats", sdp_shell_cmd_test_pool),
+#if CONFIG_SDP_FILTER_CACHE
+	/* 'cache' command handler. */
+	SHELL_CMD(cache, NULL, "Display cache stats", sdp_shell_cmd_test_cache),
+#endif
 
 	/* Array terminator. */
 	SHELL_SUBCMD_SET_END

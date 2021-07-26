@@ -9,6 +9,7 @@ zephyr_include_directories(include)
 
 zephyr_library()
 zephyr_library_sources(
+    src/cache.c
     src/filter.c
     src/measurement.c
     src/node.c

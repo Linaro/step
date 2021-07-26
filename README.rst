@@ -57,7 +57,7 @@ Sample Output
    Type 'sdp help' for command options.
    
     1.) Populate the processor registry: sdp add
-    2.) Publish measurement(s):          sdp msg
+    2.) Publish measurement(s):          sdp pub
     3.) Check results:                   sdp stats
    
     uart:~$ sdp add
