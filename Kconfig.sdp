@@ -22,12 +22,11 @@ config SDP
 
 if SDP
 
-config SDP_SHELL
-	bool "Enable the 'sdp' shell command"
+config SDP_INSTRUMENTATION
+	bool "Enable basic code insrumentation for SDP"
 	default n
-	depends on SHELL
 	help
-	  Enabling this option will make the 'sdp' shell command available.
+	  Enables basic code instrumentation in sdp.
 
 config SDP_POOL_SIZE
 	int "Measurement pool heap size (in bytes)"
@@ -37,12 +36,14 @@ config SDP_POOL_SIZE
 
 config SDP_FILTER_CACHE
 	bool "Enable filter evaluation caching"
-	default y
+	default n
 	help
 		Enables caching of filter evaluation results when determining if a
 		processor or sink node should be assigned an incoming datasample.
 		Enabling filter evaluation caching may help avoid expensive reptitive
-		'evaluate' calls.
+		'evaluate' calls, but can also have a negative effect since adding
+		records to the cache has some overhead. Instrumention tests should be
+		performed to decide if caching is beneficial or not.
 
 config SDP_FILTER_CACHE_DEPTH
 	int "Records to store in the filter evaluation cache FIFO."

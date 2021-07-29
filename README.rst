@@ -1,7 +1,60 @@
 .. _sensor_pipeline:
 
-Secure Data Pipeline (SDP) for Zephyr
-#####################################
+Composable Metrology Stack (COMETS) for Zephyr
+##############################################
+
+
+OATS    = Open Asynchronous Telemetry Stack
+OCTS    = Open Composable Telemetry Stack
+ComPAcT = Composable Pipeline for Asynchronous Telemetry
+CATS    = Composable Asynchronous Telemetry Stack
+STeP    = Secure/Structured Telemetry Pipeline
+COMETS  = Composable Metrology Stack
+
+PACT    = Pipeline for Asynchronous Composable Telemetry
+ACTP    = Asynchronous Composable Telemetry Pipeline
+CATP    = Composable Asynchronous Telemetry Pipeline
+ACT     = Asynchronous Composable Telemetry
+ACTS    = Asynchronous Composable Telemetry Stack
+ACTive  = Asynchronous Composable Telemetry ive???
+ACTion  = Asynchronous Composable Telemetry ion???
+FACTS   = Free Asynchronous Composable Telemetry Stack
+impact  = im?? Pipeline for Asynchronous Composable Telemetry
+ExACT   = Extensible Asynchronous Composable Telemetry
+React   = Re??? Asynchronous Composable Telemetry
+React   = Re??? Asynchronous Composable Telemetry
+OATS    = Open Asynchronous Telemetry Stack
+...OTS  = Open Telemetry Stack
+SCOTS   = Secure/Structured Composable Open Telemetry Stack
+...OTF  = Open Telemetry Framework
+...POT  = Pipeline for Open Telemetry
+DePOT   = Decompoosable Pipeline for Open Telemetry
+...TeP  = Telemetry Pipeline
+ReNoTe  = Recomposable Node-Based Telemetry
+ReMoTe  = Recomposable Meaurement Telemetry
+....ST  = ?? Secure Telemetry / Structured Telemetry
+..PiST  = ?? Pipeline for Secure Telemetry (NOT Rapid!, eeek)
+?? POST = ?? Pipeline for Open Source Telemetry
+?? POST = ?? Pipeline for O??? Secure Telemetry
+OutPOST = OUT?? Pipeline for Open Source Telemetry
+ComPOST = Composable Pipeline for Open Source Telemetry 
+CompOST = Composable Open Stack for Telemetry 
+CoMP    = Composable Measurement/Metrology Pipeline
+COMP    = Composable Open Metrology Pipeline
+COMP    = Composable Open Measurement Pipeline
+ComPAcT = Composable Pipeline for Asynchronous Telemetry
+CoMetS  = Composable Metrology Stack
+ComET   = Composable Embedded Telemetry
+ComETS  = Composable Embedded Telemetry Stack
+ComETS  = Composable Embedded Telemetry System
+ComMIt  = Composable Measurement Infrastructure
+Compass = Composable Architecture for Secure Sensors
+CATS    = Composable Asynchronous Telemetry Stack
+STeP    = Secure/Structured Telemetry Pipeline
+TeSt    = ?? Telemetry Stack
+TOAST   = Trusted Open Soorce Asynchronous Stack for Telemetry
+TOAST   = T? for Open Source Asynchronous Secure Telemetry
+CoAsT   = Composable Asynchronous Telemetry
 
 Overview
 ********

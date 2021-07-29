@@ -12,6 +12,7 @@
 #include <sdp/proc_mgr.h>
 #include <sdp/sample_pool.h>
 #include <sdp/cache.h>
+#include <sdp/instrumentation.h>
 
 #define LOG_LEVEL LOG_LEVEL_DBG
 LOG_MODULE_REGISTER(proc_mgr);
@@ -46,6 +47,18 @@ struct sdp_pm_node_record {
 	struct {
 		uint16_t enabled : 1;
 	} flags;
+
+#if CONFIG_SDP_INSTRUMENTATION
+	/**
+	 * @brief Runtime spent inside the node or node chain.
+	 */
+	uint32_t runtime_ns;
+
+	/**
+	 * @brief Number of times the node or node chain has run.
+	 */
+	uint32_t runs;
+#endif
 };
 
 /* Processor node registry. This static array provides a fixed location in
@@ -188,15 +201,15 @@ int sdp_pm_process(struct sdp_measurement *mes, int *matches, bool free)
 {
 	int rc = 0;
 	int match = 0;
+	int match_count = 0;
 	int cached = 0;
 	struct sdp_pm_node_record *pnode;
 	struct sdp_pm_node_record *tmp;
 	struct sdp_node *n;
 
-	/* Track the number of filter matches in node registry. */
-	if (matches != NULL) {
-		*matches = 0;
-	}
+#if CONFIG_SDP_INSTRUMENTATION
+	uint32_t instr = 0;
+#endif
 
 	/* Lock registry access during processing. */
 	k_mutex_lock(&sdp_pm_reg_access, K_FOREVER);
@@ -212,6 +225,11 @@ int sdp_pm_process(struct sdp_measurement *mes, int *matches, bool free)
 		/* Skip disabled nodes. */
 		if (pnode->flags.enabled) {
 			n = pnode->node;
+
+#if CONFIG_SDP_INSTRUMENTATION
+			/* Start total runtime INSTR timer. */
+			SDP_INSTR_START(instr);
+#endif
 
 #if CONFIG_SDP_FILTER_CACHE
 			/* Check filter cache for cached match results. */
@@ -263,20 +281,31 @@ int sdp_pm_process(struct sdp_measurement *mes, int *matches, bool free)
 				} while (n != NULL);
 			}
 
-			/* Track the match count if requested. */
-			if (match && (matches != NULL)) {
-				*matches += 1;
+			/* Track the total match count. */
+			if (match) {
+				match_count += 1;
 			}
+
+#if CONFIG_SDP_INSTRUMENTATION
+			/* Stop total runtime INSTR timer. */
+			SDP_INSTR_STOP(instr);
+			pnode->runtime_ns += instr;
+			pnode->runs++;
+#endif
 		}
 	}
 
 	/* No matches ... warn that sample will be lost. */
-	/* ToDo: This will only be caught if matches != NULL ... change logic. */
-	if ((matches != NULL) && (*matches == 0)) {
+	if (match_count == 0) {
 		LOG_WRN("Measurement lost: no processor node(s) matched");
 	}
 
 abort:
+	/* Return the number of filter matches in node registry if requested. */
+	if (matches != NULL) {
+		*matches = match_count;
+	}
+	
 	/* Free measurement from shared memory if requested. */
 	if (free) {
 		sdp_sp_free(mes);
@@ -389,6 +418,14 @@ int sdp_pm_list(void)
 			n = n->next;
 		} while (n != NULL);
 		printk("\n");
+#if CONFIG_SDP_INSTRUMENTATION
+		/* Note: This value is strictly limited to node evaluation inside the
+		 * 'sdp_pm_process' function, and doesn't take into account the
+		 * additional processing overhead in the larger pipeline. */
+		printk("     processing time: %d ns (%d avg, %d runs)\n",
+			pnode->runtime_ns, 
+			pnode->runtime_ns / pnode->runs, pnode->runs);
+#endif
 	}
 
 abort:
