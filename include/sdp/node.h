@@ -72,7 +72,7 @@ struct sdp_node_callbacks {
 
 	/**
 	 * @brief Callback to fire when the filter engine has indicated that a
-	 *        match occured. This function allows the node to implement
+	 *        match occurred. This function allows the node to implement
 	 *        further filtering on secondary info or parameters, and
 	 *        returning true or false from this function will override the
 	 *        previous 'match' value.

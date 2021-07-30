@@ -32,14 +32,14 @@ struct sdp_pm_node_record {
 	struct sdp_node *node;
 
 	/**
-	 * @brief Priority level (larger = higher priority).
-	 */
-	uint8_t priority;
-
-	/**
 	 * @brief Handle associated with this processor node in the proc. manager.
 	 */
-	uint8_t handle;
+	uint32_t handle;
+
+	/**
+	 * @brief Priority level (larger = higher priority).
+	 */
+	uint16_t priority;
 
 	/**
 	 * @brief Config flags for this node in the linked list.
@@ -83,7 +83,7 @@ K_THREAD_DEFINE(sdp_pm_tid, CONFIG_SDP_PROC_MGR_STACK_SIZE,
 /* Registry should be locked during processing or when modifying it. */
 K_MUTEX_DEFINE(sdp_pm_reg_access);
 
-int sdp_pm_register(struct sdp_node *node, uint8_t pri, uint8_t *handle)
+int sdp_pm_register(struct sdp_node *node, uint16_t pri, uint32_t *handle)
 {
 	int rc = 0;
 	struct sdp_pm_node_record *pnode;
@@ -94,7 +94,7 @@ int sdp_pm_register(struct sdp_node *node, uint8_t pri, uint8_t *handle)
 	k_mutex_lock(&sdp_pm_reg_access, K_FOREVER);
 
 	if (sdp_pm_handle_counter == CONFIG_SDP_PROC_MGR_NODE_LIMIT) {
-		*handle = 0;
+		*handle = -1;	/* 0xFFFFFFFF */
 		rc = -ENOMEM;
 		LOG_ERR("Registration failed: node limit reached");
 		goto err;
@@ -103,7 +103,7 @@ int sdp_pm_register(struct sdp_node *node, uint8_t pri, uint8_t *handle)
 	/* Assign and increment the handle counter. */
 	*handle = sdp_pm_handle_counter++;
 
-	LOG_DBG("Registering node/chain (handle %02d, pri %02d)", *handle, pri);
+	LOG_DBG("Registering node/chain (handle %d, pri %d)", *handle, pri);
 
 	/* Clear the processor node record placeholder. */
 	memset(&sdp_pm_nodes[*handle], 0, sizeof(struct sdp_pm_node_record));
@@ -117,6 +117,7 @@ int sdp_pm_register(struct sdp_node *node, uint8_t pri, uint8_t *handle)
 	SYS_SLIST_FOR_EACH_CONTAINER_SAFE(&pm_node_slist, pnode, tmp, snode) {
 		if ((match == NULL) && (pri > pnode->priority)) {
 			match = pnode;
+			break;
 		}
 		/* If no match, track current node for next iteration. */
 		if (match == NULL) {
@@ -184,7 +185,7 @@ int sdp_pm_clear(void)
 	sdp_pm_handle_counter = 0;
 
 	/* Free the node record placeholders. */
-	for (uint8_t i = 0; i < CONFIG_SDP_PROC_MGR_NODE_LIMIT - 1; i++) {
+	for (uint8_t i = 0; i < CONFIG_SDP_PROC_MGR_NODE_LIMIT; i++) {
 		memset(&sdp_pm_nodes[i], 0, sizeof(struct sdp_pm_node_record));
 	}
 
@@ -279,10 +280,8 @@ int sdp_pm_process(struct sdp_measurement *mes, int *matches, bool free)
 					/* Move to next node in the chain, if present. */
 					n = n->next;
 				} while (n != NULL);
-			}
 
-			/* Track the total match count. */
-			if (match) {
+				/* Track the total match count. */
 				match_count += 1;
 			}
 
@@ -362,7 +361,7 @@ static void sdp_pm_poll_thread(bool free)
 }
 #endif
 
-int sdp_pm_disable_node(uint8_t handle)
+int sdp_pm_disable_node(uint32_t handle)
 {
 	int rc = 0;
 
@@ -379,7 +378,7 @@ err:
 	return rc;
 }
 
-int sdp_pm_enable_node(uint8_t handle)
+int sdp_pm_enable_node(uint32_t handle)
 {
 	int rc = 0;
 
@@ -410,7 +409,7 @@ int sdp_pm_list(void)
 
 	/* Cycle through registered nodes. */
 	SYS_SLIST_FOR_EACH_CONTAINER_SAFE(&pm_node_slist, pnode, tmp, snode) {
-		printk("  %02d (pri:%02d):", pnode->handle, pnode->priority);
+		printk("  %d (pri:%d):", pnode->handle, pnode->priority);
 		struct sdp_node *n = pnode->node;
 
 		do {

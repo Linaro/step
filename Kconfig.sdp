@@ -63,8 +63,9 @@ config SDP_PROC_MGR_NODE_LIMIT
 	range 1 255
 	help
 	  Determines the maximum number of processor nodes than can be registered
-	  in the processor manager. Requires SDP_PROC_MGR_NODE_LIMIT * 12 bytes
-	  memory.
+	  in the processor manager. Requires SDP_PROC_MGR_NODE_LIMIT * 16 bytes
+	  memory wihout instrumentation, or SDP_PROC_MGR_NODE_LIMIT * 24 if
+	  CONFIG_SDP_INSTRUMENTATION is enabled.
 
 config SDP_PROC_MGR_POLL_RATE
 	int "Rate in Hz to poll the measurement pool."

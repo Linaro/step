@@ -18,7 +18,7 @@
 void test_proc_reg_limit(void)
 {
 	int rc;
-	uint8_t handle;
+	uint32_t handle;
 
 	/* Make sure the polling thread is stopped. */
 	rc = sdp_pm_suspend();
@@ -38,7 +38,7 @@ void test_proc_reg_limit(void)
 	/* Try to add one more. */
 	rc = sdp_pm_register(sdp_test_data_procnode_chain, 0, &handle);
 	zassert_equal(rc, -ENOMEM, NULL);
-	zassert_equal(handle, 0, NULL);
+	zassert_equal(handle, -1, NULL);
 
 	/* Clear the node registry. */
 	rc = sdp_pm_clear();
@@ -52,7 +52,7 @@ void test_proc_reg_limit(void)
 void test_proc_manual(void)
 {
 	int rc;
-	uint8_t handle;
+	uint32_t handle;
 	int msgcnt;
 
 	struct sdp_measurement *mes;
@@ -123,7 +123,7 @@ void test_proc_manual(void)
 void test_proc_thread(void)
 {
 	int rc;
-	uint8_t handle;
+	uint32_t handle;
 	int msgcnt;
 
 	struct sdp_measurement *mes;

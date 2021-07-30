@@ -207,7 +207,7 @@ sdp_shell_cmd_test_add(const struct shell *shell, size_t argc, char **argv)
 	ARG_UNUSED(argc);
 	ARG_UNUSED(argv);
 
-	uint8_t handle = 0;
+	uint32_t handle = 0;
 
 	/* Append a new instance of the node chain. */
 	SDP_INSTR_START(_instr);

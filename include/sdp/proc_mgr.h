@@ -40,11 +40,12 @@ extern "C" {
  *
  * @param node      The processor node to register with the manager.
  * @param pri       The priority level for this node (larger = higher priority).
- * @param handle    The handle the node has been registered under.
+ * @param handle    The handle the node has been registered under. Set to
+ *                  -1 (0xFFFFFFFF) if node registration limit has been reached.
  *
  * @return int  0 on success, negative error code on failure.
  */
-int sdp_pm_register(struct sdp_node *node, uint8_t pri, uint8_t *handle);
+int sdp_pm_register(struct sdp_node *node, uint16_t pri, uint32_t *handle);
 
 /**
  * @brief Initialises the timer thread used to periodically poll for queued
@@ -111,7 +112,7 @@ int sdp_pm_poll(int *mcnt, bool free);
  *
  * @return int  0 on success, negative error code on failure.
  */
-int sdp_pm_disable_node(uint8_t handle);
+int sdp_pm_disable_node(uint32_t handle);
 
 /**
  * @brief Enables a registered processor node.
@@ -120,7 +121,7 @@ int sdp_pm_disable_node(uint8_t handle);
  *
  * @return int  0 on success, negative error code on failure.
  */
-int sdp_pm_enable_node(uint8_t handle);
+int sdp_pm_enable_node(uint32_t handle);
 
 /**
  * @brief Displays a list of registered processor nodes in the order which
