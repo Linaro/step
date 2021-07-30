@@ -83,7 +83,10 @@ K_THREAD_DEFINE(sdp_pm_tid, CONFIG_SDP_PROC_MGR_STACK_SIZE,
 /* Registry should be locked during processing or when modifying it. */
 K_MUTEX_DEFINE(sdp_pm_reg_access);
 
-int sdp_pm_register(struct sdp_node *node, uint8_t pri, uint8_t *handle)
+/* `handle` is a uint8_t pointer and it'd cause overflow when 256th node
+    is registered.
+*/
+int sdp_pm_register(struct sdp_node *node, uint8_t pri, uint32_t *handle)
 {
 	int rc = 0;
 	struct sdp_pm_node_record *pnode;
@@ -94,7 +97,8 @@ int sdp_pm_register(struct sdp_node *node, uint8_t pri, uint8_t *handle)
 	k_mutex_lock(&sdp_pm_reg_access, K_FOREVER);
 
 	if (sdp_pm_handle_counter == CONFIG_SDP_PROC_MGR_NODE_LIMIT) {
-		*handle = 0;
+		// `handle` 0 is a valid handle. May be set it to -1?
+		*handle = -1;
 		rc = -ENOMEM;
 		LOG_ERR("Registration failed: node limit reached");
 		goto err;
@@ -117,6 +121,8 @@ int sdp_pm_register(struct sdp_node *node, uint8_t pri, uint8_t *handle)
 	SYS_SLIST_FOR_EACH_CONTAINER_SAFE(&pm_node_slist, pnode, tmp, snode) {
 		if ((match == NULL) && (pri > pnode->priority)) {
 			match = pnode;
+			// Break the loop when a match is found
+			break;
 		}
 		/* If no match, track current node for next iteration. */
 		if (match == NULL) {
@@ -184,7 +190,8 @@ int sdp_pm_clear(void)
 	sdp_pm_handle_counter = 0;
 
 	/* Free the node record placeholders. */
-	for (uint8_t i = 0; i < CONFIG_SDP_PROC_MGR_NODE_LIMIT - 1; i++) {
+	// Since we are checking < instead of <=
+	for (uint8_t i = 0; i < CONFIG_SDP_PROC_MGR_NODE_LIMIT; i++) {
 		memset(&sdp_pm_nodes[i], 0, sizeof(struct sdp_pm_node_record));
 	}
 
@@ -279,12 +286,15 @@ int sdp_pm_process(struct sdp_measurement *mes, int *matches, bool free)
 					/* Move to next node in the chain, if present. */
 					n = n->next;
 				} while (n != NULL);
-			}
 
-			/* Track the total match count. */
-			if (match) {
+				/* Track the total match count. */
 				match_count += 1;
 			}
+
+			// /* Track the total match count. */
+			// if (match) {
+			// 	match_count += 1;
+			// }
 
 #if CONFIG_SDP_INSTRUMENTATION
 			/* Stop total runtime INSTR timer. */
@@ -368,7 +378,10 @@ int sdp_pm_disable_node(uint8_t handle)
 
 	LOG_DBG("Disabling processor node %d:", handle);
 
-	if (handle > sdp_pm_handle_counter) {
+	// Should check negative values
+	if ((handle > sdp_pm_handle_counter) ||
+		(handle < 0)
+	   ) {
 		LOG_ERR("Invalid handle: %d", handle);
 		rc = -EINVAL;
 		goto err;
@@ -385,7 +398,10 @@ int sdp_pm_enable_node(uint8_t handle)
 
 	LOG_DBG("Enabling processor node %d:", handle);
 
-	if (handle > sdp_pm_handle_counter) {
+	// Should check negative values
+	if ((handle > sdp_pm_handle_counter) ||
+		(handle < 0)
+	   ) {
 		LOG_ERR("Invalid handle: %d", handle);
 		rc = -EINVAL;
 		goto err;
