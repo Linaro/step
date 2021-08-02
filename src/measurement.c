@@ -4,12 +4,12 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-#include <sdp/filter.h>
-#include <sdp/measurement/measurement.h>
+#include <step/filter.h>
+#include <step/measurement/measurement.h>
 
 #include <sys/printk.h>
 
-void sdp_mes_print(struct sdp_measurement *mes)
+void step_mes_print(struct step_measurement *mes)
 {
 	printk("Filter:           0x%08X\n", mes->header.filter_bits);
 	printk("  base_type:      0x%02X (%u)\n", mes->header.filter.base_type, mes->header.filter.base_type);

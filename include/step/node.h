@@ -4,17 +4,17 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-#ifndef SDP_NODE_H__
-#define SDP_NODE_H__
+#ifndef STEP_NODE_H__
+#define STEP_NODE_H__
 
-#include <sdp/sdp.h>
-#include <sdp/filter.h>
-#include <sdp/measurement/measurement.h>
+#include <step/step.h>
+#include <step/filter.h>
+#include <step/measurement/measurement.h>
 
 /**
  * @defgroup NODE Nodes
- * @ingroup sdp_api
- * @brief API header file for SDP processor and sink nodes.
+ * @ingroup step_api
+ * @brief API header file for STeP processor and sink nodes.
  * @{
  */
 
@@ -23,42 +23,42 @@ extern "C" {
 #endif
 
 /**
- * @typedef sdp_node_callback_t
+ * @typedef step_node_callback_t
  * @brief Generic callback prototype for node implementations.
  *
- * @param mes       Pointer to the sdp_measurement being used.
+ * @param mes       Pointer to the step_measurement being used.
  * @param cfg       Pointer to the config struct/value being used.
  *
  * @return 0 on success, negative error code on failure
  */
-typedef int (*sdp_node_callback_t)(struct sdp_measurement *mes, void *cfg);
+typedef int (*step_node_callback_t)(struct step_measurement *mes, void *cfg);
 
 /**
- * @typedef sdp_node_evaluate_t
+ * @typedef step_node_evaluate_t
  * @brief Callback prototype for node filter evaluation.
  *
- * @param mes       Pointer to the sdp_measurement being used.
+ * @param mes       Pointer to the step_measurement being used.
  * @param cfg       Pointer to the config struct/value being used.
  *
  * @return 1 on a match, 0 on match failure.
  */
-typedef bool (*sdp_node_evaluate_t)(struct sdp_measurement *mes, void *cfg);
+typedef bool (*step_node_evaluate_t)(struct step_measurement *mes, void *cfg);
 
 /**
- * @typedef sdp_node_error_t
+ * @typedef step_node_error_t
  * @brief Callback prototype when a node fails to successfully run.
  *
- * @param mes       Pointer to the sdp_measurement being used.
+ * @param mes       Pointer to the step_measurement being used.
  * @param cfg       Pointer to the config struct/value being used.
  * @param error     Negative error code produced during node execution.
  */
-typedef void (*sdp_node_error_t)(struct sdp_measurement *mes, void *cfg,
+typedef void (*step_node_error_t)(struct step_measurement *mes, void *cfg,
 				 int error);
 
 /**
  * @brief Optional callback handlers for nodes.
  */
-struct sdp_node_callbacks {
+struct step_node_callbacks {
 	/**
 	 * @brief Callback to fire when the node is being evaluated based on
 	 *        its filter chain. This callback allows the node implementation
@@ -68,7 +68,7 @@ struct sdp_node_callbacks {
 	 * @note  Set this to NULL to allow the default filter engine to evaluate
 	 *        whether there is a match or not.
 	 */
-	sdp_node_evaluate_t evaluate_handler;
+	step_node_evaluate_t evaluate_handler;
 
 	/**
 	 * @brief Callback to fire when the filter engine has indicated that a
@@ -79,7 +79,7 @@ struct sdp_node_callbacks {
 	 *
 	 * @note  Set this to NULL to accept previous filter evaluation.
 	 */
-	sdp_node_evaluate_t matched_handler;
+	step_node_evaluate_t matched_handler;
 
 	/**
 	 * @brief Callback to fire when the node is triggered. This fires
@@ -91,23 +91,23 @@ struct sdp_node_callbacks {
 	 *        executing yet. This callback can be used to prepare the data
 	 *        for processing, or implement any statistical tracking required.
 	 */
-	sdp_node_callback_t start_handler;
+	step_node_callback_t start_handler;
 
 	/**
 	 * @brief Callback to implement the node's execution logic.
 	 */
-	sdp_node_callback_t run_handler;
+	step_node_callback_t run_handler;
 
 	/**
 	 * @brief Callback to fire when the node has successfully
 	 *        finished execution. This fires after 'run' has terminated.
 	 */
-	sdp_node_callback_t stop_handler;
+	step_node_callback_t stop_handler;
 
 	/**
 	 * @brief Callback to fire when the 'run' command fails.
 	 */
-	sdp_node_error_t error_handler;
+	step_node_error_t error_handler;
 };
 
 /**
@@ -117,7 +117,7 @@ struct sdp_node_callbacks {
  * chain, and to define the node's filter properties to know when it should
  * be executed.
  */
-struct sdp_node {
+struct step_node {
 	/**
 	 * @brief An optional display name for this processor node. Must be
 	 *        NULL-terrminated.
@@ -127,12 +127,12 @@ struct sdp_node {
 	/**
 	 * @brief The filter chain use to determine matches for this node.
 	 */
-	struct sdp_filter_chain filters;
+	struct step_filter_chain filters;
 
 	/**
 	 * @brief Callback handlers for this node.
 	 */
-	struct sdp_node_callbacks callbacks;
+	struct step_node_callbacks callbacks;
 
 	/**
 	 * @brief Config settings for the node. The exact struct or
@@ -144,7 +144,7 @@ struct sdp_node {
 	/**
 	 * @brief Next node in the node chain. Set to NULL if none.
 	 */
-	struct sdp_node *next;
+	struct step_node *next;
 };
 
 /**
@@ -152,7 +152,7 @@ struct sdp_node {
  *
  * @param node The node to display.
  */
-void sdp_node_print(struct sdp_node *node);
+void step_node_print(struct step_node *node);
 
 #ifdef __cplusplus
 }
@@ -162,4 +162,4 @@ void sdp_node_print(struct sdp_node *node);
  * @}
  */
 
-#endif /* SDP_NODE_H_ */
+#endif /* STEP_NODE_H_ */

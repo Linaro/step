@@ -4,13 +4,13 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-#ifndef SDP_H__
-#define SDP_H__
+#ifndef STEP_H__
+#define STEP_H__
 
 #include <stdint.h>
 
 /**
- * @defgroup sdp_api Secure data pipeline (SDP) API
+ * @defgroup step_api Secure telemetry pipeline (STeP) API
  * @{
  */
 
@@ -28,4 +28,4 @@ extern "C" {
  * @}
  */
 
-#endif /* SDP_H_ */
+#endif /* STEP_H_ */

@@ -6,10 +6,10 @@
 
 #include <zephyr.h>
 #include <sys/printk.h>
-#include <sdp/filter.h>
-#include <sdp/node.h>
+#include <step/filter.h>
+#include <step/node.h>
 
-void sdp_node_print(struct sdp_node *node)
+void step_node_print(struct step_node *node)
 {
 	int count = 0;
 
@@ -22,7 +22,7 @@ void sdp_node_print(struct sdp_node *node)
 		}
 
 		/* Filter chain. */
-		sdp_filt_print(&node->filters);
+		step_filt_print(&node->filters);
 
 		/* Callback handlers */
 		printk("Handlers:\n");

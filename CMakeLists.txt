@@ -2,8 +2,8 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 
-if(CONFIG_SDP)
-zephyr_interface_library_named(SDP)
+if(CONFIG_STEP)
+zephyr_interface_library_named(STEP)
 
 zephyr_include_directories(include)
 
@@ -19,6 +19,6 @@ zephyr_library_sources(
     src/src_mgr.c
 )
 
-zephyr_library_link_libraries(SDP)
-target_link_libraries(SDP INTERFACE zephyr_interface)
+zephyr_library_link_libraries(STEP)
+target_link_libraries(STEP INTERFACE zephyr_interface)
 endif()

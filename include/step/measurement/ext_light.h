@@ -4,14 +4,14 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-#ifndef SDP_MEASUREMENT_EXT_LIGHT_H__
-#define SDP_MEASUREMENT_EXT_LIGHT_H__
+#ifndef STEP_MEASUREMENT_EXT_LIGHT_H__
+#define STEP_MEASUREMENT_EXT_LIGHT_H__
 
-#include <sdp/sdp.h>
+#include <step/step.h>
 
 /**
  * @file
- * @brief SDP_MES_TYPE_LIGHT extended type definitions
+ * @brief STEP_MES_TYPE_LIGHT extended type definitions
  * @ingroup MEASUREMENT
  * @{
  */
@@ -21,9 +21,9 @@ extern "C" {
 #endif
 
 /**
- * @brief Extended measurement types for SDP_MES_TYPE_LIGHT (8-bit).
+ * @brief Extended measurement types for STEP_MES_TYPE_LIGHT (8-bit).
  *
- * <b>Radiometric Units (SDP_MES_EXT_TYPE_LIGHT_RADIO_*)</b>
+ * <b>Radiometric Units (STEP_MES_EXT_TYPE_LIGHT_RADIO_*)</b>
  *
  * Electromagentic radiation is characterised by radiometric units, which
  * describe the physical properties of light (the number of photons, photon
@@ -32,7 +32,7 @@ extern "C" {
  * but it clearly exists as a radiometric phenomenon and can be accurately
  * measured, described and analysed for scientifically significant purposes.
  *
- * <b>Photometric Units (SDP_MES_EXT_TYPE_LIGHT_PHOTO_*)</b>
+ * <b>Photometric Units (STEP_MES_EXT_TYPE_LIGHT_PHOTO_*)</b>
  *
  * To characterise light relative to the human eye, we need to use
  * photometric units such as luminous intensity, which represents the
@@ -48,20 +48,20 @@ extern "C" {
  * which is the luminous flux incident per a specific area. Illuminance is
  * measured in lux (which is equal to lm/m^2).
  */
-enum sdp_mes_ext_light {
-	SDP_MES_EXT_TYPE_LIGHT_UNDEFINED                = 0,    /**< lux */
+enum step_mes_ext_light {
+	STEP_MES_EXT_TYPE_LIGHT_UNDEFINED                = 0,    /**< lux */
 
 	/* Radiometric units */
-	SDP_MES_EXT_TYPE_LIGHT_RADIO_RADIANT_FLUX       = 0x10, /**< W */
-	SDP_MES_EXT_TYPE_LIGHT_RADIO_RADIANT_INTEN      = 0x11, /**< W/sr */
-	SDP_MES_EXT_TYPE_LIGHT_RADIO_IRRADIANCE         = 0x12, /**< W/m^2 */
-	SDP_MES_EXT_TYPE_LIGHT_RADIO_RADIANCE           = 0x13, /**< W/(sr m^2) */
+	STEP_MES_EXT_TYPE_LIGHT_RADIO_RADIANT_FLUX       = 0x10, /**< W */
+	STEP_MES_EXT_TYPE_LIGHT_RADIO_RADIANT_INTEN      = 0x11, /**< W/sr */
+	STEP_MES_EXT_TYPE_LIGHT_RADIO_IRRADIANCE         = 0x12, /**< W/m^2 */
+	STEP_MES_EXT_TYPE_LIGHT_RADIO_RADIANCE           = 0x13, /**< W/(sr m^2) */
 
 	/* Photometric units */
-	SDP_MES_EXT_TYPE_LIGHT_PHOTO_LUM_FLUX           = 0x20, /**< lm */
-	SDP_MES_EXT_TYPE_LIGHT_PHOTO_LUM_INTEN          = 0x21, /**< lm/sr or cd */
-	SDP_MES_EXT_TYPE_LIGHT_PHOTO_ILLUMINANCE        = 0x22, /**< lm/m^2 or lux */
-	SDP_MES_EXT_TYPE_LIGHT_PHOTO_LUMINANCE          = 0x23, /**< cd/m^2 */
+	STEP_MES_EXT_TYPE_LIGHT_PHOTO_LUM_FLUX           = 0x20, /**< lm */
+	STEP_MES_EXT_TYPE_LIGHT_PHOTO_LUM_INTEN          = 0x21, /**< lm/sr or cd */
+	STEP_MES_EXT_TYPE_LIGHT_PHOTO_ILLUMINANCE        = 0x22, /**< lm/m^2 or lux */
+	STEP_MES_EXT_TYPE_LIGHT_PHOTO_LUMINANCE          = 0x23, /**< cd/m^2 */
 };
 
 #ifdef __cplusplus
@@ -72,4 +72,4 @@ enum sdp_mes_ext_light {
  * @}
  */
 
-#endif /* SDP_MEASUREMENT_EXT_LIGHT_H__ */
+#endif /* STEP_MEASUREMENT_EXT_LIGHT_H__ */

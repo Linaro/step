@@ -4,16 +4,16 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-#ifndef SDP_PROC_MGR_H__
-#define SDP_PROC_MGR_H__
+#ifndef STEP_PROC_MGR_H__
+#define STEP_PROC_MGR_H__
 
-#include <sdp/sdp.h>
-#include <sdp/node.h>
+#include <step/step.h>
+#include <step/node.h>
 
 /**
  * @defgroup PROCMGR Processor Node Management
- * @ingroup sdp_api
- * @brief API header file for SDP processor node manager
+ * @ingroup step_api
+ * @brief API header file for STEP processor node manager
  * @{
  */
 
@@ -45,7 +45,7 @@ extern "C" {
  *
  * @return int  0 on success, negative error code on failure.
  */
-int sdp_pm_register(struct sdp_node *node, uint16_t pri, uint32_t *handle);
+int step_pm_register(struct step_node *node, uint16_t pri, uint32_t *handle);
 
 /**
  * @brief Initialises the timer thread used to periodically poll for queued
@@ -53,7 +53,7 @@ int sdp_pm_register(struct sdp_node *node, uint16_t pri, uint32_t *handle);
  * 
  * @return int 0 on success, negative error code on failure.
  */
-int sdp_pm_resume(void);
+int step_pm_resume(void);
 
 /**
  * @brief Stops the timer thread used to periodically poll for queued
@@ -61,17 +61,17 @@ int sdp_pm_resume(void);
  * 
  * @return int 0 on success, negative error code on failure.
  */
-int sdp_pm_suspend(void);
+int step_pm_suspend(void);
 
 /**
  * @brief Clears the registry, and resets the manager to it's default state.
  *
  * @return int  0 on success, negative error code on failure.
  */
-int sdp_pm_clear(void);
+int step_pm_clear(void);
 
 /**
- * @brief Processes the supplied @ref sdp_measurement using the current
+ * @brief Processes the supplied @ref step_measurement using the current
  *        processor node registry, consuming the measurement and optionally
  *        releasing it from shared memory when completed.
  *
@@ -81,20 +81,20 @@ int sdp_pm_clear(void);
  * be fired in the processor node chain, from top to bottom. Only the first
  * node in a processor node chain is evaluted for a filter match.
  *
- * When this function completes, the supplied @ref sdp_message can optionally
+ * When this function completes, the supplied @ref step_message can optionally
  * be freed from shared memory in the sample pool via the @ref free argument.
  *
- * @param mes       Pointer to the @ref sdp_measurement to parse.
+ * @param mes       Pointer to the @ref step_measurement to parse.
  * @param matches   The number of matches that occured during processing.
  * @param free      If set to true (1), the measurement will be freed
  *                  from shared memory when processing is complete.
  *
  * @return int 0 on success, negative error code on failure.
  */
-int sdp_pm_process(struct sdp_measurement *mes, int *matches, bool free);
+int step_pm_process(struct step_measurement *mes, int *matches, bool free);
 
 /**
- * @brief Polls the sample pool for any incoming sdp_measurement(s) to
+ * @brief Polls the sample pool for any incoming step_measurement(s) to
  *        process, and processes them on a first in, first processed basis.
  *
  * @param mcnt      Pointer to the number of samples read from the sample pool.
@@ -103,7 +103,7 @@ int sdp_pm_process(struct sdp_measurement *mes, int *matches, bool free);
  *
  * @return int 0 on success, negative error code on failure.
  */
-int sdp_pm_poll(int *mcnt, bool free);
+int step_pm_poll(int *mcnt, bool free);
 
 /**
  * @brief Disables a registered processor node.
@@ -112,7 +112,7 @@ int sdp_pm_poll(int *mcnt, bool free);
  *
  * @return int  0 on success, negative error code on failure.
  */
-int sdp_pm_disable_node(uint32_t handle);
+int step_pm_disable_node(uint32_t handle);
 
 /**
  * @brief Enables a registered processor node.
@@ -121,7 +121,7 @@ int sdp_pm_disable_node(uint32_t handle);
  *
  * @return int  0 on success, negative error code on failure.
  */
-int sdp_pm_enable_node(uint32_t handle);
+int step_pm_enable_node(uint32_t handle);
 
 /**
  * @brief Displays a list of registered processor nodes in the order which
@@ -129,7 +129,7 @@ int sdp_pm_enable_node(uint32_t handle);
  *
  * @return int
  */
-int sdp_pm_list(void);
+int step_pm_list(void);
 
 #ifdef __cplusplus
 }
@@ -139,4 +139,4 @@ int sdp_pm_list(void);
  * @}
  */
 
-#endif /* SDP_PROC_MGR_H_ */
+#endif /* STEP_PROC_MGR_H_ */

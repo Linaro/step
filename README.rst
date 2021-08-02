@@ -1,7 +1,7 @@
-.. _sensor_pipeline:
+.. _secure_telemetry_pipeline:
 
-Secure Data Pipeline (SDP) for Zephyr
-#####################################
+Secure Telemetry Pipeline (STeP) for Zephyr
+###########################################
 
 Overview
 ********
@@ -9,8 +9,8 @@ Overview
 An experimental data processing pipeline that can be used with any
 :ref:`supported board <boards>`.
 
-Adding sdp to your project via ``west``
-***************************************
+Adding STeP to your project via ``west``
+****************************************
 
 For projects that have been setup using ``west``, you can add a local copy of
 this module by adding the following sections to ``zephyr/west.yml``:
@@ -29,7 +29,7 @@ this module by adding the following sections to ``zephyr/west.yml``:
 
    - name: linaro_sensor_pipeline
      remote: microbuilder
-     path: modules/lib/sdp
+     path: modules/lib/step
      revision: main
 
 3. Save the file, and run ``west update`` from the project root to retrieve the
@@ -43,7 +43,7 @@ This application can be built and executed on QEMU as follows:
 
 .. code-block:: console
 
-   $ west build -p auto -b qemu_cortex_m3 modules/lib/sdp/samples/shell/ -t run
+   $ west build -p auto -b qemu_cortex_m3 modules/lib/step/samples/shell/ -t run
 
 To build for another board, change ``qemu_cortex_m3`` above to that board's
 name, and remove the ``-t run`` appendix.
@@ -54,13 +54,13 @@ Sample Output
 .. code-block:: console
 
    *** Booting Zephyr OS build zephyr-v2.6.0-536-g89212a7fbf5f  ***
-   Type 'sdp help' for command options.
+   Type 'step help' for command options.
    
-    1.) Populate the processor registry: sdp add
-    2.) Publish measurement(s):          sdp pub
-    3.) Check results:                   sdp stats
+    1.) Populate the processor registry: step add
+    2.) Publish measurement(s):          step pub
+    3.) Check results:                   step stats
    
-    uart:~$ sdp add
+    uart:~$ step add
 
 Exit QEMU by pressing :kbd:`CTRL+A` :kbd:`x`.
 
@@ -74,13 +74,13 @@ To run the unit tests for this module, you can run ``twister`` via:
    $ cd $ZEPHYR_BASE
    $ twister --inline-logs \
      -p qemu_cortex_m3 \
-     -T ../modules/lib/sdp/tests
+     -T ../modules/lib/step/tests
 
 Basic Architecture
 ******************
 
-The Secure Data Pipeline (SDP) aims to implement an extensible workflow to
-process generic sensor data (**measurements**) in a content-agnostic manner.
+The Secure Telemetry Pipeline (STeP) aims to implement an extensible workflow
+to process generic sensor data (**measurements**) in a content-agnostic manner.
 
 In theory, any type of measurement, using any standard SI unit and scale, and
 represented in any standard C type should be expressable in a relatively
@@ -94,7 +94,7 @@ Processor nodes have an optional filter mechanism to indicate which types of
 measurements they process, allowing for processing workflows to be defined on
 a per-measurement-type basis.
 
-The **Secure** in SDP comes from the goal to provide basic secure processor
+The **Secure** in STeP comes from the goal to provide basic secure processor
 nodes out of the box, implementing common operations like: hash, sign,
 compress, encrypt, etc.
 
@@ -109,11 +109,11 @@ A high-level overview of the system is shown here:
 Measurement Values
 ==================
 
-Measurements are the main component in SDP, and traverse the system starting
+Measurements are the main component in STeP, and traverse the system starting
 as inputs from a data source, are processed, and output to an appropriate
 data sink(s).
 
-SDP attempts to compromise between optimising for memory in small embedded
+STeP attempts to compromise between optimising for memory in small embedded
 systems, and trying to describe exactly what this measurement represents in as
 expressive a manner as possible. It aims to balance the ability to precisely
 represent the exact meaning of the measurement, without wasting precious memory
@@ -151,7 +151,7 @@ Measurements make use of the following header, with a 12-byte overhead:
        |    +---------------------------- Timestamp
        +--------------------------------- Reserved (version flag?)
 
-For futher technical details, see ``ìnclude/sdp/measurement.h``, but a
+For futher technical details, see ``ìnclude/step/measurement.h``, but a
 high-level summary of these three key words is shown below:
 
 Filter
@@ -164,10 +164,10 @@ It consists of an 8-bit **Base Measurement Type**, and an optional 8-bit
 **Extended Measurement Type**, which can be used to specialise the meaning of
 the base type.
 
-EXAMPLE: ``SDP_MES_TYPE_LIGHT`` is a base type, which uses a default
-SI unit of ``SDP_MES_UNIT_SI_LUX``. If we wish to represent a different
+EXAMPLE: ``STEP_MES_TYPE_LIGHT`` is a base type, which uses a default
+SI unit of ``STEP_MES_UNIT_SI_LUX``. If we wish to represent a different
 measurement in the same measurement family (base type), we could indicate
-``SDP_MES_EXT_TYPE_LIGHT_RADIO_RADIANCE`` as the extended type, which
+``STEP_MES_EXT_TYPE_LIGHT_RADIO_RADIANCE`` as the extended type, which
 represents a radiometric measurement based on W/(sr m^2).
 
 The **Flags** field indicates other important data about this measurement
@@ -185,7 +185,7 @@ allows for a flexible expression of this information on a per-measurement basis,
 without an excessive amount of overhead.
 
 Standard SI units, scale factors and C types are all represented via enums in
-SDP in the ``include/sdp/measurement`` folder.
+STeP in the ``include/step/measurement`` folder.
 
 SrcLen
 ------
@@ -198,7 +198,7 @@ in steps of power of two (2, 4, 8, 16, 32, etc., samples). This allows for
 better use of system resources by hashing, signing and encrypting larger sets
 of data, with only one 12-byte header as additional memory overhead. The 4-bits
 reserved to indicate that multiple samples are present allows for between 2 and
-32768 samples to be stored in the payload (2^n):
+16384 samples to be stored in the payload (2^n), or an arbitrary value:
 
 ::
 
@@ -209,17 +209,22 @@ reserved to indicate that multiple samples are present allows for between 2 and
    4 = 16 samples             12 = 4096 samples
    5 = 32 samples             13 = 8192 samples
    6 = 64 samples             14 = 16384 samples
-   7 = 128 samples            15 = 32768 samples
+   7 = 128 samples            15 = Arbitrary (see below)
 
-It also contains an 8-bit **Source ID** field, which allows the measurement
-value's source to be identified to retrieve further information about the
-source device, such as it's min/max values, sample rate, gain setting, etc.
+If the sample count is set to 15 (0xF), the number of samples should be
+indicated via an unsigned 32-bit integer in little-endian format at the start
+of the payload, but AFTER the optional timestamp (if present).
+
+This word also contains an 8-bit **Source ID** field, which allows the
+measurement value's source to be identified to retrieve further information
+about the source device, such as it's min/max values, sample rate, gain
+setting, etc.
 
 Measurement Memory Management
 =============================
 
 In order to minimize endless memcpy operations, and deal with variable length
-measurements, all ``sdp_measurement`` records are allocated from a central
+measurements, all ``step_measurement`` records are allocated from a central
 heap memory block managed by the **sample pool manager**.
 
 Allocating and freeing memory imposes a certain amount of rigor on behalf of

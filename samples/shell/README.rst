@@ -1,7 +1,7 @@
-.. _sdp-shell-sample:
+.. step-shell-sample:
 
-Secure Data Pipeline Shell Example
-##################################
+Secure Telemetry Pipeline (STeP) Shell Example
+##############################################
 
 Overview
 ********
@@ -68,13 +68,13 @@ This application will normally output text resembling the following:
 .. code-block:: console
 
     *** Booting Zephyr OS build zephyr-v2.6.0-536-g89212a7fbf5f  ***
-    Type 'sdp help' for command options.
+    Type 'step help' for command options.
 
-    1.) Populate the processor registry: sdp add
-    2.) Publish measurement(s):          sdp pub
-    3.) Check results:                   sdp stats
+    1.) Populate the processor registry: step add
+    2.) Publish measurement(s):          step pub
+    3.) Check results:                   step stats
 
-    uart:~$ sdp add
+    uart:~$ step add
     Node #0
     -------
     Name: Temperature
@@ -103,8 +103,8 @@ This application will normally output text resembling the following:
     error: yes
     End of chain: yes
 
-    [01:19:25.420,000] <dbg> proc_mgr.sdp_pm_register: Registering node/chain (handle 00, pri 00)
-    uart:~$ sdp pub
+    [01:19:25.420,000] <dbg> proc_mgr.step_pm_register: Registering node/chain (handle 00, pri 00)
+    uart:~$ step pub
     Published 1 measurement:
     Filter:           0x04000229
     base_type:      0x29 (41)
@@ -129,7 +129,7 @@ This application will normally output text resembling the following:
     sourceid:       10
 
     Payload: 8B F0 D0 60 00 00 00 42 
-    uart:~$ sdp stats
+    uart:~$ step stats
     evaluate: 0
     matched:  1
     start:    2

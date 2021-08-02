@@ -1,6 +1,6 @@
-# Secure Data Pipeline Unit Tests
+# Secure Telemetry Pipeline (STeP) Unit Tests
 
-This folder contains unit tests for the secure data pipeline library.
+This folder contains unit tests for the secure telemetry pipeline library.
 
 ## Running tests via `twister`
 
@@ -10,7 +10,7 @@ execute the following command to start the test-runner:
 
 ```
 $ cd $ZEPHYR_BASE
-$ ./scripts/twister --inline-logs -p qemu_cortex_m3 -T ../modules/lib/sdp/tests
+$ ./scripts/twister --inline-logs -p qemu_cortex_m3 -T ../modules/lib/step/tests
 ```
 
 > **Tip**: If you wish to have **verbose output** to see any errors in

@@ -6,14 +6,14 @@
 
 #include <zephyr.h>
 #include <shell/shell.h>
-#include <sdp/node.h>
-#include <sdp/measurement/measurement.h>
-#include <sdp/sample_pool.h>
-#include <sdp/proc_mgr.h>
-#include <sdp/cache.h>
-#include <sdp/instrumentation.h>
+#include <step/node.h>
+#include <step/measurement/measurement.h>
+#include <step/sample_pool.h>
+#include <step/proc_mgr.h>
+#include <step/cache.h>
+#include <step/instrumentation.h>
 
-#if CONFIG_SDP_INSTRUMENTATION
+#if CONFIG_STEP_INSTRUMENTATION
 /**
  * @brief Instrumentation counter.
  */
@@ -21,7 +21,7 @@ static uint32_t _instr;
 #endif
 
 /* Struct to track the number of times specific callbacks are fired. */
-struct sdp_node_cb_stats {
+struct step_node_cb_stats {
 	uint32_t evaluate;
 	uint32_t matched;
 	uint32_t start;
@@ -30,9 +30,9 @@ struct sdp_node_cb_stats {
 	uint32_t error;
 };
 
-struct sdp_node_cb_stats cb_stats = { 0 };
+struct step_node_cb_stats cb_stats = { 0 };
 
-bool node_evaluate(struct sdp_measurement *mes, void *cfg)
+bool node_evaluate(struct step_measurement *mes, void *cfg)
 {
 	/* Overrides the filter engine when evaluating this node. */
 	cb_stats.evaluate++;
@@ -40,7 +40,7 @@ bool node_evaluate(struct sdp_measurement *mes, void *cfg)
 	return true;
 }
 
-bool node_matched(struct sdp_measurement *mes, void *cfg)
+bool node_matched(struct step_measurement *mes, void *cfg)
 {
 	/* Fires when the filter engine has indicated a match for this node. */
 	cb_stats.matched++;
@@ -48,7 +48,7 @@ bool node_matched(struct sdp_measurement *mes, void *cfg)
 	return true;
 }
 
-int node_start(struct sdp_measurement *mes, void *cfg)
+int node_start(struct step_measurement *mes, void *cfg)
 {
 	/* Fires before the node runs. */
 	cb_stats.start++;
@@ -56,7 +56,7 @@ int node_start(struct sdp_measurement *mes, void *cfg)
 	return 0;
 }
 
-int node_run(struct sdp_measurement *mes, void *cfg)
+int node_run(struct step_measurement *mes, void *cfg)
 {
 	/* Node logic implementation. */
 	cb_stats.run++;
@@ -64,7 +64,7 @@ int node_run(struct sdp_measurement *mes, void *cfg)
 	return 0;
 }
 
-int node_stop(struct sdp_measurement *mes, void *cfg)
+int node_stop(struct step_measurement *mes, void *cfg)
 {
 	/* Fires when the node has been successfully run. */
 	cb_stats.stop++;
@@ -72,39 +72,39 @@ int node_stop(struct sdp_measurement *mes, void *cfg)
 	return 0;
 }
 
-void node_error(struct sdp_measurement *mes, void *cfg, int error)
+void node_error(struct step_measurement *mes, void *cfg, int error)
 {
 	/* Fires when an error occurs running this node. */
 	cb_stats.error++;
 }
 
 /* Processor node chain. */
-static struct sdp_node test_node_chain_data[] = {
+static struct step_node test_node_chain_data[] = {
 	/* Processor node 0. */
 	{
 		.name = "Temperature",
 		.filters = {
 			.count = 3,
-			.chain = (struct sdp_filter[]){
+			.chain = (struct step_filter[]){
 				{
 					/* Temperature (base type). */
-					.match = SDP_MES_TYPE_TEMPERATURE,
-					.ignore_mask = ~SDP_MES_MASK_FULL_TYPE,
+					.match = STEP_MES_TYPE_TEMPERATURE,
+					.ignore_mask = ~STEP_MES_MASK_FULL_TYPE,
 				},
 				{
 					/* Die temperature. */
-					.op = SDP_FILTER_OP_OR,
-					.match = SDP_MES_TYPE_TEMPERATURE +
-						 (SDP_MES_EXT_TYPE_TEMP_DIE <<
-						  SDP_MES_MASK_EXT_TYPE_POS),
-					.ignore_mask = ~SDP_MES_MASK_FULL_TYPE,
+					.op = STEP_FILTER_OP_OR,
+					.match = STEP_MES_TYPE_TEMPERATURE +
+						 (STEP_MES_EXT_TYPE_TEMP_DIE <<
+						  STEP_MES_MASK_EXT_TYPE_POS),
+					.ignore_mask = ~STEP_MES_MASK_FULL_TYPE,
 				},
 				{
 					/* Make sure timestamp (bits 26-28) = EPOCH32 */
-					.op = SDP_FILTER_OP_AND,
-					.match = (SDP_MES_TIMESTAMP_EPOCH_32 <<
-						  SDP_MES_MASK_TIMESTAMP_POS),
-					.ignore_mask = ~SDP_MES_MASK_TIMESTAMP,
+					.op = STEP_FILTER_OP_AND,
+					.match = (STEP_MES_TIMESTAMP_EPOCH_32 <<
+						  STEP_MES_MASK_TIMESTAMP_POS),
+					.ignore_mask = ~STEP_MES_MASK_TIMESTAMP,
 				},
 			},
 		},
@@ -146,7 +146,7 @@ static struct sdp_node test_node_chain_data[] = {
 };
 
 /* Pointer to node chain. */
-static struct sdp_node *test_node_chain = test_node_chain_data;
+static struct step_node *test_node_chain = test_node_chain_data;
 
 /* Die temperature with 32-bit timestamp payload. */
 static struct {
@@ -158,25 +158,25 @@ static struct {
 };
 
 /* Test die temp measurement, with timestamp. */
-static struct sdp_measurement dietemp_mes = {
+static struct step_measurement dietemp_mes = {
 	/* Measurement metadata. */
 	.header = {
 		/* Filter word. */
 		.filter = {
-			.base_type = SDP_MES_TYPE_TEMPERATURE,
-			.ext_type = SDP_MES_EXT_TYPE_TEMP_DIE,
+			.base_type = STEP_MES_TYPE_TEMPERATURE,
+			.ext_type = STEP_MES_EXT_TYPE_TEMP_DIE,
 			.flags = {
-				.data_format = SDP_MES_FORMAT_NONE,
-				.encoding = SDP_MES_ENCODING_NONE,
-				.compression = SDP_MES_COMPRESSION_NONE,
-				.timestamp = SDP_MES_TIMESTAMP_EPOCH_32,
+				.data_format = STEP_MES_FORMAT_NONE,
+				.encoding = STEP_MES_ENCODING_NONE,
+				.compression = STEP_MES_COMPRESSION_NONE,
+				.timestamp = STEP_MES_TIMESTAMP_EPOCH_32,
 			},
 		},
 		/* SI Unit word. */
 		.unit = {
-			.si_unit = SDP_MES_UNIT_SI_DEGREE_CELSIUS,
-			.ctype = SDP_MES_UNIT_CTYPE_IEEE754_FLOAT32,
-			.scale_factor = SDP_MES_SI_SCALE_NONE,
+			.si_unit = STEP_MES_UNIT_SI_DEGREE_CELSIUS,
+			.ctype = STEP_MES_UNIT_CTYPE_IEEE754_FLOAT32,
+			.scale_factor = STEP_MES_SI_SCALE_NONE,
 		},
 		/* Source/Len word. */
 		.srclen = {
@@ -191,18 +191,18 @@ static struct sdp_measurement dietemp_mes = {
 };
 
 static int
-sdp_shell_cmd_test_list(const struct shell *shell, size_t argc, char **argv)
+step_shell_cmd_test_list(const struct shell *shell, size_t argc, char **argv)
 {
 	ARG_UNUSED(argc);
 	ARG_UNUSED(argv);
 
-	sdp_pm_list();
+	step_pm_list();
 
 	return 0;
 }
 
 static int
-sdp_shell_cmd_test_add(const struct shell *shell, size_t argc, char **argv)
+step_shell_cmd_test_add(const struct shell *shell, size_t argc, char **argv)
 {
 	ARG_UNUSED(argc);
 	ARG_UNUSED(argv);
@@ -210,13 +210,13 @@ sdp_shell_cmd_test_add(const struct shell *shell, size_t argc, char **argv)
 	uint32_t handle = 0;
 
 	/* Append a new instance of the node chain. */
-	SDP_INSTR_START(_instr);
-	sdp_pm_register(test_node_chain, 0, &handle);
-	SDP_INSTR_STOP(_instr);
+	STEP_INSTR_START(_instr);
+	step_pm_register(test_node_chain, 0, &handle);
+	STEP_INSTR_STOP(_instr);
 
-	sdp_node_print(test_node_chain);
+	step_node_print(test_node_chain);
 
-#if CONFIG_SDP_INSTRUMENTATION
+#if CONFIG_STEP_INSTRUMENTATION
 	shell_print(shell, "Took %d ns", _instr);
 #endif
 
@@ -224,17 +224,17 @@ sdp_shell_cmd_test_add(const struct shell *shell, size_t argc, char **argv)
 }
 
 static int
-sdp_shell_cmd_test_clr(const struct shell *shell, size_t argc, char **argv)
+step_shell_cmd_test_clr(const struct shell *shell, size_t argc, char **argv)
 {
 	ARG_UNUSED(argc);
 	ARG_UNUSED(argv);
 
 	/* Reset the processor node registry. */
-	SDP_INSTR_START(_instr);
-	sdp_pm_clear();
-	SDP_INSTR_STOP(_instr);
+	STEP_INSTR_START(_instr);
+	step_pm_clear();
+	STEP_INSTR_STOP(_instr);
 
-#if CONFIG_SDP_INSTRUMENTATION
+#if CONFIG_STEP_INSTRUMENTATION
 	shell_print(shell, "Took %d ns", _instr);
 #endif
 
@@ -242,54 +242,54 @@ sdp_shell_cmd_test_clr(const struct shell *shell, size_t argc, char **argv)
 }
 
 static int
-sdp_shell_cmd_test_pub(const struct shell *shell, size_t argc, char **argv)
+step_shell_cmd_test_pub(const struct shell *shell, size_t argc, char **argv)
 {
 	ARG_UNUSED(argc);
 	ARG_UNUSED(argv);
 
-	struct sdp_measurement *mes_alloc;
+	struct step_measurement *mes_alloc;
 
 	/* WARNING: The instrumention values below are incomplete.
 	 *
 	 * In the case where the polling thread is used to process the measurement
-	 * (CONFIG_SDP_PROC_MGR_POLL_RATE > 0), what is being calculated is the
+	 * (CONFIG_STEP_PROC_MGR_POLL_RATE > 0), what is being calculated is the
 	 * time it takes to allocate memory from the sample pool and assign a new
 	 * measurement to the FIFO. It doesn't include the PROCESSING time for that
 	 * sample once it is removed from the FIFO by the polling thread.
 	 *
-	 * The second code block (CONFIG_SDP_PROC_MGR_POLL_RATE = 0) includes
+	 * The second code block (CONFIG_STEP_PROC_MGR_POLL_RATE = 0) includes
 	 * the execution time when processing the sample, since it happens in the
 	 * same thread.
 	 */
 
-	SDP_INSTR_START(_instr);
+	STEP_INSTR_START(_instr);
 
 	/* Allocate memory for measurement. */
-	mes_alloc = sdp_sp_alloc(dietemp_mes.header.srclen.len);
+	mes_alloc = step_sp_alloc(dietemp_mes.header.srclen.len);
 
 	/* Copy test data into heap-based measurement instance. */
 	memcpy(&(mes_alloc->header), &(dietemp_mes.header),
-	       sizeof(struct sdp_mes_header));
+	       sizeof(struct step_mes_header));
 	memcpy(mes_alloc->payload, dietemp_mes.payload,
 	       dietemp_mes.header.srclen.len);
 
-#if (CONFIG_SDP_PROC_MGR_POLL_RATE > 0)
+#if (CONFIG_STEP_PROC_MGR_POLL_RATE > 0)
 	/* Assign measurement to FIFO so polling thread finds it. */
-	sdp_sp_put(mes_alloc);
+	step_sp_put(mes_alloc);
 #else
 	/* Manually process the measurement when no polling thread is present. */
-	sdp_pm_process(&dietemp_mes, NULL, false);
+	step_pm_process(&dietemp_mes, NULL, false);
 #endif
 
-	SDP_INSTR_STOP(_instr);
+	STEP_INSTR_STOP(_instr);
 
 	shell_print(shell, "Published 1 measurement:");
-	sdp_mes_print(&dietemp_mes);
+	step_mes_print(&dietemp_mes);
 
-#if CONFIG_SDP_INSTRUMENTATION
-#if (CONFIG_SDP_PROC_MGR_POLL_RATE > 0)
+#if CONFIG_STEP_INSTRUMENTATION
+#if (CONFIG_STEP_PROC_MGR_POLL_RATE > 0)
 	shell_print(shell, "Took %d ns, " \
-		"excluding polling thread processing time (run 'sdp list').", _instr);
+		"excluding polling thread processing time (run 'step list').", _instr);
 #else
 	shell_print(shell, "Took %d ns. ", _instr);
 #endif
@@ -299,7 +299,7 @@ sdp_shell_cmd_test_pub(const struct shell *shell, size_t argc, char **argv)
 }
 
 static int
-sdp_shell_cmd_test_stats(const struct shell *shell, size_t argc, char **argv)
+step_shell_cmd_test_stats(const struct shell *shell, size_t argc, char **argv)
 {
 	ARG_UNUSED(argc);
 	ARG_UNUSED(argv);
@@ -315,27 +315,27 @@ sdp_shell_cmd_test_stats(const struct shell *shell, size_t argc, char **argv)
 }
 
 static int
-sdp_shell_cmd_test_pool(const struct shell *shell, size_t argc, char **argv)
+step_shell_cmd_test_pool(const struct shell *shell, size_t argc, char **argv)
 {
 	ARG_UNUSED(argc);
 	ARG_UNUSED(argv);
 
-	sdp_sp_print_stats();
+	step_sp_print_stats();
 
 	return 0;
 }
 
-#if CONFIG_SDP_FILTER_CACHE
+#if CONFIG_STEP_FILTER_CACHE
 static int
-sdp_shell_cmd_test_cache(const struct shell *shell, size_t argc, char **argv)
+step_shell_cmd_test_cache(const struct shell *shell, size_t argc, char **argv)
 {
 	ARG_UNUSED(argc);
 	ARG_UNUSED(argv);
 
 	shell_print(shell, "Cache slots:\n");
-	sdp_cache_print();
+	step_cache_print();
 	shell_print(shell, "\nStats:\n");
-	sdp_cache_print_stats();
+	step_cache_print_stats();
 
 	return 0;
 }
@@ -343,39 +343,39 @@ sdp_shell_cmd_test_cache(const struct shell *shell, size_t argc, char **argv)
 
 void main(void)
 {
-	printk("Type 'sdp help' for command options.\n\n");
-	printk("1.) Populate the processor registry: sdp add\n");
-	printk("2.) Publish measurement(s):          sdp msg\n");
-	printk("3.) Check results:                   sdp stats");
+	printk("Type 'step help' for command options.\n\n");
+	printk("1.) Populate the processor registry: step add\n");
+	printk("2.) Publish measurement(s):          step msg\n");
+	printk("3.) Check results:                   step stats");
 
 	while (1) {
 		k_sleep(K_FOREVER);
 	}
 }
 
-/* Subcommand array for "sdp" (level 1). */
+/* Subcommand array for "step" (level 1). */
 SHELL_STATIC_SUBCMD_SET_CREATE(
-	sub_sdp,
+	sub_step,
 	/* 'list' command handler. */
-	SHELL_CMD(list, NULL, "Display proc. registry", sdp_shell_cmd_test_list),
+	SHELL_CMD(list, NULL, "Display proc. registry", step_shell_cmd_test_list),
 	/* 'add' command handler. */
-	SHELL_CMD(add, NULL, "Populate proc. registry", sdp_shell_cmd_test_add),
+	SHELL_CMD(add, NULL, "Populate proc. registry", step_shell_cmd_test_add),
 	/* 'clr' command handler. */
-	SHELL_CMD(clr, NULL, "Clear proc. registry", sdp_shell_cmd_test_clr),
+	SHELL_CMD(clr, NULL, "Clear proc. registry", step_shell_cmd_test_clr),
 	/* 'pub' command handler. */
-	SHELL_CMD(pub, NULL, "Publish a measurement", sdp_shell_cmd_test_pub),
+	SHELL_CMD(pub, NULL, "Publish a measurement", step_shell_cmd_test_pub),
 	/* 'stats' command handler. */
-	SHELL_CMD(stats, NULL, "Display node cb stats", sdp_shell_cmd_test_stats),
+	SHELL_CMD(stats, NULL, "Display node cb stats", step_shell_cmd_test_stats),
 	/* 'pool' command handler. */
-	SHELL_CMD(pool, NULL, "Display meas. pool stats", sdp_shell_cmd_test_pool),
-#if CONFIG_SDP_FILTER_CACHE
+	SHELL_CMD(pool, NULL, "Display meas. pool stats", step_shell_cmd_test_pool),
+#if CONFIG_STEP_FILTER_CACHE
 	/* 'cache' command handler. */
-	SHELL_CMD(cache, NULL, "Display cache stats", sdp_shell_cmd_test_cache),
+	SHELL_CMD(cache, NULL, "Display cache stats", step_shell_cmd_test_cache),
 #endif
 
 	/* Array terminator. */
 	SHELL_SUBCMD_SET_END
 	);
 
-/* Root command "sdp" (level 0). */
-SHELL_CMD_REGISTER(sdp, &sub_sdp, "Secure data pipeline commands", NULL);
+/* Root command "step" (level 0). */
+SHELL_CMD_REGISTER(step, &sub_step, "Secure telemetry pipeline commands", NULL);

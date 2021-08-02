@@ -4,19 +4,19 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-#ifndef SDP_MEASUREMENT_H__
-#define SDP_MEASUREMENT_H__
+#ifndef STEP_MEASUREMENT_H__
+#define STEP_MEASUREMENT_H__
 
-#include <sdp/sdp.h>
-#include <sdp/measurement/base.h>
-#include <sdp/measurement/ext_color.h>
-#include <sdp/measurement/ext_light.h>
-#include <sdp/measurement/ext_temperature.h>
-#include <sdp/measurement/unit.h>
+#include <step/step.h>
+#include <step/measurement/base.h>
+#include <step/measurement/ext_color.h>
+#include <step/measurement/ext_light.h>
+#include <step/measurement/ext_temperature.h>
+#include <step/measurement/unit.h>
 
 /**
  * @defgroup MEASUREMENT Measurements
- * @ingroup sdp_api
+ * @ingroup step_api
  * @brief API Header file for measurements
  *
  * <PRE>
@@ -175,8 +175,8 @@
  *   o Sample Count   [20:23]
  *
  *       If more than one sample is present in the payload, this field can
- *       be used to represent the number of sample's present. Value must be
- *       example 2^n where n is the sample count, meaning:
+ *       be used to represent the number of samples present. Sample count is
+ *       represented in 2^n format, except for 0xF, where:
  *
  *       0 = 1 sample (default)     8 = 256 samples
  *       1 = 2 samples              9 = 512 samples
@@ -185,8 +185,14 @@
  *       4 = 16 samples             12 = 4096 samples
  *       5 = 32 samples             13 = 8192 samples
  *       6 = 64 samples             14 = 16384 samples
- *       7 = 128 samples            15 = 32768 samples
+ *       7 = 128 samples            15 = Arbitrary (see below)
  *
+ *       If the Sample Count field is set to 0xF (15), the payload contains an
+ *       arbitrary number of samples, where the sample count is placed as a
+ *       32-bit word at the very beginning of the payload (after the optional
+ *       timestamp if present!), as an unsigned integer in little-endian
+ *       format.
+ * 
  *       If more than one sample is present, and the timestamp is enabled,
  *       the timestamp value corresponds to the time when the first sample
  *       was taken, and the interval between samples will need to be
@@ -212,7 +218,7 @@
 
 /**
  * @file measurement.h
- * @brief API header file for SDP measurements.
+ * @brief API header file for STEP measurements.
  */
 
 #ifdef __cplusplus
@@ -220,25 +226,25 @@ extern "C" {
 #endif
 
 /* Mask values for use with the filter word. */
-#define SDP_MES_MASK_FULL_TYPE_POS   (0)
-#define SDP_MES_MASK_FULL_TYPE       (0xFFFF << SDP_MES_MASK_FULL_TYPE_POS)
-#define SDP_MES_MASK_BASE_TYPE_POS   (0)
-#define SDP_MES_MASK_BASE_TYPE       (0xFF << SDP_MES_MASK_BASE_TYPE_POS)
-#define SDP_MES_MASK_EXT_TYPE_POS    (8)
-#define SDP_MES_MASK_EXT_TYPE        (0xFF << SDP_MES_MASK_EXT_TYPE_POS)
-#define SDP_MES_MASK_FLAGS_POS       (16)
-#define SDP_MES_MASK_FLAGS           (0xFFFF << SDP_MES_MASK_FLAGS_POS)
-#define SDP_MES_MASK_FORMAT_POS      (16)
-#define SDP_MES_MASK_FORMAT          (0x7 << SDP_MES_MASK_FORMAT_POS)
-#define SDP_MES_MASK_ENCODING_POS    (19)
-#define SDP_MES_MASK_ENCODING        (0xF << SDP_MES_MASK_ENCODING_POS)
-#define SDP_MES_MASK_COMPRESSION_POS (23)
-#define SDP_MES_MASK_COMPRESSION     (0x7 << SDP_MES_MASK_COMPRESSION_POS)
-#define SDP_MES_MASK_TIMESTAMP_POS   (26)
-#define SDP_MES_MASK_TIMESTAMP       (0x7 << SDP_MES_MASK_TIMESTAMP_POS)
+#define STEP_MES_MASK_FULL_TYPE_POS   (0)
+#define STEP_MES_MASK_FULL_TYPE       (0xFFFF << STEP_MES_MASK_FULL_TYPE_POS)
+#define STEP_MES_MASK_BASE_TYPE_POS   (0)
+#define STEP_MES_MASK_BASE_TYPE       (0xFF << STEP_MES_MASK_BASE_TYPE_POS)
+#define STEP_MES_MASK_EXT_TYPE_POS    (8)
+#define STEP_MES_MASK_EXT_TYPE        (0xFF << STEP_MES_MASK_EXT_TYPE_POS)
+#define STEP_MES_MASK_FLAGS_POS       (16)
+#define STEP_MES_MASK_FLAGS           (0xFFFF << STEP_MES_MASK_FLAGS_POS)
+#define STEP_MES_MASK_FORMAT_POS      (16)
+#define STEP_MES_MASK_FORMAT          (0x7 << STEP_MES_MASK_FORMAT_POS)
+#define STEP_MES_MASK_ENCODING_POS    (19)
+#define STEP_MES_MASK_ENCODING        (0xF << STEP_MES_MASK_ENCODING_POS)
+#define STEP_MES_MASK_COMPRESSION_POS (23)
+#define STEP_MES_MASK_COMPRESSION     (0x7 << STEP_MES_MASK_COMPRESSION_POS)
+#define STEP_MES_MASK_TIMESTAMP_POS   (26)
+#define STEP_MES_MASK_TIMESTAMP       (0x7 << STEP_MES_MASK_TIMESTAMP_POS)
 
 /** Measurement header. All fields in little endian. */
-struct sdp_mes_header {
+struct step_mes_header {
 	/** Filter (header upper word). */
 	union {
 		struct {
@@ -273,20 +279,20 @@ struct sdp_mes_header {
 		struct {
 			/**
 			 * @brief The SI unit and default scale used for this measurement.
-			 * Must be a member of sdp_mes_unit_si.
+			 * Must be a member of step_mes_unit_si.
 			 */
 			uint16_t si_unit;
 
 			/**
 			 * @brief The amount to scale the measurement value up or down
 			 * (10^n), starting from the unit and scale indicated by si_unit.
-			 * Typically, but not necessarily a member of sdp_mes_unit_scale.
+			 * Typically, but not necessarily a member of step_mes_unit_scale.
 			 */
 			int8_t scale_factor;
 
 			/**
 			 * @brief The data type that this SI unit is represented by in C.
-			 * Must be a member of sdp_mes_unit_ctype.
+			 * Must be a member of step_mes_unit_ctype.
 			 *
 			 * This field can be used to determine how many bytes are required
 			 * to represent this measurement value, and how to interpret the
@@ -322,7 +328,7 @@ struct sdp_mes_header {
 /**
  * @brief Measurement packet wrapper.
  */
-struct sdp_measurement {
+struct step_measurement {
 	/**
 	 * Zephyr's FIFO implementation requires that FIFO entries reserve a single
 	 * word at the start of the record for kernel use (to add the .next
@@ -332,70 +338,70 @@ struct sdp_measurement {
 	int *reserved;
 
 	/** Packet header containing filter data, SI unit and payload length. */
-	struct sdp_mes_header header;
+	struct step_mes_header header;
 
 	/** Payload contents. */
 	void *payload;
 };
 
 /** Payload data structure used. */
-enum sdp_mes_format {
+enum step_mes_format {
 	/** No data structure (raw C type data). */
-	SDP_MES_FORMAT_NONE     = 0,
+	STEP_MES_FORMAT_NONE     = 0,
 	/** CBOR record(s). */
-	SDP_MES_FORMAT_CBOR     = 1,
+	STEP_MES_FORMAT_CBOR     = 1,
 };
 
 /** Payload encoding used. */
-enum sdp_mes_encoding {
+enum step_mes_encoding {
 	/** No encoding used (binary data). */
-	SDP_MES_ENCODING_NONE   = 0,
+	STEP_MES_ENCODING_NONE   = 0,
 	/** BASE64 Encoding (rfc4648). */
-	SDP_MES_ENCODING_BASE64 = 1,
+	STEP_MES_ENCODING_BASE64 = 1,
 	/** BASE45 Encoding (draft-faltstrom-base45-06). */
-	SDP_MES_ENCODING_BASE45 = 2,
+	STEP_MES_ENCODING_BASE45 = 2,
 };
 
 /** Payload compression algorithm used. */
-enum sdp_mes_compression {
+enum step_mes_compression {
 	/** No payload compression used. */
-	SDP_MES_COMPRESSION_NONE        = 0,
+	STEP_MES_COMPRESSION_NONE        = 0,
 	/** LZ4 compression. */
-	SDP_MES_COMPRESSION_LZ4         = 1,
+	STEP_MES_COMPRESSION_LZ4         = 1,
 };
 
 /** Optional timestamp format used. */
-enum sdp_mes_timestamp {
+enum step_mes_timestamp {
 	/** No timestamp included. */
-	SDP_MES_TIMESTAMP_NONE          = 0,
+	STEP_MES_TIMESTAMP_NONE          = 0,
 	/** 32-bit Unix epoch timestamp present. */
-	SDP_MES_TIMESTAMP_EPOCH_32      = 1,
+	STEP_MES_TIMESTAMP_EPOCH_32      = 1,
 	/** 64-bit Unix epoch timestamp present. */
-	SDP_MES_TIMESTAMP_EPOCH_64      = 2,
+	STEP_MES_TIMESTAMP_EPOCH_64      = 2,
 	/** 32-bit millisecond device uptime counter. */
-	SDP_MES_TIMESTAMP_UPTIME_MS_32  = 3,
+	STEP_MES_TIMESTAMP_UPTIME_MS_32  = 3,
 	/** 64-bit millisecond device uptime counter. */
-	SDP_MES_TIMESTAMP_UPTIME_MS_64  = 4,
+	STEP_MES_TIMESTAMP_UPTIME_MS_64  = 4,
 	/** 64-bit microsecond device uptime counter. */
-	SDP_MES_TIMESTAMP_UPTIME_US_64  = 5,
+	STEP_MES_TIMESTAMP_UPTIME_US_64  = 5,
 };
 
 /** Packet fragments. */
-enum sdp_mes_fragment {
+enum step_mes_fragment {
 	/** No a fragment (complete payload). */
-	SDP_MES_FRAGMENT_NONE           = 0,
+	STEP_MES_FRAGMENT_NONE           = 0,
 	/** Non-final fragment in a larger payload. */
-	SDP_MES_FRAGMENT_PARTIAL        = 1,
+	STEP_MES_FRAGMENT_PARTIAL        = 1,
 	/** Final fragment in the larger payload. */
-	SDP_MES_FRAGMENT_FINAL          = 2,
+	STEP_MES_FRAGMENT_FINAL          = 2,
 };
 
 /**
- * @brief Helper function to display the contents of the sdp_measurement.
+ * @brief Helper function to display the contents of the step_measurement.
  *
- * @param sample sdp_measurement to print.
+ * @param sample step_measurement to print.
  */
-void sdp_mes_print(struct sdp_measurement *sample);
+void step_mes_print(struct step_measurement *sample);
 
 #ifdef __cplusplus
 }
@@ -405,4 +411,4 @@ void sdp_mes_print(struct sdp_measurement *sample);
  * @}
  */
 
-#endif /* SDP_MEASUREMENT_H_ */
+#endif /* STEP_MEASUREMENT_H_ */

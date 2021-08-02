@@ -5,63 +5,63 @@
  */
 
 #include <ztest.h>
-#include <sdp/sdp.h>
-#include <sdp/filter.h>
-#include <sdp/measurement/measurement.h>
-#include <sdp/node.h>
+#include <step/step.h>
+#include <step/filter.h>
+#include <step/measurement/measurement.h>
+#include <step/node.h>
 #include "data.h"
 
 /* Track callback entry statistics. */
-struct sdp_test_data_procnode_cb_stats sdp_test_data_cb_stats = { 0 };
+struct step_test_data_procnode_cb_stats step_test_data_cb_stats = { 0 };
 
-bool data_node_evaluate(struct sdp_measurement *mes, void *cfg)
+bool data_node_evaluate(struct step_measurement *mes, void *cfg)
 {
 	/* Overrides the filter engine when evaluating this node. */
-	sdp_test_data_cb_stats.evaluate++;
+	step_test_data_cb_stats.evaluate++;
 
 	return true;
 }
 
-bool data_node_matched(struct sdp_measurement *mes, void *cfg)
+bool data_node_matched(struct step_measurement *mes, void *cfg)
 {
 	/* Fires when the filter engine has indicated a match for this node. */
-	sdp_test_data_cb_stats.matched++;
+	step_test_data_cb_stats.matched++;
 
 	return true;
 }
 
-int data_node_start(struct sdp_measurement *mes, void *cfg)
+int data_node_start(struct step_measurement *mes, void *cfg)
 {
 	/* Fires before the node runs. */
-	sdp_test_data_cb_stats.start++;
+	step_test_data_cb_stats.start++;
 
 	return 0;
 }
 
-int data_node_run(struct sdp_measurement *mes, void *cfg)
+int data_node_run(struct step_measurement *mes, void *cfg)
 {
 	/* Node logic implementation. */
-	sdp_test_data_cb_stats.run++;
+	step_test_data_cb_stats.run++;
 
 	return 0;
 }
 
-int data_node_stop(struct sdp_measurement *mes, void *cfg)
+int data_node_stop(struct step_measurement *mes, void *cfg)
 {
 	/* Fires when the node has been successfully run. */
-	sdp_test_data_cb_stats.stop++;
+	step_test_data_cb_stats.stop++;
 
 	return 0;
 }
 
-void data_node_error(struct sdp_measurement *mes, void *cfg, int error)
+void data_node_error(struct step_measurement *mes, void *cfg, int error)
 {
 	/* Fires when an error occurs running this node. */
-	sdp_test_data_cb_stats.error++;
+	step_test_data_cb_stats.error++;
 }
 
 /* Processor node chain. */
-static struct sdp_node sdp_test_data_procnode_chain_data[] = {
+static struct step_node step_test_data_procnode_chain_data[] = {
 	/* Processor node 0. */
 	{
 		.name = "Temperature chain",
@@ -69,26 +69,26 @@ static struct sdp_node sdp_test_data_procnode_chain_data[] = {
 		/* Temperature filter. */
 		.filters = {
 			.count = 3,
-			.chain = (struct sdp_filter[]){
+			.chain = (struct step_filter[]){
 				{
 					/* Temperature (base type). */
-					.match = SDP_MES_TYPE_TEMPERATURE,
-					.ignore_mask = ~SDP_MES_MASK_FULL_TYPE,
+					.match = STEP_MES_TYPE_TEMPERATURE,
+					.ignore_mask = ~STEP_MES_MASK_FULL_TYPE,
 				},
 				{
 					/* Die temperature. */
-					.op = SDP_FILTER_OP_OR,
-					.match = SDP_MES_TYPE_TEMPERATURE +
-						 (SDP_MES_EXT_TYPE_TEMP_DIE <<
-						  SDP_MES_MASK_EXT_TYPE_POS),
-					.ignore_mask = ~SDP_MES_MASK_FULL_TYPE,
+					.op = STEP_FILTER_OP_OR,
+					.match = STEP_MES_TYPE_TEMPERATURE +
+						 (STEP_MES_EXT_TYPE_TEMP_DIE <<
+						  STEP_MES_MASK_EXT_TYPE_POS),
+					.ignore_mask = ~STEP_MES_MASK_FULL_TYPE,
 				},
 				{
 					/* Make sure timestamp (bits 26-28) = EPOCH32 */
-					.op = SDP_FILTER_OP_AND,
-					.match = (SDP_MES_TIMESTAMP_EPOCH_32 <<
-						  SDP_MES_MASK_TIMESTAMP_POS),
-					.ignore_mask = ~SDP_MES_MASK_TIMESTAMP,
+					.op = STEP_FILTER_OP_AND,
+					.match = (STEP_MES_TIMESTAMP_EPOCH_32 <<
+						  STEP_MES_MASK_TIMESTAMP_POS),
+					.ignore_mask = ~STEP_MES_MASK_TIMESTAMP,
 				},
 			},
 		},
@@ -107,7 +107,7 @@ static struct sdp_node sdp_test_data_procnode_chain_data[] = {
 		.config = NULL,
 
 		/* Point to next processor node in chain. */
-		.next = &sdp_test_data_procnode_chain_data[1]
+		.next = &step_test_data_procnode_chain_data[1]
 	},
 	/* Processor node 1. */
 	{
@@ -132,35 +132,35 @@ static struct sdp_node sdp_test_data_procnode_chain_data[] = {
 };
 
 /* Pointer to node chain. */
-struct sdp_node *sdp_test_data_procnode_chain =
-	sdp_test_data_procnode_chain_data;
+struct step_node *step_test_data_procnode_chain =
+	step_test_data_procnode_chain_data;
 
 /* Single processor node. */
-struct sdp_node sdp_test_data_procnode = {
+struct step_node step_test_data_procnode = {
 	.name = "Temperature",
 	/* Matches if DS filter field = 0x26 OR 0x226 AND bit 26 is set. */
 	.filters = {
 		.count = 3,
-		.chain = (struct sdp_filter[]){
+		.chain = (struct step_filter[]){
 			{
 				/* Temperature (base type). */
-				.match = SDP_MES_TYPE_TEMPERATURE,
-				.ignore_mask = ~SDP_MES_MASK_FULL_TYPE,         /* 0xFFFF0000 */
+				.match = STEP_MES_TYPE_TEMPERATURE,
+				.ignore_mask = ~STEP_MES_MASK_FULL_TYPE,         /* 0xFFFF0000 */
 			},
 			{
 				/* Die temperature. */
-				.op = SDP_FILTER_OP_OR,
-				.match = SDP_MES_TYPE_TEMPERATURE +
-					 (SDP_MES_EXT_TYPE_TEMP_DIE <<
-					  SDP_MES_MASK_EXT_TYPE_POS),
-				.ignore_mask = ~SDP_MES_MASK_FULL_TYPE,         /* 0xFFFF0000 */
+				.op = STEP_FILTER_OP_OR,
+				.match = STEP_MES_TYPE_TEMPERATURE +
+					 (STEP_MES_EXT_TYPE_TEMP_DIE <<
+					  STEP_MES_MASK_EXT_TYPE_POS),
+				.ignore_mask = ~STEP_MES_MASK_FULL_TYPE,         /* 0xFFFF0000 */
 			},
 			{
 				/* Make sure timestamp (bits 26-28) = EPOCH32. */
-				.op = SDP_FILTER_OP_AND,
-				.match = (SDP_MES_TIMESTAMP_EPOCH_32 <<
-					  SDP_MES_MASK_TIMESTAMP_POS),
-				.ignore_mask = ~SDP_MES_MASK_TIMESTAMP,         /* 0xE3FFFFFF */
+				.op = STEP_FILTER_OP_AND,
+				.match = (STEP_MES_TIMESTAMP_EPOCH_32 <<
+					  STEP_MES_MASK_TIMESTAMP_POS),
+				.ignore_mask = ~STEP_MES_MASK_TIMESTAMP,         /* 0xE3FFFFFF */
 			},
 		},
 	},
@@ -186,35 +186,35 @@ struct sdp_node sdp_test_data_procnode = {
 struct {
 	uint32_t timestamp;
 	float temp_c;
-} sdp_test_data_dietemp_payload = {
+} step_test_data_dietemp_payload = {
 	.timestamp = 1624305803,         /* Monday, June 21, 2021 8:03:23 PM */
 	.temp_c = 32.0F,
 };
 
 /* Test die temp measurement, with timestamp. */
-struct sdp_measurement sdp_test_mes_dietemp = {
+struct step_measurement step_test_mes_dietemp = {
 	/* Measurement metadata. */
 	.header = {
 		/* Filter word. */
 		.filter = {
-			.base_type = SDP_MES_TYPE_TEMPERATURE,
-			.ext_type = SDP_MES_EXT_TYPE_TEMP_DIE,
+			.base_type = STEP_MES_TYPE_TEMPERATURE,
+			.ext_type = STEP_MES_EXT_TYPE_TEMP_DIE,
 			.flags = {
-				.timestamp = SDP_MES_TIMESTAMP_EPOCH_32,
+				.timestamp = STEP_MES_TIMESTAMP_EPOCH_32,
 			},
 		},
 		/* SI Unit word. */
 		.unit = {
-			.si_unit = SDP_MES_UNIT_SI_DEGREE_CELSIUS,
-			.ctype = SDP_MES_UNIT_CTYPE_IEEE754_FLOAT32,
+			.si_unit = STEP_MES_UNIT_SI_DEGREE_CELSIUS,
+			.ctype = STEP_MES_UNIT_CTYPE_IEEE754_FLOAT32,
 		},
 		/* Source/Len word. */
 		.srclen = {
-			.len = sizeof(sdp_test_data_dietemp_payload),
+			.len = sizeof(step_test_data_dietemp_payload),
 			.sourceid = 10,
 		},
 	},
 
 	/* Die temperature in C plus 32-bit epoch timestamp. */
-	.payload = &sdp_test_data_dietemp_payload,
+	.payload = &step_test_data_dietemp_payload,
 };

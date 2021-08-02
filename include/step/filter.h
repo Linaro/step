@@ -4,16 +4,16 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-#ifndef SDP_FILTER_H__
-#define SDP_FILTER_H__
+#ifndef STEP_FILTER_H__
+#define STEP_FILTER_H__
 
-#include <sdp/sdp.h>
-#include <sdp/measurement/measurement.h>
+#include <step/step.h>
+#include <step/measurement/measurement.h>
 
 /**
  * @defgroup FILTER Filter Definitions
- * @ingroup sdp_api
- * @brief API header file for the SDP filter engine.
+ * @ingroup step_api
+ * @brief API header file for the STeP filter engine.
  * @{
  */
 
@@ -25,61 +25,61 @@ extern "C" {
  * @brief Logical operand used between the current and
  *        previous filter values in a filter chain.
  *
- * @note The first value in a filter chain MUST be either SDP_FILTER_OP_IS
- *       of SDP_FILTER_OP_NOT.
+ * @note The first value in a filter chain MUST be either STEP_FILTER_OP_IS
+ *       of STEP_FILTER_OP_NOT.
  */
-enum sdp_filter_op {
+enum step_filter_op {
 	/**
 	 * @brief Filter evaluation must be logically true. Solely for use as
 	 *        the first operand in a filter chain.
 	 *
-	 * @note This is functionally identical to SDP_FILTER_AND_IS, with the
+	 * @note This is functionally identical to STEP_FILTER_AND_IS, with the
 	 *       assumption that the previous value is true.
 	 *
-	 * @note The first value in a filter chain MUST be either SDP_FILTER_OP_IS
-	 *       of SDP_FILTER_OP_NOT.
+	 * @note The first value in a filter chain MUST be either STEP_FILTER_OP_IS
+	 *       of STEP_FILTER_OP_NOT.
 	 */
-	SDP_FILTER_OP_IS        = 0,
+	STEP_FILTER_OP_IS       = 0,
 
 	/**
 	 * @brief Filter evaluation must be logically false. Solely for use as
 	 *        the first operand in a filter chain.
 	 *
-	 * @note This is functionally identical to SDP_FILTER_AND_IS, with the
+	 * @note This is functionally identical to STEP_FILTER_AND_IS, with the
 	 *       assumption that the previous value is true.
 	 *
-	 * @note The first value in a filter chain MUST be either SDP_FILTER_OP_IS
-	 *       of SDP_FILTER_OP_NOT.
+	 * @note The first value in a filter chain MUST be either STEP_FILTER_OP_IS
+	 *       of STEP_FILTER_OP_NOT.
 	 */
-	SDP_FILTER_OP_NOT       = 1,
+	STEP_FILTER_OP_NOT      = 1,
 
 	/**
 	 * @brief Previous operand AND current operand must resolve to being true,
 	 *        where the current filter evaluation is logically true. Solely for
 	 *        use in non-initial entries in a filter chain.
 	 */
-	SDP_FILTER_OP_AND       = 2,
+	STEP_FILTER_OP_AND      = 2,
 
 	/**
 	 * @brief Previous operand AND current operand must resolve to being true,
 	 *        where the current filter evaluation is logically false. Solely for
 	 *        use in non-initial entries in a filter chain.
 	 */
-	SDP_FILTER_OP_AND_NOT   = 3,
+	STEP_FILTER_OP_AND_NOT  = 3,
 
 	/**
 	 * @brief Previous operand OR current operand must resolve to being true,
 	 *        where the current filter evaluation is logically true. Solely for
 	 *        use in non-initial entries in a filter chain.
 	 */
-	SDP_FILTER_OP_OR        = 4,
+	STEP_FILTER_OP_OR       = 4,
 
 	/**
 	 * @brief Previous operand OR current operand must resolve to being true,
 	 *        where the current filter evaluation is logically false. Solely for
 	 *        use in non-initial entries in a filter chain.
 	 */
-	SDP_FILTER_OP_OR_NOT    = 5,
+	STEP_FILTER_OP_OR_NOT   = 5,
 
 	/**
 	 * @brief Exactly one of the previous operand OR current operand must
@@ -87,17 +87,17 @@ enum sdp_filter_op {
 	 *        logically true. Solely for use in non-initial entries in a filter
 	 *        chain.
 	 */
-	SDP_FILTER_OP_XOR       = 6,
+	STEP_FILTER_OP_XOR      = 6,
 };
 
 /**
  * @brief An individual filter entry.
  */
-struct sdp_filter {
+struct step_filter {
 	/**
-	 * @brief The operand to apply between the current and previous sdp_filters.
+	 * @brief The operand to apply between the current and previous step_filters.
 	 */
-	enum sdp_filter_op op;
+	enum step_filter_op op;
 
 	/**
 	 * @brief The measurement's filter value must exactly match this value,
@@ -127,7 +127,7 @@ struct sdp_filter {
  *       There is currently no mechanism to override the order of evaluation
  *       via parentheses or operator precedence.
  */
-struct sdp_filter_chain {
+struct step_filter_chain {
 	/**
 	 * @brief The number of filters supplied in 'chain'.
 	 *
@@ -142,7 +142,7 @@ struct sdp_filter_chain {
 	 * If this value is NULL, it will be interpretted as a catch-all indicator,
 	 * matching on all measurements.
 	 */
-	struct sdp_filter *chain;
+	struct step_filter *chain;
 };
 
 /**
@@ -150,20 +150,20 @@ struct sdp_filter_chain {
  *
  * @param fc The sdsp_filter_chain to print.
  */
-void sdp_filt_print(struct sdp_filter_chain *fc);
+void step_filt_print(struct step_filter_chain *fc);
 
 /**
- * @brief Evaluates the supplied sdp_measurement against the sdp_filter_chain
+ * @brief Evaluates the supplied step_measurement against the step_filter_chain
  *        to determine if there is a match.
  *
- * @param fc		The sdp_filter_chain to evalute for a match.
- * @param mes 		The sdp_measurement to evaluate a match against.
+ * @param fc		The step_filter_chain to evalute for a match.
+ * @param mes 		The step_measurement to evaluate a match against.
  * @param match 	1 if the node's filter chain matches, otherwise 0.
  *
  * @return int 		Zero on normal execution, otherwise a negative error code.
  */
-int sdp_filt_evaluate(struct sdp_filter_chain *fc, struct sdp_measurement *mes,
-		      int *match);
+int step_filt_evaluate(struct step_filter_chain *fc,
+		       struct step_measurement *mes, int *match);
 
 #ifdef __cplusplus
 }
@@ -173,4 +173,4 @@ int sdp_filt_evaluate(struct sdp_filter_chain *fc, struct sdp_measurement *mes,
  * @}
  */
 
-#endif /* SDP_FILTER_H_ */
+#endif /* STEP_FILTER_H_ */

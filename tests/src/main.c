@@ -9,6 +9,7 @@
 /* tests_meas.c */
 extern void test_mes_check_header(void);
 extern void test_mes_check_payload(void);
+extern void test_mes_check_sample_count(void);
 
 /* tests_filter.c */
 extern void test_filter_evaluate_fc_null(void);
@@ -30,9 +31,10 @@ extern void test_sp_fifo(void);
 
 void test_main(void)
 {
-	ztest_test_suite(sdp_tests,
+	ztest_test_suite(step_tests,
 		ztest_unit_test(test_mes_check_header),
 		ztest_unit_test(test_mes_check_payload),
+		ztest_unit_test(test_mes_check_sample_count),
 		ztest_unit_test(test_filter_evaluate_fc_null),
 		ztest_unit_test(test_filter_evaluate_mes_null),
 		ztest_unit_test(test_filter_evaluate_fc_len),
@@ -48,5 +50,5 @@ void test_main(void)
 	);
 
 	/* Test suites. */
-	ztest_run_test_suite(sdp_tests);
+	ztest_run_test_suite(step_tests);
 }

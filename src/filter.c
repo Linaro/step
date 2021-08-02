@@ -5,11 +5,11 @@
  */
 
 #include <errno.h>
-#include <sdp/filter.h>
+#include <step/filter.h>
 
 #include <sys/printk.h>
 
-void sdp_filt_print(struct sdp_filter_chain *fc)
+void step_filt_print(struct step_filter_chain *fc)
 {
 	if (fc->count == 0) {
 		return;
@@ -21,25 +21,25 @@ void sdp_filt_print(struct sdp_filter_chain *fc)
 
 		/* Operand */
 		switch (fc->chain[i].op) {
-		case SDP_FILTER_OP_IS:
+		case STEP_FILTER_OP_IS:
 			printk("IS ");
 			break;
-		case SDP_FILTER_OP_NOT:
+		case STEP_FILTER_OP_NOT:
 			printk("NOT ");
 			break;
-		case SDP_FILTER_OP_AND:
+		case STEP_FILTER_OP_AND:
 			printk("AND ");
 			break;
-		case SDP_FILTER_OP_AND_NOT:
+		case STEP_FILTER_OP_AND_NOT:
 			printk("AND NOT ");
 			break;
-		case SDP_FILTER_OP_OR:
+		case STEP_FILTER_OP_OR:
 			printk("OR ");
 			break;
-		case SDP_FILTER_OP_OR_NOT:
+		case STEP_FILTER_OP_OR_NOT:
 			printk("OR NOT ");
 			break;
-		case SDP_FILTER_OP_XOR:
+		case STEP_FILTER_OP_XOR:
 			printk("XOR ");
 			break;
 		}
@@ -58,12 +58,12 @@ void sdp_filt_print(struct sdp_filter_chain *fc)
  * @brief Evaluates a single filter record.
  *
  * @param f			The filter to evaluate.
- * @param mes		The sdp_measurement to evaluate against.
+ * @param mes		The step_measurement to evaluate against.
  * @param prev		Sum of the previous match results.
  * @param match		1 if a match occurred, otherwise.
  */
-static void sdp_filt_evaluate_filter(struct sdp_filter *f,
-				     struct sdp_measurement *mes, int prev, int *match)
+static void step_filt_evaluate_filter(struct step_filter *f,
+				     struct step_measurement *mes, int prev, int *match)
 {
 	int curr_eval = 0;
 	uint32_t mes_cmp = mes->header.filter_bits;
@@ -82,31 +82,31 @@ static void sdp_filt_evaluate_filter(struct sdp_filter *f,
 
 	/* Operand evaluation against prev result(s). */
 	switch (f->op) {
-	case SDP_FILTER_OP_IS:
+	case STEP_FILTER_OP_IS:
 		*match = curr_eval ? 1 : 0;
 		break;
-	case SDP_FILTER_OP_NOT:
+	case STEP_FILTER_OP_NOT:
 		*match = curr_eval ? 0 : 1;
 		break;
-	case SDP_FILTER_OP_AND:
+	case STEP_FILTER_OP_AND:
 		*match = (curr_eval & prev) ? 1 : 0;
 		break;
-	case SDP_FILTER_OP_AND_NOT:
+	case STEP_FILTER_OP_AND_NOT:
 		*match = (prev && !curr_eval) ? 1 : 0;
 		break;
-	case SDP_FILTER_OP_OR:
+	case STEP_FILTER_OP_OR:
 		*match = (prev || curr_eval) ? 1 : 0;
 		break;
-	case SDP_FILTER_OP_OR_NOT:
+	case STEP_FILTER_OP_OR_NOT:
 		*match = (prev || !curr_eval) ? 1 : 0;
 		break;
-	case SDP_FILTER_OP_XOR:
+	case STEP_FILTER_OP_XOR:
 		*match = (prev != curr_eval) ? 1 : 0;
 		break;
 	}
 }
 
-int sdp_filt_evaluate(struct sdp_filter_chain *fc, struct sdp_measurement *mes,
+int step_filt_evaluate(struct step_filter_chain *fc, struct step_measurement *mes,
 		      int *match)
 {
 	int rc = 0;
@@ -128,8 +128,8 @@ int sdp_filt_evaluate(struct sdp_filter_chain *fc, struct sdp_measurement *mes,
 	}
 
 	/* Make sure we start the chain with IS or NOT operands. */
-	if ((fc->chain[0].op != SDP_FILTER_OP_IS) &&
-	    (fc->chain[0].op != SDP_FILTER_OP_NOT)) {
+	if ((fc->chain[0].op != STEP_FILTER_OP_IS) &&
+	    (fc->chain[0].op != STEP_FILTER_OP_NOT)) {
 		rc = -EINVAL;
 		goto err;
 	}
@@ -139,7 +139,7 @@ int sdp_filt_evaluate(struct sdp_filter_chain *fc, struct sdp_measurement *mes,
 		curr_eval = 0;
 
 		/* Evalute current filter. */
-		sdp_filt_evaluate_filter(&(fc->chain[i]), mes,
+		step_filt_evaluate_filter(&(fc->chain[i]), mes,
 					 prev_eval, &curr_eval);
 
 		/* Store results for comparison against next filter. */

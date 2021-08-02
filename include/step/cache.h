@@ -4,14 +4,14 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-#ifndef SDP_CACHE_H__
-#define SDP_CACHE_H__
+#ifndef STEP_CACHE_H__
+#define STEP_CACHE_H__
 
-#include <sdp/sdp.h>
+#include <step/step.h>
 
 /**
  * @defgroup CACHE LRU Cache
- * @ingroup sdp_api
+ * @ingroup step_api
  * @brief API header file for a least recently used (LRU) cache
  * @{
  */
@@ -23,7 +23,7 @@ extern "C" {
 /**
  * @brief Cache record
  */
-struct sdp_cache_rec {
+struct step_cache_rec {
 	/**
 	 * @brief The input value to be stored in cache.
 	 */
@@ -50,17 +50,17 @@ struct sdp_cache_rec {
 /**
  * @brief Prints the current cache contents using printk.
  */
-void sdp_cache_print(void);
+void step_cache_print(void);
 
 /**
  * @brief Prints the current cache statistics using printk.
  */
-void sdp_cache_print_stats(void);
+void step_cache_print_stats(void);
 
 /**
  * @brief Clears all existing records from cache memory.
  */
-void sdp_cache_clear(void);
+void step_cache_clear(void);
 
 /**
  * @brief Evaluates the supplied filter and node handle against the cache.
@@ -82,7 +82,7 @@ void sdp_cache_clear(void);
  *
  * @return int 		1 if a match was found in cache, otherwise 0.
  */
-int sdp_cache_check(uint32_t filter, uint32_t handle, int *result);
+int step_cache_check(uint32_t filter, uint32_t handle, int *result);
 
 /**
  * @brief Inserts a new record in cache memory. If cache memory is full, the
@@ -96,7 +96,7 @@ int sdp_cache_check(uint32_t filter, uint32_t handle, int *result);
  *
  * @return int 		Zero on normal execution, otherwise a negative error code.
  */
-int sdp_cache_add(uint32_t filter, uint32_t handle, int result);
+int step_cache_add(uint32_t filter, uint32_t handle, int result);
 
 #ifdef __cplusplus
 }
@@ -106,4 +106,4 @@ int sdp_cache_add(uint32_t filter, uint32_t handle, int result);
  * @}
  */
 
-#endif /* SDP_CACHE_H_ */
+#endif /* STEP_CACHE_H_ */

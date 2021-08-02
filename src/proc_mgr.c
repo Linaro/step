@@ -9,27 +9,27 @@
 #include <logging/log.h>
 #include <sys/printk.h>
 #include <sys/slist.h>
-#include <sdp/proc_mgr.h>
-#include <sdp/sample_pool.h>
-#include <sdp/cache.h>
-#include <sdp/instrumentation.h>
+#include <step/proc_mgr.h>
+#include <step/sample_pool.h>
+#include <step/cache.h>
+#include <step/instrumentation.h>
 
 #define LOG_LEVEL LOG_LEVEL_DBG
 LOG_MODULE_REGISTER(proc_mgr);
 
 /**
- * @brief Struct used to represent a @ref sdp_node in the registry.
+ * @brief Struct used to represent a @ref step_node in the registry.
  */
-struct sdp_pm_node_record {
+struct step_pm_node_record {
 	/**
 	 * @brief Singly-linked list node reference.
 	 */
 	sys_snode_t snode;
 
 	/**
-	 * @brief Pointer to the @ref sdp_node to register.
+	 * @brief Pointer to the @ref step_node to register.
 	 */
-	struct sdp_node *node;
+	struct step_node *node;
 
 	/**
 	 * @brief Handle associated with this processor node in the proc. manager.
@@ -48,7 +48,7 @@ struct sdp_pm_node_record {
 		uint16_t enabled : 1;
 	} flags;
 
-#if CONFIG_SDP_INSTRUMENTATION
+#if CONFIG_STEP_INSTRUMENTATION
 	/**
 	 * @brief Runtime spent inside the node or node chain.
 	 */
@@ -64,8 +64,8 @@ struct sdp_pm_node_record {
 /* Processor node registry. This static array provides a fixed location in
  * memory for individual records in the processor node registry, along with
  * any relevant meta-data required when evaluating them. */
-static struct sdp_pm_node_record sdp_pm_nodes[CONFIG_SDP_PROC_MGR_NODE_LIMIT];
-static uint32_t sdp_pm_handle_counter = 0;
+static struct step_pm_node_record step_pm_nodes[CONFIG_STEP_PROC_MGR_NODE_LIMIT];
+static uint32_t step_pm_handle_counter = 0;
 
 /* Node registry linked list. This ordered list contains a reference
  * to every registered processor node or node chain, in the order which
@@ -73,27 +73,27 @@ static uint32_t sdp_pm_handle_counter = 0;
 static sys_slist_t pm_node_slist = SYS_SLIST_STATIC_INIT(&pm_node_slist);
 
 /* Create the polling thread if sample rate > 0. */
-#if (CONFIG_SDP_PROC_MGR_POLL_RATE > 0)
-static void sdp_pm_poll_thread(bool free);
-K_THREAD_DEFINE(sdp_pm_tid, CONFIG_SDP_PROC_MGR_STACK_SIZE,
-		sdp_pm_poll_thread, 1, NULL, NULL,
-		CONFIG_SDP_PROC_MGR_PRIORITY, 0, 0);
+#if (CONFIG_STEP_PROC_MGR_POLL_RATE > 0)
+static void step_pm_poll_thread(bool free);
+K_THREAD_DEFINE(step_pm_tid, CONFIG_STEP_PROC_MGR_STACK_SIZE,
+		step_pm_poll_thread, 1, NULL, NULL,
+		CONFIG_STEP_PROC_MGR_PRIORITY, 0, 0);
 #endif
 
 /* Registry should be locked during processing or when modifying it. */
-K_MUTEX_DEFINE(sdp_pm_reg_access);
+K_MUTEX_DEFINE(step_pm_reg_access);
 
-int sdp_pm_register(struct sdp_node *node, uint16_t pri, uint32_t *handle)
+int step_pm_register(struct step_node *node, uint16_t pri, uint32_t *handle)
 {
 	int rc = 0;
-	struct sdp_pm_node_record *pnode;
-	struct sdp_pm_node_record *tmp;
-	struct sdp_pm_node_record *prev, *match;
+	struct step_pm_node_record *pnode;
+	struct step_pm_node_record *tmp;
+	struct step_pm_node_record *prev, *match;
 
 	/* Lock registry access during registration. */
-	k_mutex_lock(&sdp_pm_reg_access, K_FOREVER);
+	k_mutex_lock(&step_pm_reg_access, K_FOREVER);
 
-	if (sdp_pm_handle_counter == CONFIG_SDP_PROC_MGR_NODE_LIMIT) {
+	if (step_pm_handle_counter == CONFIG_STEP_PROC_MGR_NODE_LIMIT) {
 		*handle = -1;	/* 0xFFFFFFFF */
 		rc = -ENOMEM;
 		LOG_ERR("Registration failed: node limit reached");
@@ -101,16 +101,16 @@ int sdp_pm_register(struct sdp_node *node, uint16_t pri, uint32_t *handle)
 	}
 
 	/* Assign and increment the handle counter. */
-	*handle = sdp_pm_handle_counter++;
+	*handle = step_pm_handle_counter++;
 
 	LOG_DBG("Registering node/chain (handle %d, pri %d)", *handle, pri);
 
 	/* Clear the processor node record placeholder. */
-	memset(&sdp_pm_nodes[*handle], 0, sizeof(struct sdp_pm_node_record));
-	sdp_pm_nodes[*handle].node = node;
-	sdp_pm_nodes[*handle].priority = pri;
-	sdp_pm_nodes[*handle].handle = *handle;
-	sdp_pm_nodes[*handle].flags.enabled = 1;
+	memset(&step_pm_nodes[*handle], 0, sizeof(struct step_pm_node_record));
+	step_pm_nodes[*handle].node = node;
+	step_pm_nodes[*handle].priority = pri;
+	step_pm_nodes[*handle].handle = *handle;
+	step_pm_nodes[*handle].flags.enabled = 1;
 
 	/* Find the correct insertion point based on priority. */
 	match = prev = NULL;
@@ -128,92 +128,92 @@ int sdp_pm_register(struct sdp_node *node, uint16_t pri, uint32_t *handle)
 	/* Insert new node record in appropriate position based on priority. */
 	if ((match != NULL) && (prev == NULL)) {
 		/* Prepend before sole record. */
-		sys_slist_prepend(&pm_node_slist, &(sdp_pm_nodes[*handle].snode));
+		sys_slist_prepend(&pm_node_slist, &(step_pm_nodes[*handle].snode));
 	} else if (match != NULL) {
 		/* Insert before first lower priority record. */
 		sys_slist_insert(&pm_node_slist,
-				 &(prev->snode), &(sdp_pm_nodes[*handle].snode));
+				 &(prev->snode), &(step_pm_nodes[*handle].snode));
 	} else {
 		/* Insert at the end. */
-		sys_slist_append(&pm_node_slist, &(sdp_pm_nodes[*handle].snode));
+		sys_slist_append(&pm_node_slist, &(step_pm_nodes[*handle].snode));
 	}
 
 err:
 	/* Release the registry lock. */
-	k_mutex_unlock(&sdp_pm_reg_access);
+	k_mutex_unlock(&step_pm_reg_access);
 
 	return rc;
 }
 
-int sdp_pm_resume(void)
+int step_pm_resume(void)
 {
 	int rc = 0;
 
-#if (CONFIG_SDP_PROC_MGR_POLL_RATE > 0)
-	k_thread_resume(sdp_pm_tid);
+#if (CONFIG_STEP_PROC_MGR_POLL_RATE > 0)
+	k_thread_resume(step_pm_tid);
 #endif
 
 	return rc;
 }
 
-int sdp_pm_suspend(void)
+int step_pm_suspend(void)
 {
 	int rc = 0;
 
-#if (CONFIG_SDP_PROC_MGR_POLL_RATE > 0)
-	k_thread_suspend(sdp_pm_tid);
+#if (CONFIG_STEP_PROC_MGR_POLL_RATE > 0)
+	k_thread_suspend(step_pm_tid);
 #endif
 
 	return rc;
 }
 
-int sdp_pm_clear(void)
+int step_pm_clear(void)
 {
 	int rc = 0;
 
 	LOG_DBG("Resetting processor node registry");
 
 	/* Lock registry access during clear. */
-	k_mutex_lock(&sdp_pm_reg_access, K_FOREVER);
+	k_mutex_lock(&step_pm_reg_access, K_FOREVER);
 
-#if CONFIG_SDP_FILTER_CACHE
+#if CONFIG_STEP_FILTER_CACHE
 	/* Clear match cache. */
-	sdp_cache_clear();
+	step_cache_clear();
 #endif
 
 	/* Reset the handle counter. */
-	sdp_pm_handle_counter = 0;
+	step_pm_handle_counter = 0;
 
 	/* Free the node record placeholders. */
-	for (uint8_t i = 0; i < CONFIG_SDP_PROC_MGR_NODE_LIMIT; i++) {
-		memset(&sdp_pm_nodes[i], 0, sizeof(struct sdp_pm_node_record));
+	for (uint8_t i = 0; i < CONFIG_STEP_PROC_MGR_NODE_LIMIT; i++) {
+		memset(&step_pm_nodes[i], 0, sizeof(struct step_pm_node_record));
 	}
 
 	/* Reset the linked list. */
 	sys_slist_init(&pm_node_slist);
 
 	/* Release the registry lock. */
-	k_mutex_unlock(&sdp_pm_reg_access);
+	k_mutex_unlock(&step_pm_reg_access);
 
 	return rc;
 }
 
-int sdp_pm_process(struct sdp_measurement *mes, int *matches, bool free)
+int step_pm_process(struct step_measurement *mes, int *matches, bool free)
 {
 	int rc = 0;
 	int match = 0;
 	int match_count = 0;
 	int cached = 0;
-	struct sdp_pm_node_record *pnode;
-	struct sdp_pm_node_record *tmp;
-	struct sdp_node *n;
+	struct step_pm_node_record *pnode;
+	struct step_pm_node_record *tmp;
+	struct step_node *n;
 
-#if CONFIG_SDP_INSTRUMENTATION
+#if CONFIG_STEP_INSTRUMENTATION
 	uint32_t instr = 0;
 #endif
 
 	/* Lock registry access during processing. */
-	k_mutex_lock(&sdp_pm_reg_access, K_FOREVER);
+	k_mutex_lock(&step_pm_reg_access, K_FOREVER);
 
 	/* No nodes registered ... warn that sample will be lost. */
 	if (sys_slist_is_empty(&pm_node_slist)) {
@@ -227,14 +227,14 @@ int sdp_pm_process(struct sdp_measurement *mes, int *matches, bool free)
 		if (pnode->flags.enabled) {
 			n = pnode->node;
 
-#if CONFIG_SDP_INSTRUMENTATION
+#if CONFIG_STEP_INSTRUMENTATION
 			/* Start total runtime INSTR timer. */
-			SDP_INSTR_START(instr);
+			STEP_INSTR_START(instr);
 #endif
 
-#if CONFIG_SDP_FILTER_CACHE
+#if CONFIG_STEP_FILTER_CACHE
 			/* Check filter cache for cached match results. */
-			cached = sdp_cache_check(mes->header.filter_bits,
+			cached = step_cache_check(mes->header.filter_bits,
 						 pnode->handle, &match);
 #endif
 			/* Evaluate filter match. */
@@ -244,7 +244,7 @@ int sdp_pm_process(struct sdp_measurement *mes, int *matches, bool free)
 					match = n->callbacks.evaluate_handler(mes, n->config);
 				} else {
 					/* Standard evaluation against the node's filter chain. */
-					rc = sdp_filt_evaluate(&(n->filters), mes, &match);
+					rc = step_filt_evaluate(&(n->filters), mes, &match);
 				}
 
 				/* Call matched handler if requested, can negate match value. */
@@ -252,9 +252,9 @@ int sdp_pm_process(struct sdp_measurement *mes, int *matches, bool free)
 					match = n->callbacks.matched_handler(mes, n->config);
 				}
 
-#if CONFIG_SDP_FILTER_CACHE
+#if CONFIG_STEP_FILTER_CACHE
 				/* Add match results to cache. */
-				sdp_cache_add(mes->header.filter_bits, pnode->handle, match);
+				step_cache_add(mes->header.filter_bits, pnode->handle, match);
 #endif
 			}
 
@@ -285,9 +285,9 @@ int sdp_pm_process(struct sdp_measurement *mes, int *matches, bool free)
 				match_count += 1;
 			}
 
-#if CONFIG_SDP_INSTRUMENTATION
+#if CONFIG_STEP_INSTRUMENTATION
 			/* Stop total runtime INSTR timer. */
-			SDP_INSTR_STOP(instr);
+			STEP_INSTR_STOP(instr);
 			pnode->runtime_ns += instr;
 			pnode->runs++;
 #endif
@@ -307,98 +307,98 @@ abort:
 	
 	/* Free measurement from shared memory if requested. */
 	if (free) {
-		sdp_sp_free(mes);
+		step_sp_free(mes);
 	}
 
 	/* Release the registry lock. */
-	k_mutex_unlock(&sdp_pm_reg_access);
+	k_mutex_unlock(&step_pm_reg_access);
 
 	return rc;
 }
 
-int sdp_pm_poll(int *mcnt, bool free)
+int step_pm_poll(int *mcnt, bool free)
 {
 	int rc = 0;
-	struct sdp_measurement *mes;
+	struct step_measurement *mes;
 
 	if (mcnt != NULL) {
 		*mcnt = 0;
 	}
 
 	/* Check FIFO for unprocessed measurements. */
-	mes = sdp_sp_get();
+	mes = step_sp_get();
 	while (mes != NULL) {
 		if (mcnt != NULL) {
 			*mcnt += 1;
 		}
 		/* Evaluate the measurement against the processor node registry. */
-		rc = sdp_pm_process(mes, NULL, free);
+		rc = step_pm_process(mes, NULL, free);
 		if (rc) {
 			goto err;
 		}
 		/* Check if we have more measurements available. */
-		mes = sdp_sp_get();
+		mes = step_sp_get();
 	}
 
 err:
 	return rc;
 }
 
-#if (CONFIG_SDP_PROC_MGR_POLL_RATE > 0)
+#if (CONFIG_STEP_PROC_MGR_POLL_RATE > 0)
 /**
  * @brief Polling handler if automatic polling is requested.
  *
  * @param free Whether to free measurement from heap memory once processed.
  */
-static void sdp_pm_poll_thread(bool free)
+static void step_pm_poll_thread(bool free)
 {
 	int matches = 0;
 
 	while (1) {
-		sdp_pm_poll(&matches, free);
-		k_sleep(K_MSEC(1000 / CONFIG_SDP_PROC_MGR_POLL_RATE));
+		step_pm_poll(&matches, free);
+		k_sleep(K_MSEC(1000 / CONFIG_STEP_PROC_MGR_POLL_RATE));
 	}
 }
 #endif
 
-int sdp_pm_disable_node(uint32_t handle)
+int step_pm_disable_node(uint32_t handle)
 {
 	int rc = 0;
 
 	LOG_DBG("Disabling processor node %d:", handle);
 
-	if (handle > sdp_pm_handle_counter) {
+	if (handle > step_pm_handle_counter) {
 		LOG_ERR("Invalid handle: %d", handle);
 		rc = -EINVAL;
 		goto err;
 	}
-	sdp_pm_nodes[handle].flags.enabled = 0;
+	step_pm_nodes[handle].flags.enabled = 0;
 
 err:
 	return rc;
 }
 
-int sdp_pm_enable_node(uint32_t handle)
+int step_pm_enable_node(uint32_t handle)
 {
 	int rc = 0;
 
 	LOG_DBG("Enabling processor node %d:", handle);
 
-	if (handle > sdp_pm_handle_counter) {
+	if (handle > step_pm_handle_counter) {
 		LOG_ERR("Invalid handle: %d", handle);
 		rc = -EINVAL;
 		goto err;
 	}
-	sdp_pm_nodes[handle].flags.enabled = 1;
+	step_pm_nodes[handle].flags.enabled = 1;
 
 err:
 	return rc;
 }
 
-int sdp_pm_list(void)
+int step_pm_list(void)
 {
-	struct sdp_pm_node_record *pnode;
-	struct sdp_pm_node_record *tmp;
+	struct step_pm_node_record *pnode;
+	struct step_pm_node_record *tmp;
 
 	printk("Processor node registry:\n");
 
@@ -410,16 +410,16 @@ int sdp_pm_list(void)
 	/* Cycle through registered nodes. */
 	SYS_SLIST_FOR_EACH_CONTAINER_SAFE(&pm_node_slist, pnode, tmp, snode) {
 		printk("  %d (pri:%d):", pnode->handle, pnode->priority);
-		struct sdp_node *n = pnode->node;
+		struct step_node *n = pnode->node;
 
 		do {
 			printk(" [%s]", n->name);
 			n = n->next;
 		} while (n != NULL);
 		printk("\n");
-#if CONFIG_SDP_INSTRUMENTATION
+#if CONFIG_STEP_INSTRUMENTATION
 		/* Note: This value is strictly limited to node evaluation inside the
-		 * 'sdp_pm_process' function, and doesn't take into account the
+		 * 'step_pm_process' function, and doesn't take into account the
 		 * additional processing overhead in the larger pipeline. */
 		printk("     processing time: %d ns (%d avg, %d runs)\n",
 			pnode->runtime_ns, 

@@ -1,5 +1,5 @@
 sample:
-  name: Secure data pipeline shell example
+  name: Secure teletmetry pipeline shell example
 tests:
   test:
-    tags: sdp
+    tags: step

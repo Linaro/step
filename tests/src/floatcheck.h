@@ -11,8 +11,8 @@
  * This file contains helpers to test floating point values.
  */
 
-#ifndef ZEPHYR_INCLUDE_ZCLR_FLOATCHECK_H_
-#define ZEPHYR_INCLUDE_ZCLR_FLOATCHECK_H_
+#ifndef ZEPHYR_INCLUDE_STEP_FLOATCHECK_H_
+#define ZEPHYR_INCLUDE_STEP_FLOATCHECK_H_
 
 #include <zephyr.h>
 #include <stdint.h>
@@ -78,4 +78,4 @@ bool val_is_within(float a, float upper, float lower);
 }
 #endif
 
-#endif /* ZEPHYR_INCLUDE_ZCLR_FLOATCHECK_H_ */
+#endif /* ZEPHYR_INCLUDE_STEP_FLOATCHECK_H_ */
