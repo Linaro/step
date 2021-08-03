@@ -14,7 +14,8 @@
 /* Track callback entry statistics. */
 struct step_test_data_procnode_cb_stats step_test_data_cb_stats = { 0 };
 
-bool data_node_evaluate(struct step_measurement *mes, void *cfg)
+bool data_node_evaluate(struct step_measurement *mes, uint32_t handle,
+			uint32_t inst)
 {
 	/* Overrides the filter engine when evaluating this node. */
 	step_test_data_cb_stats.evaluate++;
@@ -22,7 +23,8 @@ bool data_node_evaluate(struct step_measurement *mes, void *cfg)
 	return true;
 }
 
-bool data_node_matched(struct step_measurement *mes, void *cfg)
+bool data_node_matched(struct step_measurement *mes, uint32_t handle,
+		       uint32_t inst)
 {
 	/* Fires when the filter engine has indicated a match for this node. */
 	step_test_data_cb_stats.matched++;
@@ -30,7 +32,8 @@ bool data_node_matched(struct step_measurement *mes, void *cfg)
 	return true;
 }
 
-int data_node_start(struct step_measurement *mes, void *cfg)
+int data_node_start(struct step_measurement *mes, uint32_t handle,
+		    uint32_t inst)
 {
 	/* Fires before the node runs. */
 	step_test_data_cb_stats.start++;
@@ -38,7 +41,8 @@ int data_node_start(struct step_measurement *mes, void *cfg)
 	return 0;
 }
 
-int data_node_run(struct step_measurement *mes, void *cfg)
+int data_node_exec(struct step_measurement *mes, uint32_t handle,
+		   uint32_t inst)
 {
 	/* Node logic implementation. */
 	step_test_data_cb_stats.run++;
@@ -46,7 +50,8 @@ int data_node_run(struct step_measurement *mes, void *cfg)
 	return 0;
 }
 
-int data_node_stop(struct step_measurement *mes, void *cfg)
+int data_node_stop(struct step_measurement *mes, uint32_t handle,
+		   uint32_t inst)
 {
 	/* Fires when the node has been successfully run. */
 	step_test_data_cb_stats.stop++;
@@ -54,7 +59,8 @@ int data_node_stop(struct step_measurement *mes, void *cfg)
 	return 0;
 }
 
-void data_node_error(struct step_measurement *mes, void *cfg, int error)
+void data_node_error(struct step_measurement *mes, uint32_t handle,
+		     uint32_t inst, int error)
 {
 	/* Fires when an error occurs running this node. */
 	step_test_data_cb_stats.error++;
@@ -99,7 +105,7 @@ static struct step_node step_test_data_procnode_chain_data[] = {
 			.matched_handler = data_node_matched,
 			.start_handler = data_node_start,
 			.stop_handler = data_node_stop,
-			.run_handler = data_node_run,
+			.exec_handler = data_node_exec,
 			.error_handler = data_node_error,
 		},
 
@@ -119,7 +125,7 @@ static struct step_node step_test_data_procnode_chain_data[] = {
 			.matched_handler = data_node_matched,
 			.start_handler = data_node_start,
 			.stop_handler = data_node_stop,
-			.run_handler = data_node_run,
+			.exec_handler = data_node_exec,
 			.error_handler = data_node_error,
 		},
 
@@ -171,7 +177,7 @@ struct step_node step_test_data_procnode = {
 		.matched_handler = data_node_matched,
 		.start_handler = data_node_start,
 		.stop_handler = data_node_stop,
-		.run_handler = data_node_run,
+		.exec_handler = data_node_exec,
 		.error_handler = data_node_error,
 	},
 

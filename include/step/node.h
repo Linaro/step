@@ -27,33 +27,38 @@ extern "C" {
  * @brief Generic callback prototype for node implementations.
  *
  * @param mes       Pointer to the step_measurement being used.
- * @param cfg       Pointer to the config struct/value being used.
+ * @param handle    The handle of the source node this callback.
+ * @param inst      sdp_node instance in a node chain (zero-based).
  *
  * @return 0 on success, negative error code on failure
  */
-typedef int (*step_node_callback_t)(struct step_measurement *mes, void *cfg);
+typedef int (*step_node_callback_t)(struct step_measurement *mes,
+				    uint32_t handle, uint32_t inst);
 
 /**
  * @typedef step_node_evaluate_t
  * @brief Callback prototype for node filter evaluation.
  *
  * @param mes       Pointer to the step_measurement being used.
- * @param cfg       Pointer to the config struct/value being used.
+ * @param handle    The handle of the source node this callback.
+ * @param inst      sdp_node instance in a node chain (zero-based).
  *
  * @return 1 on a match, 0 on match failure.
  */
-typedef bool (*step_node_evaluate_t)(struct step_measurement *mes, void *cfg);
+typedef bool (*step_node_evaluate_t)(struct step_measurement *mes,
+				     uint32_t handle, uint32_t inst);
 
 /**
  * @typedef step_node_error_t
  * @brief Callback prototype when a node fails to successfully run.
  *
  * @param mes       Pointer to the step_measurement being used.
- * @param cfg       Pointer to the config struct/value being used.
+ * @param handle    The handle of the source node this callback.
+ * @param inst      sdp_node instance in a node chain (zero-based).
  * @param error     Negative error code produced during node execution.
  */
-typedef void (*step_node_error_t)(struct step_measurement *mes, void *cfg,
-				 int error);
+typedef void (*step_node_error_t)(struct step_measurement *mes,
+				  uint32_t handle, uint32_t inst, int error);
 
 /**
  * @brief Optional callback handlers for nodes.
@@ -96,7 +101,7 @@ struct step_node_callbacks {
 	/**
 	 * @brief Callback to implement the node's execution logic.
 	 */
-	step_node_callback_t run_handler;
+	step_node_callback_t exec_handler;
 
 	/**
 	 * @brief Callback to fire when the node has successfully

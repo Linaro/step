@@ -33,7 +33,7 @@ void step_node_print(struct step_node *node)
 		printk("  start: %s\n",
 		       node->callbacks.start_handler == NULL ? "no" : "yes");
 		printk("  run: %s\n",
-		       node->callbacks.run_handler == NULL ? "no" : "yes");
+		       node->callbacks.exec_handler == NULL ? "no" : "yes");
 		printk("  stop: %s\n",
 		       node->callbacks.stop_handler == NULL ? "no" : "yes");
 		printk("  error: %s\n",

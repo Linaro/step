@@ -6,12 +6,15 @@
 
 #include <zephyr.h>
 #include <shell/shell.h>
-#include <step/node.h>
-#include <step/measurement/measurement.h>
+#include <logging/log.h>
 #include <step/sample_pool.h>
 #include <step/proc_mgr.h>
 #include <step/cache.h>
 #include <step/instrumentation.h>
+#include "pnodes.h"
+
+#define LOG_LEVEL LOG_LEVEL_DBG
+LOG_MODULE_REGISTER(step_shell);
 
 #if CONFIG_STEP_INSTRUMENTATION
 /**
@@ -19,134 +22,6 @@
  */
 static uint32_t _instr;
 #endif
-
-/* Struct to track the number of times specific callbacks are fired. */
-struct step_node_cb_stats {
-	uint32_t evaluate;
-	uint32_t matched;
-	uint32_t start;
-	uint32_t run;
-	uint32_t stop;
-	uint32_t error;
-};
-
-struct step_node_cb_stats cb_stats = { 0 };
-
-bool node_evaluate(struct step_measurement *mes, void *cfg)
-{
-	/* Overrides the filter engine when evaluating this node. */
-	cb_stats.evaluate++;
-
-	return true;
-}
-
-bool node_matched(struct step_measurement *mes, void *cfg)
-{
-	/* Fires when the filter engine has indicated a match for this node. */
-	cb_stats.matched++;
-
-	return true;
-}
-
-int node_start(struct step_measurement *mes, void *cfg)
-{
-	/* Fires before the node runs. */
-	cb_stats.start++;
-
-	return 0;
-}
-
-int node_run(struct step_measurement *mes, void *cfg)
-{
-	/* Node logic implementation. */
-	cb_stats.run++;
-
-	return 0;
-}
-
-int node_stop(struct step_measurement *mes, void *cfg)
-{
-	/* Fires when the node has been successfully run. */
-	cb_stats.stop++;
-
-	return 0;
-}
-
-void node_error(struct step_measurement *mes, void *cfg, int error)
-{
-	/* Fires when an error occurs running this node. */
-	cb_stats.error++;
-}
-
-/* Processor node chain. */
-static struct step_node test_node_chain_data[] = {
-	/* Processor node 0. */
-	{
-		.name = "Temperature",
-		.filters = {
-			.count = 3,
-			.chain = (struct step_filter[]){
-				{
-					/* Temperature (base type). */
-					.match = STEP_MES_TYPE_TEMPERATURE,
-					.ignore_mask = ~STEP_MES_MASK_FULL_TYPE,
-				},
-				{
-					/* Die temperature. */
-					.op = STEP_FILTER_OP_OR,
-					.match = STEP_MES_TYPE_TEMPERATURE +
-						 (STEP_MES_EXT_TYPE_TEMP_DIE <<
-						  STEP_MES_MASK_EXT_TYPE_POS),
-					.ignore_mask = ~STEP_MES_MASK_FULL_TYPE,
-				},
-				{
-					/* Make sure timestamp (bits 26-28) = EPOCH32 */
-					.op = STEP_FILTER_OP_AND,
-					.match = (STEP_MES_TIMESTAMP_EPOCH_32 <<
-						  STEP_MES_MASK_TIMESTAMP_POS),
-					.ignore_mask = ~STEP_MES_MASK_TIMESTAMP,
-				},
-			},
-		},
-
-		/* Callbacks */
-		.callbacks = {
-			.evaluate_handler = NULL,
-			.matched_handler = node_matched,
-			.start_handler = node_start,
-			.stop_handler = node_stop,
-			.run_handler = node_run,
-			.error_handler = node_error,
-		},
-
-		/* Config settings */
-		.config = NULL,
-
-		/* Point to next processor node in chain. */
-		.next = &test_node_chain_data[1]
-	},
-	/* Processor node 1. */
-	{
-		.name = "Secondary temp processor",
-		/* Callbacks */
-		.callbacks = {
-			.matched_handler = node_matched,
-			.start_handler = node_start,
-			.stop_handler = node_stop,
-			.run_handler = node_run,
-			.error_handler = node_error,
-		},
-
-		/* Config settings */
-		.config = NULL,
-
-		/* End of the chain. */
-		.next = NULL
-	}
-};
-
-/* Pointer to node chain. */
-static struct step_node *test_node_chain = test_node_chain_data;
 
 /* Die temperature with 32-bit timestamp payload. */
 static struct {
@@ -211,13 +86,13 @@ step_shell_cmd_test_add(const struct shell *shell, size_t argc, char **argv)
 
 	/* Append a new instance of the node chain. */
 	STEP_INSTR_START(_instr);
-	step_pm_register(test_node_chain, 0, &handle);
+	step_pm_register(test_node_chain, 4, &handle);
 	STEP_INSTR_STOP(_instr);
 
-	step_node_print(test_node_chain);
+	/* step_node_print(test_node_chain); */
 
 #if CONFIG_STEP_INSTRUMENTATION
-	shell_print(shell, "Took %d ns", _instr);
+	LOG_DBG("Took %d ns", _instr);
 #endif
 
 	return 0;
@@ -235,7 +110,7 @@ step_shell_cmd_test_clr(const struct shell *shell, size_t argc, char **argv)
 	STEP_INSTR_STOP(_instr);
 
 #if CONFIG_STEP_INSTRUMENTATION
-	shell_print(shell, "Took %d ns", _instr);
+	LOG_DBG("Took %d ns", _instr);
 #endif
 
 	return 0;
@@ -283,15 +158,15 @@ step_shell_cmd_test_pub(const struct shell *shell, size_t argc, char **argv)
 
 	STEP_INSTR_STOP(_instr);
 
-	shell_print(shell, "Published 1 measurement:");
-	step_mes_print(&dietemp_mes);
+	LOG_DBG("Published 1 measurement");
+	/* step_mes_print(&dietemp_mes); */
 
 #if CONFIG_STEP_INSTRUMENTATION
 #if (CONFIG_STEP_PROC_MGR_POLL_RATE > 0)
-	shell_print(shell, "Took %d ns, " \
+	LOG_DBG("Took %d ns, " \
 		"excluding polling thread processing time (run 'step list').", _instr);
 #else
-	shell_print(shell, "Took %d ns. ", _instr);
+	LOG_DBG("Took %d ns", _instr);
 #endif
 #endif
 

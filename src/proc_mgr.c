@@ -94,7 +94,7 @@ int step_pm_register(struct step_node *node, uint16_t pri, uint32_t *handle)
 	k_mutex_lock(&step_pm_reg_access, K_FOREVER);
 
 	if (step_pm_handle_counter == CONFIG_STEP_PROC_MGR_NODE_LIMIT) {
-		*handle = -1;	/* 0xFFFFFFFF */
+		*handle = -1;   /* 0xFFFFFFFF */
 		rc = -ENOMEM;
 		LOG_ERR("Registration failed: node limit reached");
 		goto err;
@@ -143,6 +143,34 @@ err:
 	k_mutex_unlock(&step_pm_reg_access);
 
 	return rc;
+}
+
+struct step_node *step_pm_node_get(uint32_t handle, uint32_t inst)
+{
+	struct step_node *n;
+
+	if (handle > step_pm_handle_counter) {
+		LOG_ERR("Invalid handle: %d", handle);
+		return NULL;
+	}
+
+	n = step_pm_nodes[handle].node;
+
+	/* Return the first node instance if requested. */
+	if (inst == 0) {
+		return n;
+	}
+
+	/* Find the requested node instance. */
+	/* ToDo: we could speed this up calculating the offset in memory. */
+	for (uint32_t i = 0; i < inst; i++) {
+		n = n->next;
+		if (n == NULL) {
+			LOG_ERR("Node instance out of bounds: %d:%d", handle, inst);
+			return NULL;
+		}
+	}
+	return n;
 }
 
 int step_pm_resume(void)
@@ -204,6 +232,7 @@ int step_pm_process(struct step_measurement *mes, int *matches, bool free)
 	int match = 0;
 	int match_count = 0;
 	int cached = 0;
+	int node_idx = 0;
 	struct step_pm_node_record *pnode;
 	struct step_pm_node_record *tmp;
 	struct step_node *n;
@@ -227,6 +256,9 @@ int step_pm_process(struct step_measurement *mes, int *matches, bool free)
 		if (pnode->flags.enabled) {
 			n = pnode->node;
 
+			/* Reset node index counter for node chains. */
+			node_idx = 0;
+
 #if CONFIG_STEP_INSTRUMENTATION
 			/* Start total runtime INSTR timer. */
 			STEP_INSTR_START(instr);
@@ -235,13 +267,14 @@ int step_pm_process(struct step_measurement *mes, int *matches, bool free)
 #if CONFIG_STEP_FILTER_CACHE
 			/* Check filter cache for cached match results. */
 			cached = step_cache_check(mes->header.filter_bits,
-						 pnode->handle, &match);
+						  pnode->handle, &match);
 #endif
 			/* Evaluate filter match. */
 			if (!cached) {
 				if (n->callbacks.evaluate_handler != NULL) {
 					/* Use the node's evaluate callback to determine match. */
-					match = n->callbacks.evaluate_handler(mes, n->config);
+					match = n->callbacks.evaluate_handler(mes,
+									      pnode->handle, node_idx);
 				} else {
 					/* Standard evaluation against the node's filter chain. */
 					rc = step_filt_evaluate(&(n->filters), mes, &match);
@@ -249,7 +282,8 @@ int step_pm_process(struct step_measurement *mes, int *matches, bool free)
 
 				/* Call matched handler if requested, can negate match value. */
 				if (match && (n->callbacks.matched_handler != NULL)) {
-					match = n->callbacks.matched_handler(mes, n->config);
+					match = n->callbacks.matched_handler(mes,
+									     pnode->handle, node_idx);
 				}
 
 #if CONFIG_STEP_FILTER_CACHE
@@ -262,22 +296,42 @@ int step_pm_process(struct step_measurement *mes, int *matches, bool free)
 			if (match) {
 				/* Sequentially fire each node in the node chain. */
 				do {
+					int node_rc;
 					/* Call start handler if requested. */
 					if (n->callbacks.start_handler != NULL) {
-						n->callbacks.start_handler(mes, n->config);
+						node_rc = n->callbacks.start_handler(mes,
+										     pnode->handle, node_idx);
+						/* Call error handler if necessary. */
+						if (node_rc) {
+							n->callbacks.error_handler(mes,
+										   pnode->handle, node_idx, node_rc);
+						}
 					}
 
 					/* Execute the main node processor. */
-					if (n->callbacks.run_handler != NULL) {
-						n->callbacks.run_handler(mes, n->config);
+					if (n->callbacks.exec_handler != NULL) {
+						node_rc = n->callbacks.exec_handler(mes,
+										    pnode->handle, node_idx);
+						/* Call error handler if necessary. */
+						if (node_rc) {
+							n->callbacks.error_handler(mes,
+										   pnode->handle, node_idx, node_rc);
+						}
 					}
 
 					/* Call stop handler if requested. */
 					if (n->callbacks.stop_handler != NULL) {
-						n->callbacks.stop_handler(mes, n->config);
+						node_rc = n->callbacks.stop_handler(mes,
+										    pnode->handle, node_idx);
+						/* Call error handler if necessary. */
+						if (node_rc) {
+							n->callbacks.error_handler(mes,
+										   pnode->handle, node_idx, node_rc);
+						}
 					}
 
 					/* Move to next node in the chain, if present. */
+					node_idx++;
 					n = n->next;
 				} while (n != NULL);
 
@@ -304,7 +358,7 @@ abort:
 	if (matches != NULL) {
 		*matches = match_count;
 	}
-	
+
 	/* Free measurement from shared memory if requested. */
 	if (free) {
 		step_sp_free(mes);
@@ -399,6 +453,7 @@ int step_pm_list(void)
 {
 	struct step_pm_node_record *pnode;
 	struct step_pm_node_record *tmp;
+	uint32_t inst;
 
 	printk("Processor node registry:\n");
 
@@ -409,22 +464,23 @@ int step_pm_list(void)
 
 	/* Cycle through registered nodes. */
 	SYS_SLIST_FOR_EACH_CONTAINER_SAFE(&pm_node_slist, pnode, tmp, snode) {
-		printk("  %d (pri:%d):", pnode->handle, pnode->priority);
-		struct step_node *n = pnode->node;
-
-		do {
-			printk(" [%s]", n->name);
-			n = n->next;
-		} while (n != NULL);
-		printk("\n");
+		printk("%d (priority %d):\n", pnode->handle, pnode->priority);
 #if CONFIG_STEP_INSTRUMENTATION
 		/* Note: This value is strictly limited to node evaluation inside the
 		 * 'step_pm_process' function, and doesn't take into account the
 		 * additional processing overhead in the larger pipeline. */
-		printk("     processing time: %d ns (%d avg, %d runs)\n",
-			pnode->runtime_ns, 
-			pnode->runtime_ns / pnode->runs, pnode->runs);
+		printk("  Total processing time: %d ns (%d avg, %d runs)\n",
+		       pnode->runtime_ns,
+		       pnode->runtime_ns / pnode->runs, pnode->runs);
 #endif
+		/* Print individual nodes. */
+		struct step_node *n = pnode->node;
+		inst = 0;
+		do {
+			printk("  [%d] %s\n", inst, n->name);
+			inst++;
+			n = n->next;
+		} while (n != NULL);
 	}
 
 abort:

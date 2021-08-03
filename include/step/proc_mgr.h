@@ -48,9 +48,21 @@ extern "C" {
 int step_pm_register(struct step_node *node, uint16_t pri, uint32_t *handle);
 
 /**
+ * @brief Gets a pointer to the node or node chain associated with the
+ *        specified handle.
+ *
+ * @param handle    The handle the node has been registered under.
+ * @param inst      The instancee number in a node chain, otherwise 0.
+ *
+ * @return struct* spd_node Pointer to the associated node or node chain,
+ *                          NULL on error.
+ */
+struct step_node* step_pm_node_get(uint32_t handle, uint32_t inst);
+
+/**
  * @brief Initialises the timer thread used to periodically poll for queued
  *        measurements.
- * 
+ *
  * @return int 0 on success, negative error code on failure.
  */
 int step_pm_resume(void);
@@ -58,7 +70,7 @@ int step_pm_resume(void);
 /**
  * @brief Stops the timer thread used to periodically poll for queued
  *        measurements.
- * 
+ *
  * @return int 0 on success, negative error code on failure.
  */
 int step_pm_suspend(void);
