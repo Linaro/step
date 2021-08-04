@@ -10,6 +10,7 @@
 extern void test_mes_check_header(void);
 extern void test_mes_check_payload(void);
 extern void test_mes_check_sample_count(void);
+extern void test_mes_check_payload_sz(void);
 
 /* tests_filter.c */
 extern void test_filter_evaluate_fc_null(void);
@@ -35,6 +36,7 @@ void test_main(void)
 		ztest_unit_test(test_mes_check_header),
 		ztest_unit_test(test_mes_check_payload),
 		ztest_unit_test(test_mes_check_sample_count),
+		ztest_unit_test(test_mes_check_payload_sz),
 		ztest_unit_test(test_filter_evaluate_fc_null),
 		ztest_unit_test(test_filter_evaluate_mes_null),
 		ztest_unit_test(test_filter_evaluate_fc_len),

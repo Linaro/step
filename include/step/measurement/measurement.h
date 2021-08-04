@@ -192,7 +192,7 @@
  *       32-bit word at the very beginning of the payload (after the optional
  *       timestamp if present!), as an unsigned integer in little-endian
  *       format.
- * 
+ *
  *       If more than one sample is present, and the timestamp is enabled,
  *       the timestamp value corresponds to the time when the first sample
  *       was taken, and the interval between samples will need to be
@@ -347,54 +347,71 @@ struct step_measurement {
 /** Payload data structure used. */
 enum step_mes_format {
 	/** No data structure (raw C type data). */
-	STEP_MES_FORMAT_NONE     = 0,
+	STEP_MES_FORMAT_NONE    = 0,
 	/** CBOR record(s). */
-	STEP_MES_FORMAT_CBOR     = 1,
+	STEP_MES_FORMAT_CBOR    = 1,
 };
 
 /** Payload encoding used. */
 enum step_mes_encoding {
 	/** No encoding used (binary data). */
-	STEP_MES_ENCODING_NONE   = 0,
+	STEP_MES_ENCODING_NONE          = 0,
 	/** BASE64 Encoding (rfc4648). */
-	STEP_MES_ENCODING_BASE64 = 1,
+	STEP_MES_ENCODING_BASE64        = 1,
 	/** BASE45 Encoding (draft-faltstrom-base45-06). */
-	STEP_MES_ENCODING_BASE45 = 2,
+	STEP_MES_ENCODING_BASE45        = 2,
 };
 
 /** Payload compression algorithm used. */
 enum step_mes_compression {
 	/** No payload compression used. */
-	STEP_MES_COMPRESSION_NONE        = 0,
+	STEP_MES_COMPRESSION_NONE       = 0,
 	/** LZ4 compression. */
-	STEP_MES_COMPRESSION_LZ4         = 1,
+	STEP_MES_COMPRESSION_LZ4        = 1,
 };
 
 /** Optional timestamp format used. */
 enum step_mes_timestamp {
 	/** No timestamp included. */
-	STEP_MES_TIMESTAMP_NONE          = 0,
+	STEP_MES_TIMESTAMP_NONE         = 0,
 	/** 32-bit Unix epoch timestamp present. */
-	STEP_MES_TIMESTAMP_EPOCH_32      = 1,
+	STEP_MES_TIMESTAMP_EPOCH_32     = 1,
 	/** 64-bit Unix epoch timestamp present. */
-	STEP_MES_TIMESTAMP_EPOCH_64      = 2,
+	STEP_MES_TIMESTAMP_EPOCH_64     = 2,
 	/** 32-bit millisecond device uptime counter. */
-	STEP_MES_TIMESTAMP_UPTIME_MS_32  = 3,
+	STEP_MES_TIMESTAMP_UPTIME_MS_32 = 3,
 	/** 64-bit millisecond device uptime counter. */
-	STEP_MES_TIMESTAMP_UPTIME_MS_64  = 4,
+	STEP_MES_TIMESTAMP_UPTIME_MS_64 = 4,
 	/** 64-bit microsecond device uptime counter. */
-	STEP_MES_TIMESTAMP_UPTIME_US_64  = 5,
+	STEP_MES_TIMESTAMP_UPTIME_US_64 = 5,
 };
 
 /** Packet fragments. */
 enum step_mes_fragment {
 	/** No a fragment (complete payload). */
-	STEP_MES_FRAGMENT_NONE           = 0,
+	STEP_MES_FRAGMENT_NONE          = 0,
 	/** Non-final fragment in a larger payload. */
-	STEP_MES_FRAGMENT_PARTIAL        = 1,
+	STEP_MES_FRAGMENT_PARTIAL       = 1,
 	/** Final fragment in the larger payload. */
-	STEP_MES_FRAGMENT_FINAL          = 2,
+	STEP_MES_FRAGMENT_FINAL         = 2,
 };
+
+/**
+ * @brief Calculates the minimum number of bytes required for the measurement
+ *        payload, taking into account the timestamp, ctype, sample count and
+ *        encoding scheme indicated in the supplied header.
+ *
+ * @param hdr       Pointer to the @ref step_mes_header to parse.
+ *
+ * @return int32_t  The minimum number of bytes required to represent @ref mes
+ *                  in memory, or -1 if a minimum payload can not be determined.
+ *
+ * @note This function does not currently take into account data format
+ *       (CBOR, etc.) or compression (LZ4, etc.) when determining the minimum
+ *       payload size. Be sure to adjust the returned minimum size to provide
+ *       sufficient overhead in the payload for these features if required.
+ */
+int32_t step_mes_sz_payload(struct step_mes_header *hdr);
 
 /**
  * @brief Helper function to display the contents of the step_measurement.

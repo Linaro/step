@@ -20,7 +20,7 @@ void test_sp_alloc(void)
 	/* Flush the fifo. */
 	step_sp_flush();
 
-	/* Allocate a datasample with an too large payload buffer. */
+	/* Allocate a datasample with an oversized payload buffer. */
 	mes = step_sp_alloc(16384);
 	zassert_is_null(mes, NULL);
 

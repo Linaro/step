@@ -191,10 +191,10 @@ struct step_node step_test_data_procnode = {
 /* Die temperature with 32-bit timestamp payload. */
 struct {
 	uint32_t timestamp;
-	float temp_c;
+	float temp_c[4];
 } step_test_data_dietemp_payload = {
 	.timestamp = 1624305803,         /* Monday, June 21, 2021 8:03:23 PM */
-	.temp_c = 32.0F,
+	.temp_c = { 32.0F, 36.0F, 21.0F, -3.6F },
 };
 
 /* Test die temp measurement, with timestamp. */
@@ -216,6 +216,7 @@ struct step_measurement step_test_mes_dietemp = {
 		},
 		/* Source/Len word. */
 		.srclen = {
+			.samples = 2,	/* 2^2 = 4 samples. */
 			.len = sizeof(step_test_data_dietemp_payload),
 			.sourceid = 10,
 		},

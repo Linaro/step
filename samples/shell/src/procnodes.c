@@ -7,7 +7,7 @@
 #include <stdio.h>
 #include <logging/log.h>
 #include <step/proc_mgr.h>
-#include "pnodes.h"
+#include "procnodes.h"
 
 LOG_MODULE_DECLARE(step_shell);
 
@@ -26,37 +26,38 @@ struct node_cfg {
 	.mult = 10.0F,
 };
 
+/* Overrides the filter engine when evaluating this node. */
 bool node_evaluate(struct step_measurement *mes, uint32_t handle, uint32_t inst)
 {
-	/* Overrides the filter engine when evaluating this node. */
 	cb_stats.evaluate++;
 
 	return true;
 }
 
+/* Fires when the filter engine has indicated a match for this node. */
 bool node_matched(struct step_measurement *mes, uint32_t handle, uint32_t inst)
 {
-	/* Fires when the filter engine has indicated a match for this node. */
 	cb_stats.matched++;
 
 	return true;
 }
 
+/* Fires before the node runs. */
 int node_start(struct step_measurement *mes, uint32_t handle, uint32_t inst)
 {
-	/* Fires before the node runs. */
 	cb_stats.start++;
 
 	return 0;
 }
 
+/* Main node processing function. */
 int node_exec(struct step_measurement *mes, uint32_t handle, uint32_t inst)
 {
 	struct step_node *node;
 
 	if (mes->header.filter.ext_type == STEP_MES_EXT_TYPE_TEMP_DIE) {
 		float mult = 1.0F;
-		
+
 		/* Get a reference to the source node from the proc. node registry. */
 		node = step_pm_node_get(handle, inst);
 		if (node == NULL) {
@@ -86,18 +87,18 @@ int node_exec(struct step_measurement *mes, uint32_t handle, uint32_t inst)
 	return 0;
 }
 
+/* Fires when the node has been successfully run. */
 int node_stop(struct step_measurement *mes, uint32_t handle, uint32_t inst)
 {
-	/* Fires when the node has been successfully run. */
 	cb_stats.stop++;
 
 	return 0;
 }
 
+/* Fires when an error occurs running this node. */
 void node_error(struct step_measurement *mes, uint32_t handle,
 		uint32_t inst, int error)
 {
-	/* Fires when an error occurs running this node. */
 	cb_stats.error++;
 }
 
@@ -105,7 +106,7 @@ void node_error(struct step_measurement *mes, uint32_t handle,
 struct step_node test_node_chain_data[] = {
 	/* Root processor node. */
 	{
-		.name = "Root processor node (temp)",
+		.name = "Root processor node",
 		.filters = {
 			.count = 3,
 			.chain = (struct step_filter[]){

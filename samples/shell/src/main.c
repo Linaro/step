@@ -11,17 +11,15 @@
 #include <step/proc_mgr.h>
 #include <step/cache.h>
 #include <step/instrumentation.h>
-#include "pnodes.h"
+#include "procnodes.h"
 
 #define LOG_LEVEL LOG_LEVEL_DBG
 LOG_MODULE_REGISTER(step_shell);
 
-#if CONFIG_STEP_INSTRUMENTATION
 /**
  * @brief Instrumentation counter.
  */
 static uint32_t _instr;
-#endif
 
 /* Die temperature with 32-bit timestamp payload. */
 static struct {
@@ -66,7 +64,7 @@ static struct step_measurement dietemp_mes = {
 };
 
 static int
-step_shell_cmd_test_list(const struct shell *shell, size_t argc, char **argv)
+step_shell_cmd_list(const struct shell *shell, size_t argc, char **argv)
 {
 	ARG_UNUSED(argc);
 	ARG_UNUSED(argv);
@@ -77,7 +75,7 @@ step_shell_cmd_test_list(const struct shell *shell, size_t argc, char **argv)
 }
 
 static int
-step_shell_cmd_test_add(const struct shell *shell, size_t argc, char **argv)
+step_shell_cmd_add(const struct shell *shell, size_t argc, char **argv)
 {
 	ARG_UNUSED(argc);
 	ARG_UNUSED(argv);
@@ -99,7 +97,7 @@ step_shell_cmd_test_add(const struct shell *shell, size_t argc, char **argv)
 }
 
 static int
-step_shell_cmd_test_clr(const struct shell *shell, size_t argc, char **argv)
+step_shell_cmd_clr(const struct shell *shell, size_t argc, char **argv)
 {
 	ARG_UNUSED(argc);
 	ARG_UNUSED(argv);
@@ -117,7 +115,7 @@ step_shell_cmd_test_clr(const struct shell *shell, size_t argc, char **argv)
 }
 
 static int
-step_shell_cmd_test_pub(const struct shell *shell, size_t argc, char **argv)
+step_shell_cmd_pub(const struct shell *shell, size_t argc, char **argv)
 {
 	ARG_UNUSED(argc);
 	ARG_UNUSED(argv);
@@ -174,7 +172,7 @@ step_shell_cmd_test_pub(const struct shell *shell, size_t argc, char **argv)
 }
 
 static int
-step_shell_cmd_test_stats(const struct shell *shell, size_t argc, char **argv)
+step_shell_cmd_stats(const struct shell *shell, size_t argc, char **argv)
 {
 	ARG_UNUSED(argc);
 	ARG_UNUSED(argv);
@@ -190,7 +188,7 @@ step_shell_cmd_test_stats(const struct shell *shell, size_t argc, char **argv)
 }
 
 static int
-step_shell_cmd_test_pool(const struct shell *shell, size_t argc, char **argv)
+step_shell_cmd_pool(const struct shell *shell, size_t argc, char **argv)
 {
 	ARG_UNUSED(argc);
 	ARG_UNUSED(argv);
@@ -202,7 +200,7 @@ step_shell_cmd_test_pool(const struct shell *shell, size_t argc, char **argv)
 
 #if CONFIG_STEP_FILTER_CACHE
 static int
-step_shell_cmd_test_cache(const struct shell *shell, size_t argc, char **argv)
+step_shell_cmd_cache(const struct shell *shell, size_t argc, char **argv)
 {
 	ARG_UNUSED(argc);
 	ARG_UNUSED(argv);
@@ -220,7 +218,7 @@ void main(void)
 {
 	printk("Type 'step help' for command options.\n\n");
 	printk("1.) Populate the processor registry: step add\n");
-	printk("2.) Publish measurement(s):          step msg\n");
+	printk("2.) Publish measurement(s):          step pub\n");
 	printk("3.) Check results:                   step stats");
 
 	while (1) {
@@ -232,20 +230,20 @@ void main(void)
 SHELL_STATIC_SUBCMD_SET_CREATE(
 	sub_step,
 	/* 'list' command handler. */
-	SHELL_CMD(list, NULL, "Display proc. registry", step_shell_cmd_test_list),
+	SHELL_CMD(list, NULL, "Display proc. registry", step_shell_cmd_list),
 	/* 'add' command handler. */
-	SHELL_CMD(add, NULL, "Populate proc. registry", step_shell_cmd_test_add),
+	SHELL_CMD(add, NULL, "Populate proc. registry", step_shell_cmd_add),
 	/* 'clr' command handler. */
-	SHELL_CMD(clr, NULL, "Clear proc. registry", step_shell_cmd_test_clr),
+	SHELL_CMD(clr, NULL, "Clear proc. registry", step_shell_cmd_clr),
 	/* 'pub' command handler. */
-	SHELL_CMD(pub, NULL, "Publish a measurement", step_shell_cmd_test_pub),
+	SHELL_CMD(pub, NULL, "Publish a measurement", step_shell_cmd_pub),
 	/* 'stats' command handler. */
-	SHELL_CMD(stats, NULL, "Display node cb stats", step_shell_cmd_test_stats),
+	SHELL_CMD(stats, NULL, "Display node cb stats", step_shell_cmd_stats),
 	/* 'pool' command handler. */
-	SHELL_CMD(pool, NULL, "Display meas. pool stats", step_shell_cmd_test_pool),
+	SHELL_CMD(pool, NULL, "Display meas. pool stats", step_shell_cmd_pool),
 #if CONFIG_STEP_FILTER_CACHE
 	/* 'cache' command handler. */
-	SHELL_CMD(cache, NULL, "Display cache stats", step_shell_cmd_test_cache),
+	SHELL_CMD(cache, NULL, "Display cache stats", step_shell_cmd_cache),
 #endif
 
 	/* Array terminator. */

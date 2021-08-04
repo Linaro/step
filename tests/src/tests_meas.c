@@ -50,15 +50,15 @@ void test_mes_check_header(void)
 		      STEP_MES_SI_SCALE_NONE, NULL);
 
 	/* Payload length in bytes. */
-	zassert_equal(step_test_mes_dietemp.header.srclen.len, 8,
+	zassert_equal(step_test_mes_dietemp.header.srclen.len, 20,
 		      NULL);
 
 	/* Partial payload packet? */
 	zassert_equal(step_test_mes_dietemp.header.srclen.fragment, 0,
 		      NULL);
 
-	/* Sample count. */
-	zassert_equal(step_test_mes_dietemp.header.srclen.samples, 0,
+	/* Sample count (2^2 = 4 samples). */
+	zassert_equal(step_test_mes_dietemp.header.srclen.samples, 2,
 		      NULL);
 
 	/* Source ID from the source manager registry. */
@@ -70,26 +70,35 @@ void test_mes_check_payload(void)
 {
 	struct payload {
 		uint32_t timestamp;
-		float temp_c;
-	} payload;
+		float temp_c[4];
+	} *payload;
 
 	/* Check payload length. */
-	zassert_equal(sizeof(payload),
+	zassert_equal(sizeof(struct payload),
 		      step_test_mes_dietemp.header.srclen.len, NULL);
 
-	/* Make a copy of the payload. */
-	memcpy(&payload,
-	       step_test_mes_dietemp.payload,
-	       step_test_mes_dietemp.header.srclen.len);
+	/* Get a reference to the payload. */
+	payload = step_test_mes_dietemp.payload;
 
 	/* Verify timestamp. */
-	zassert_equal(payload.timestamp, 1624305803, NULL);
+	zassert_equal(payload->timestamp, 1624305803, NULL);
 
 	/* Verify temperature. */
-	zassert_true(val_is_equal(payload.temp_c, 32.0F, 0.0001), NULL);
+	zassert_true(val_is_equal(payload->temp_c[0], 32.0F, 0.0001), NULL);
+	zassert_true(val_is_equal(payload->temp_c[1], 36.0F, 0.0001), NULL);
+	zassert_true(val_is_equal(payload->temp_c[2], 21.0F, 0.0001), NULL);
+	zassert_true(val_is_equal(payload->temp_c[3], -3.6F, 0.0001), NULL);
 }
 
 void test_mes_check_sample_count(void)
 {
-	/* ToDo: Verify sample count edge cases. */
+	/* ToDo: Verify arbitrary sample count, etc. */
+}
+
+void test_mes_check_payload_sz(void)
+{
+	int32_t sz;
+
+	sz = step_mes_sz_payload(&(step_test_mes_dietemp.header));
+	zassert_equal(sz, 20, NULL);
 }
