@@ -11,6 +11,7 @@
 #include <step/proc_mgr.h>
 #include <step/cache.h>
 #include <step/instrumentation.h>
+#include "driver.h"
 #include "procnodes.h"
 
 #define LOG_LEVEL LOG_LEVEL_DBG
@@ -20,48 +21,6 @@ LOG_MODULE_REGISTER(step_shell);
  * @brief Instrumentation counter.
  */
 static uint32_t _instr;
-
-/* Die temperature with 32-bit timestamp payload. */
-static struct {
-	uint32_t timestamp;
-	float temp_c;
-} dietemp_payload = {
-	.timestamp = 1624305803, /* Monday, June 21, 2021 8:03:23 PM */
-	.temp_c = 32.0F,
-};
-
-/* Test die temp measurement, with timestamp. */
-static struct step_measurement dietemp_mes = {
-	/* Measurement metadata. */
-	.header = {
-		/* Filter word. */
-		.filter = {
-			.base_type = STEP_MES_TYPE_TEMPERATURE,
-			.ext_type = STEP_MES_EXT_TYPE_TEMP_DIE,
-			.flags = {
-				.data_format = STEP_MES_FORMAT_NONE,
-				.encoding = STEP_MES_ENCODING_NONE,
-				.compression = STEP_MES_COMPRESSION_NONE,
-				.timestamp = STEP_MES_TIMESTAMP_EPOCH_32,
-			},
-		},
-		/* SI Unit word. */
-		.unit = {
-			.si_unit = STEP_MES_UNIT_SI_DEGREE_CELSIUS,
-			.ctype = STEP_MES_UNIT_CTYPE_IEEE754_FLOAT32,
-			.scale_factor = STEP_MES_SI_SCALE_NONE,
-		},
-		/* Source/Len word. */
-		.srclen = {
-			.len = sizeof(dietemp_payload),
-			.fragment = 0,
-			.sourceid = 10,
-		},
-	},
-
-	/* Die temperature in C plus 32-bit epoch timestamp. */
-	.payload = &dietemp_payload,
-};
 
 static int
 step_shell_cmd_list(const struct shell *shell, size_t argc, char **argv)
@@ -120,7 +79,8 @@ step_shell_cmd_pub(const struct shell *shell, size_t argc, char **argv)
 	ARG_UNUSED(argc);
 	ARG_UNUSED(argv);
 
-	struct step_measurement *mes_alloc;
+	int rc;
+	struct step_measurement *mes = NULL;
 
 	/* WARNING: The instrumention values below are incomplete.
 	 *
@@ -137,27 +97,25 @@ step_shell_cmd_pub(const struct shell *shell, size_t argc, char **argv)
 
 	STEP_INSTR_START(_instr);
 
-	/* Allocate memory for measurement. */
-	mes_alloc = step_sp_alloc(dietemp_mes.header.srclen.len);
-
-	/* Copy test data into heap-based measurement instance. */
-	memcpy(&(mes_alloc->header), &(dietemp_mes.header),
-	       sizeof(struct step_mes_header));
-	memcpy(mes_alloc->payload, dietemp_mes.payload,
-	       dietemp_mes.header.srclen.len);
+	/* Get a measurement from the sample driver. */
+	rc = step_shell_drv_get_mes(&mes);
+	if (rc) {
+		/* ToDo: Handle error. */
+		LOG_WRN("Failed to allocate measurement in driver.");
+	}
 
 #if (CONFIG_STEP_PROC_MGR_POLL_RATE > 0)
 	/* Assign measurement to FIFO so polling thread finds it. */
-	step_sp_put(mes_alloc);
+	step_sp_put(mes);
 #else
 	/* Manually process the measurement when no polling thread is present. */
-	step_pm_process(&dietemp_mes, NULL, false);
+	step_pm_process(mes, NULL, false);
 #endif
 
 	STEP_INSTR_STOP(_instr);
 
 	LOG_DBG("Published 1 measurement");
-	/* step_mes_print(&dietemp_mes); */
+	/* step_mes_print(smes); */
 
 #if CONFIG_STEP_INSTRUMENTATION
 #if (CONFIG_STEP_PROC_MGR_POLL_RATE > 0)

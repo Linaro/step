@@ -8,16 +8,11 @@
 #include <logging/log.h>
 #include <step/proc_mgr.h>
 #include "procnodes.h"
+#include "driver.h"
 
 LOG_MODULE_DECLARE(step_shell);
 
 struct step_node_cb_stats cb_stats = { 0 };
-
-/* Die temperature with 32-bit timestamp payload. Must match struct in main.c*/
-struct temp_payload {
-	uint32_t timestamp;
-	float temp_c;
-};
 
 /* Demonstrate how a custom config struct can be used with node callbacks. */
 struct node_cfg {
@@ -72,7 +67,7 @@ int node_exec(struct step_measurement *mes, uint32_t handle, uint32_t inst)
 		}
 
 		/* Display the timestamp and die temp value. */
-		struct temp_payload *tp = mes->payload;
+		struct drv_payload *tp = mes->payload;
 		tp->temp_c *= mult;
 		LOG_INF("[%d] Received die temp: %0.2f C (handle %d:%d)",
 			tp->timestamp, tp->temp_c, handle, inst);
@@ -124,9 +119,9 @@ struct step_node test_node_chain_data[] = {
 					.ignore_mask = ~STEP_MES_MASK_FULL_TYPE,
 				},
 				{
-					/* Make sure timestamp (bits 26-28) = EPOCH32 */
+					/* Make sure timestamp (bits 26-28) = UPTIME_MS_32 */
 					.op = STEP_FILTER_OP_AND,
-					.match = (STEP_MES_TIMESTAMP_EPOCH_32 <<
+					.match = (STEP_MES_TIMESTAMP_UPTIME_MS_32 <<
 						  STEP_MES_MASK_TIMESTAMP_POS),
 					.ignore_mask = ~STEP_MES_MASK_TIMESTAMP,
 				},

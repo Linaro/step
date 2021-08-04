@@ -226,7 +226,9 @@ void step_mes_print(struct step_measurement *mes)
 	printk("  len:            0x%04X (%u)\n", mes->header.srclen.len, mes->header.srclen.len);
 	printk("  fragment:       %u\n", mes->header.srclen.fragment);
 	printk("  _rsvd:          %u\n", mes->header.srclen._rsvd);
-	if (mes->header.srclen.samples) {
+	if (mes->header.srclen.samples == 15) {
+		printk("  samples:        - (Arbitrary count, see payload)\n");
+	} else if (mes->header.srclen.samples) {
 		printk("  samples:        2^%u\n", mes->header.srclen.samples);
 	} else {
 		printk("  samples:        0 (1 sample)\n");
