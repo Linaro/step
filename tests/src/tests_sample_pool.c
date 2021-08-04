@@ -31,7 +31,7 @@ void test_sp_alloc(void)
 	zassert_is_null(mes->payload, NULL);
 	zassert_true(step_sp_bytes_alloc() ==
 		     sizeof(struct step_measurement) +
-		     (sizeof(struct step_measurement) % 8), NULL);
+		     (8 - (sizeof(struct step_measurement) % 8)), NULL);
 	step_sp_free(mes);
 	zassert_true(step_sp_bytes_alloc() == 0, NULL);
 
@@ -40,7 +40,7 @@ void test_sp_alloc(void)
 	zassert_not_null(mes, NULL);
 	zassert_true(step_sp_bytes_alloc() ==
 		     sizeof(struct step_measurement) + payload_len +
-		     ((sizeof(struct step_measurement) + payload_len) % 8),
+		     (8 - ((sizeof(struct step_measurement) + payload_len) % 8)),
 		     NULL);
 
 	/* Check payload len. */
@@ -80,7 +80,7 @@ void test_sp_alloc(void)
 void test_sp_alloc_limit(void)
 {
 	int rec_size = sizeof(struct step_measurement) +
-		       (sizeof(struct step_measurement) % 8);
+		       (8 - (sizeof(struct step_measurement) % 8));
 	int max_samples = (CONFIG_STEP_POOL_SIZE - sizeof(struct k_heap)) /
 			  rec_size;
 	struct step_measurement *mes;
@@ -125,7 +125,8 @@ void test_sp_fifo(void)
 	zassert_not_null(src, NULL);
 	zassert_true(step_sp_bytes_alloc() ==
 		     sizeof(struct step_measurement) + sizeof payload +
-		     ((sizeof(struct step_measurement) + sizeof payload) % 8), NULL);
+		     (8 - ((sizeof(struct step_measurement) + sizeof payload) % 8)),
+		     NULL);
 	memcpy(src->payload, &payload, sizeof payload);
 	src->header.filter.base_type = STEP_MES_TYPE_LIGHT;
 	src->header.filter.ext_type = STEP_MES_EXT_TYPE_LIGHT_PHOTO_ILLUMINANCE;

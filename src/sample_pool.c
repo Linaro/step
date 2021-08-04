@@ -54,9 +54,9 @@ void step_sp_free(struct step_measurement *mes)
 	 * Note that Zephyr's heap stores records in blocks of 8 bytes memory, so
 	 * there is some additional overhead when a record isn't an exact multiple
 	 * of 8 bytes long. */
-	len = mes->header.srclen.len +
-	      sizeof(struct step_measurement) + ((mes->header.srclen.len +
-						 sizeof(struct step_measurement)) % 8);
+	len = mes->header.srclen.len + sizeof(struct step_measurement) +
+	      (8 - ((mes->header.srclen.len +
+		     sizeof(struct step_measurement)) % 8));
 	step_sp_stats_inst.bytes_alloc -= len;
 	step_sp_stats_inst.bytes_freed_total += len;
 
@@ -95,10 +95,10 @@ struct step_measurement *step_sp_alloc(uint16_t sz)
 	step_sp_stats_inst.pool_alloc_calls++;
 
 	k_mutex_lock(&step_sp_alloc_mtx, K_FOREVER);
+
 	mes = k_heap_alloc(&step_elem_pool,
 			   sizeof(struct step_measurement) + sz,
 			   K_NO_WAIT);
-	k_mutex_unlock(&step_sp_alloc_mtx);
 
 	/* Make sure memory is available. */
 	if (mes == NULL) {
@@ -111,7 +111,7 @@ struct step_measurement *step_sp_alloc(uint16_t sz)
 	 * there is some additional overhead when a record isn't an exact multiple
 	 * of 8 bytes long. */
 	len = sz + sizeof(struct step_measurement) +
-	      ((sz + sizeof(struct step_measurement)) % 8);
+	      (8 - ((sz + sizeof(struct step_measurement)) % 8));
 	step_sp_stats_inst.bytes_alloc += len;
 	step_sp_stats_inst.bytes_alloc_total += len;
 
@@ -124,6 +124,8 @@ struct step_measurement *step_sp_alloc(uint16_t sz)
 		mes->payload = mes + sizeof(struct step_measurement);
 		memset(mes->payload, 0, sz);
 	}
+
+	k_mutex_unlock(&step_sp_alloc_mtx);
 
 	return mes;
 }
