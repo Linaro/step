@@ -193,3 +193,40 @@ void test_proc_thread(void)
 	rc = step_pm_suspend();
 	zassert_equal(rc, 0, NULL);
 }
+
+/**
+ * @brief Tests the automatic polling of queued measurements.
+ */
+void test_proc_get_node(void)
+{
+	int rc;
+	uint32_t handle;
+	struct step_node *node;
+
+	/* Clear the processor node manager. */
+	rc = step_pm_clear();
+	zassert_equal(rc, 0, NULL);
+
+	/* Register a processor node. */
+	rc = step_pm_register(step_test_data_procnode_chain, 0, &handle);
+	zassert_equal(rc, 0, NULL);
+	zassert_equal(handle, 0, NULL);
+
+	/* Register a second processor node. */
+	rc = step_pm_register(step_test_data_procnode_chain, 0, &handle);
+	zassert_equal(rc, 0, NULL);
+	zassert_equal(handle, 1, NULL);
+
+	/* Retrieve node 0:0. */
+	node = step_pm_node_get(0, 0);
+	zassert_not_null(node, NULL);
+	zassert_equal(node->name, step_test_data_procnode_chain->name, NULL);
+
+	/* Rerieve node 0:2 (non-existant). */
+	node = step_pm_node_get(0, 2);
+	zassert_is_null(node, NULL);
+
+	/* Rerieve node 2:0 (non-existant). */
+	node = step_pm_node_get(2, 0);
+	zassert_is_null(node, NULL);
+}

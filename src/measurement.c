@@ -4,6 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+#include <zephyr.h>
 #include <sys/printk.h>
 #include <step/filter.h>
 #include <step/measurement/measurement.h>
@@ -180,6 +181,28 @@ int32_t step_mes_sz_payload(struct step_mes_header *hdr)
 
 err:
 	return len;
+}
+
+int32_t step_mes_validate(struct step_measurement *mes)
+{
+	int rc = 0;
+	int32_t sz;
+
+	if (mes == NULL) {
+		rc = -EINVAL;
+		goto err;
+	}
+
+	sz = step_mes_sz_payload(&(mes->header));
+	if ((sz >= 0) && (sz > mes->header.srclen.len)) {
+		/* Payload buffer isn't large enough. */
+		rc = -ENOSPC;
+	}
+
+	/* ToDo: Make sure timestamp, arbitrary size, etc. are valid if used. */
+
+err:
+	return rc;
 }
 
 void step_mes_print(struct step_measurement *mes)

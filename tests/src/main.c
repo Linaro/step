@@ -24,6 +24,7 @@ extern void test_filter_evaluate_match_bad(void);
 extern void test_proc_reg_limit(void);
 extern void test_proc_manual(void);
 extern void test_proc_thread(void);
+extern void test_proc_get_node(void);
 
 /* tests_sample_pool.c */
 extern void test_sp_alloc(void);
@@ -37,15 +38,19 @@ void test_main(void)
 		ztest_unit_test(test_mes_check_payload),
 		ztest_unit_test(test_mes_check_sample_count),
 		ztest_unit_test(test_mes_check_payload_sz),
+
 		ztest_unit_test(test_filter_evaluate_fc_null),
 		ztest_unit_test(test_filter_evaluate_mes_null),
 		ztest_unit_test(test_filter_evaluate_fc_len),
 		ztest_unit_test(test_filter_evaluate_fc_bad_op0),
 		ztest_unit_test(test_filter_evaluate_match_good),
 		ztest_unit_test(test_filter_evaluate_match_bad),
+
 		ztest_unit_test(test_proc_reg_limit),
 		ztest_unit_test(test_proc_manual),
 		ztest_unit_test(test_proc_thread),
+		ztest_unit_test(test_proc_get_node),
+		
 		ztest_unit_test(test_sp_alloc),
 		ztest_unit_test(test_sp_alloc_limit),
 		ztest_unit_test(test_sp_fifo)

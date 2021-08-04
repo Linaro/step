@@ -92,7 +92,10 @@ void test_mes_check_payload(void)
 
 void test_mes_check_sample_count(void)
 {
-	/* ToDo: Verify arbitrary sample count, etc. */
+	int rc;
+
+	rc = step_mes_validate(&step_test_mes_dietemp);
+	zassert_ok(rc, NULL);
 }
 
 void test_mes_check_payload_sz(void)

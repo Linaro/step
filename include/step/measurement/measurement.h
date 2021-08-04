@@ -414,6 +414,17 @@ enum step_mes_fragment {
 int32_t step_mes_sz_payload(struct step_mes_header *hdr);
 
 /**
+ * @brief Checks the populated @ref step_measurement for common errors, such
+ *        as the payload length being too small for the minimum payload.
+ * 
+ * @param msg       The populated measurement to validate. 
+ * 
+ * @return int32_t  0 if the measurement is valid, otherwise a negative
+ *                  error code.
+ */
+int32_t step_mes_validate(struct step_measurement *mes);
+
+/**
  * @brief Helper function to display the contents of the step_measurement.
  *
  * @param sample step_measurement to print.
