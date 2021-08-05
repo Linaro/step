@@ -14,6 +14,13 @@
 /* Track callback entry statistics. */
 struct step_test_data_procnode_cb_stats step_test_data_cb_stats = { 0 };
 
+int data_node_init(void *cfg, uint32_t handle, uint32_t inst)
+{
+	step_test_data_cb_stats.init++;
+
+	return 0;
+}
+
 bool data_node_evaluate(struct step_measurement *mes, uint32_t handle,
 			uint32_t inst)
 {
@@ -101,6 +108,7 @@ static struct step_node step_test_data_procnode_chain_data[] = {
 
 		/* Callbacks */
 		.callbacks = {
+			.init_handler = data_node_init,
 			.evaluate_handler = NULL,
 			.matched_handler = data_node_matched,
 			.start_handler = data_node_start,
@@ -121,6 +129,7 @@ static struct step_node step_test_data_procnode_chain_data[] = {
 
 		/* Callbacks */
 		.callbacks = {
+			.init_handler = data_node_init,
 			.evaluate_handler = data_node_evaluate,
 			.matched_handler = data_node_matched,
 			.start_handler = data_node_start,
@@ -173,6 +182,7 @@ struct step_node step_test_data_procnode = {
 
 	/* Callbacks */
 	.callbacks = {
+		.init_handler = data_node_init,
 		.evaluate_handler = data_node_evaluate,
 		.matched_handler = data_node_matched,
 		.start_handler = data_node_start,
@@ -216,7 +226,7 @@ struct step_measurement step_test_mes_dietemp = {
 		},
 		/* Source/Len word. */
 		.srclen = {
-			.samples = 2,	/* 2^2 = 4 samples. */
+			.samples = 2,   /* 2^2 = 4 samples. */
 			.len = sizeof(step_test_data_dietemp_payload),
 			.sourceid = 10,
 		},

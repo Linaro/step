@@ -93,6 +93,7 @@ void test_proc_manual(void)
 	zassert_equal(msgcnt, 1, NULL);
 
 	/* Verify that the processor callbacks have been fired. */
+	zassert_equal(step_test_data_cb_stats.init, 2, NULL);
 	zassert_equal(step_test_data_cb_stats.evaluate, 0, NULL);
 	zassert_equal(step_test_data_cb_stats.matched, 1, NULL);
 	zassert_equal(step_test_data_cb_stats.start, 2, NULL);
@@ -166,6 +167,7 @@ void test_proc_thread(void)
 	k_sleep(K_MSEC(1000));
 
 	/* Verify that the processor callbacks have been fired. */
+	zassert_equal(step_test_data_cb_stats.init, 2, NULL);
 	zassert_equal(step_test_data_cb_stats.evaluate, 0, NULL);
 	zassert_equal(step_test_data_cb_stats.matched, 1, NULL);
 	zassert_equal(step_test_data_cb_stats.start, 2, NULL);

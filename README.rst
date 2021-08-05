@@ -56,11 +56,28 @@ Sample Output
    *** Booting Zephyr OS build zephyr-v2.6.0-536-g89212a7fbf5f  ***
    Type 'step help' for command options.
    
-    1.) Populate the processor registry: step add
-    2.) Publish measurement(s):          step pub
-    3.) Check results:                   step stats
+   1.) Populate the processor registry: step add
+   2.) Publish measurement(s):          step pub
+   3.) Check results:                   step stats
    
-    uart:~$ step add
+   uart:~$ step add
+   [00:01:42.089,072] <dbg> proc_mgr: step_pm_register: Registering node/chain (handle 0, pri 4)
+   [00:01:42.089,125] <dbg> step_shell: step_shell_cmd_add: Took 53750 ns
+   uart:~$ step pub
+   [00:05:38.661,550] <dbg> step_shell: step_shell_cmd_pub: Published 1 measurement
+   [00:05:38.661,580] <dbg> step_shell: step_shell_cmd_pub: Took 60916 ns, excluding polling thread processing time (run 'step list').
+   [00:05:38.771,241] <inf> step_shell: [7496940] Received die temp: 32.00 C (handle 0:0)
+   [00:05:38.771,266] <inf> step_shell: cfg: mult by 10.00 (handle 0:1)
+   [00:05:38.771,289] <inf> step_shell: [7496940] Received die temp: 320.00 C (handle 0:1)
+   [00:05:38.771,316] <inf> step_shell: [7496940] Received die temp: 320.00 C (handle 0:2)
+   uart:~$ step stats
+   init:     3
+   evaluate: 0
+   matched:  1
+   start:    1
+   run:      3
+   stop:     1
+   error:    0
 
 Exit QEMU by pressing :kbd:`CTRL+A` :kbd:`x`.
 
@@ -111,7 +128,7 @@ Measurement Values
 
 Measurements are the main component in STeP, and traverse the system starting
 as inputs from a data source, are processed, and output to an appropriate
-data sink(s).
+data endpoint.
 
 STeP attempts to compromise between optimising for memory in small embedded
 systems, and trying to describe exactly what this measurement represents in as
@@ -217,8 +234,8 @@ of the payload, but AFTER the optional timestamp (if present).
 
 This word also contains an 8-bit **Source ID** field, which allows the
 measurement value's source to be identified to retrieve further information
-about the source device, such as it's min/max values, sample rate, gain
-setting, etc.
+about the source device out of band, such as it's min/max values, sample rate,
+gain setting, etc.
 
 Measurement Memory Management
 =============================

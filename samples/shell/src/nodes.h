@@ -4,8 +4,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-#ifndef STEP_SHELL_PROCNODES_H__
-#define STEP_SHELL_PROCNODES_H__
+#ifndef STEP_SHELL_NODES_H__
+#define STEP_SHELL_NODES_H__
 
 #include <stdlib.h>
 #include <stdbool.h>
@@ -19,6 +19,7 @@ extern "C" {
 
 /* Struct to track the number of times specific callbacks are fired. */
 struct step_node_cb_stats {
+	uint32_t init;
 	uint32_t evaluate;
 	uint32_t matched;
 	uint32_t start;
@@ -35,4 +36,4 @@ extern struct step_node *test_node_chain;
 }
 #endif
 
-#endif /* STEP_SHELL_PROCNODES_H_ */
+#endif /* STEP_SHELL_NODES_H_ */

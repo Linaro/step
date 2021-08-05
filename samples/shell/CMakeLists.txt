@@ -4,4 +4,4 @@ project(step_shell)
 
 target_sources(app PRIVATE src/driver.c)
 target_sources(app PRIVATE src/main.c)
-target_sources(app PRIVATE src/procnodes.c)
+target_sources(app PRIVATE src/nodes.c)

@@ -14,13 +14,25 @@
 /**
  * @defgroup NODE Nodes
  * @ingroup step_api
- * @brief API header file for STeP processor and sink nodes.
+ * @brief API header file for STeP processor nodes.
  * @{
  */
 
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+/**
+ * @typedef step_node_init_t
+ * @brief Init callback prototype for node implementations.
+ *
+ * @param cfg       Pointer to the config struct/value for this node, if any.
+ * @param handle    The handle of the source node this callback.
+ * @param inst      sdp_node instance in a node chain (zero-based).
+ *
+ * @return 0 on success, negative error code on failure
+ */
+typedef int (*step_node_init_t)(void *cfg, uint32_t handle, uint32_t inst);
 
 /**
  * @typedef step_node_callback_t
@@ -64,6 +76,16 @@ typedef void (*step_node_error_t)(struct step_measurement *mes,
  * @brief Optional callback handlers for nodes.
  */
 struct step_node_callbacks {
+	/**
+	 * @brief Callback to fire when the node is first registered. This
+	 *        callback allows the node implementation to perform any
+	 *        initiliasation steps required by subsequent callbacks, or
+	 *        to process incoming measurement data.
+	 *
+	 * @note  Set this to NULL to skip the init callback on node registration.
+	 */
+	step_node_init_t init_handler;
+
 	/**
 	 * @brief Callback to fire when the node is being evaluated based on
 	 *        its filter chain. This callback allows the node implementation

@@ -69,7 +69,7 @@
  * Filter
  * ------
  * Indicates measurement type for payload parsing, and to enable exact-match or
- * selective filtering of measurements by processor nodes or data sinks.
+ * selective filtering of measurements by processor nodes.
  *
  *   o Base Measurement Type [0:7] (Mandatory)
  *

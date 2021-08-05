@@ -10,6 +10,7 @@
 #include <step/measurement/measurement.h>
 
 struct step_test_data_procnode_cb_stats {
+	uint32_t init;
 	uint32_t evaluate;
 	uint32_t matched;
 	uint32_t start;

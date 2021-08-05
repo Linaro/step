@@ -89,6 +89,8 @@ int step_pm_register(struct step_node *node, uint16_t pri, uint32_t *handle)
 	struct step_pm_node_record *pnode;
 	struct step_pm_node_record *tmp;
 	struct step_pm_node_record *prev, *match;
+	struct step_node *n = node;
+	uint32_t idx = 0;
 
 	/* Lock registry access during registration. */
 	k_mutex_lock(&step_pm_reg_access, K_FOREVER);
@@ -137,6 +139,19 @@ int step_pm_register(struct step_node *node, uint16_t pri, uint32_t *handle)
 		/* Insert at the end. */
 		sys_slist_append(&pm_node_slist, &(step_pm_nodes[*handle].snode));
 	}
+
+	/* Node initialisation callbacks. */
+	do {
+		if (n->callbacks.init_handler != NULL) {
+			/* Use the node's evaluate callback to determine match. */
+			rc = n->callbacks.init_handler(n->config, *handle, idx);
+			if (rc) {
+				n->callbacks.error_handler(NULL, *handle, idx, rc);
+			}
+		}
+		idx++;
+		n = n->next;
+	} while (n != NULL);
 
 err:
 	/* Release the registry lock. */

@@ -15,8 +15,6 @@ zephyr_library_sources(
     src/node.c
     src/proc_mgr.c
     src/sample_pool.c
-    src/sink_mgr.c
-    src/src_mgr.c
 )
 
 zephyr_library_link_libraries(STEP)

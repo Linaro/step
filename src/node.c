@@ -26,6 +26,8 @@ void step_node_print(struct step_node *node)
 
 		/* Callback handlers */
 		printk("Handlers:\n");
+		printk("  init: %s\n",
+		       node->callbacks.init_handler == NULL ? "no" : "yes");
 		printk("  evaluate: %s\n",
 		       node->callbacks.evaluate_handler == NULL ? "no" : "yes");
 		printk("  matched: %s\n",

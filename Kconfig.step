@@ -39,7 +39,7 @@ config STEP_FILTER_CACHE
 	default n
 	help
 		Enables caching of filter evaluation results when determining if a
-		processor or sink node should be assigned an incoming datasample.
+		processor node should be assigned an incoming datasample.
 		Enabling filter evaluation caching may help avoid expensive reptitive
 		'evaluate' calls, but can also have a negative effect since adding
 		records to the cache has some overhead. Instrumention tests should be

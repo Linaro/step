@@ -7,7 +7,7 @@
 #include <stdio.h>
 #include <logging/log.h>
 #include <step/proc_mgr.h>
-#include "procnodes.h"
+#include "nodes.h"
 #include "driver.h"
 
 LOG_MODULE_DECLARE(step_shell);
@@ -20,6 +20,14 @@ struct node_cfg {
 } node_cfg_inst = {
 	.mult = 10.0F,
 };
+
+/* Overrides the filter engine when evaluating this node. */
+int node_init(void *cfg, uint32_t handle, uint32_t inst)
+{
+	cb_stats.init++;
+
+	return 0;
+}
 
 /* Overrides the filter engine when evaluating this node. */
 bool node_evaluate(struct step_measurement *mes, uint32_t handle, uint32_t inst)
@@ -48,9 +56,8 @@ int node_start(struct step_measurement *mes, uint32_t handle, uint32_t inst)
 /* Main node processing function. */
 int node_exec(struct step_measurement *mes, uint32_t handle, uint32_t inst)
 {
-	struct step_node *node;
-
 	if (mes->header.filter.ext_type == STEP_MES_EXT_TYPE_TEMP_DIE) {
+		struct step_node *node;
 		float mult = 1.0F;
 
 		/* Get a reference to the source node from the proc. node registry. */
@@ -130,6 +137,7 @@ struct step_node test_node_chain_data[] = {
 
 		/* Callbacks */
 		.callbacks = {
+			.init_handler = node_init,
 			.evaluate_handler = NULL,
 			.matched_handler = node_matched,
 			.start_handler = node_start,
@@ -150,6 +158,7 @@ struct step_node test_node_chain_data[] = {
 		.name = "2nd processor node",
 		/* Callbacks */
 		.callbacks = {
+			.init_handler = node_init,
 			.exec_handler = node_exec,
 			.error_handler = node_error,
 		},
@@ -166,6 +175,7 @@ struct step_node test_node_chain_data[] = {
 		.name = "3rd processor node",
 		/* Callbacks */
 		.callbacks = {
+			.init_handler = node_init,
 			.exec_handler = node_exec,
 			.error_handler = node_error,
 		},

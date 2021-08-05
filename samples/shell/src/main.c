@@ -12,7 +12,7 @@
 #include <step/cache.h>
 #include <step/instrumentation.h>
 #include "driver.h"
-#include "procnodes.h"
+#include "nodes.h"
 
 #define LOG_LEVEL LOG_LEVEL_DBG
 LOG_MODULE_REGISTER(step_shell);
@@ -135,6 +135,7 @@ step_shell_cmd_stats(const struct shell *shell, size_t argc, char **argv)
 	ARG_UNUSED(argc);
 	ARG_UNUSED(argv);
 
+	shell_print(shell, "init:     %d", cb_stats.init);
 	shell_print(shell, "evaluate: %d", cb_stats.evaluate);
 	shell_print(shell, "matched:  %d", cb_stats.matched);
 	shell_print(shell, "start:    %d", cb_stats.start);
