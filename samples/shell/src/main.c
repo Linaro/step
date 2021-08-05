@@ -109,7 +109,7 @@ step_shell_cmd_pub(const struct shell *shell, size_t argc, char **argv)
 	step_sp_put(mes);
 #else
 	/* Manually process the measurement when no polling thread is present. */
-	step_pm_process(mes, NULL, false);
+	step_pm_process(mes, NULL, true);
 #endif
 
 	STEP_INSTR_STOP(_instr);

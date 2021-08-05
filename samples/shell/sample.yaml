@@ -1,5 +1,5 @@
 sample:
-  name: Secure teletmetry pipeline shell example
+  name: Secure telemetry pipeline shell example
 tests:
   test:
     tags: step

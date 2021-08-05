@@ -1,0 +1,5 @@
+sample:
+  name: Secure telemetry pipeline throughput example
+tests:
+  test:
+    tags: step

@@ -72,9 +72,9 @@ static uint32_t step_pm_handle_counter = 0;
  * they should be evaluated. The 'process' function traverses this list. */
 static sys_slist_t pm_node_slist = SYS_SLIST_STATIC_INIT(&pm_node_slist);
 
-/* Create the polling thread if sample rate > 0. */
 #if (CONFIG_STEP_PROC_MGR_POLL_RATE > 0)
 static void step_pm_poll_thread(bool free);
+/* Create the polling thread. */
 K_THREAD_DEFINE(step_pm_tid, CONFIG_STEP_PROC_MGR_STACK_SIZE,
 		step_pm_poll_thread, 1, NULL, NULL,
 		CONFIG_STEP_PROC_MGR_PRIORITY, 0, 0);
