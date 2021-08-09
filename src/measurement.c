@@ -135,11 +135,6 @@ int32_t step_mes_sz_payload(struct step_mes_header *hdr)
     uint32_t cnt = 0;
 	uint32_t tmp;
 
-	/* Timestamp. */
-	if (hdr->filter.flags.timestamp) {
-		len += step_mes_sz_timestamp(hdr->filter.flags.timestamp);
-	}
-
 	/* Sample count. */
 	if (hdr->srclen.samples < 15) {
 		cnt = step_mes_sz_pow2(hdr->srclen.samples);
@@ -157,6 +152,16 @@ int32_t step_mes_sz_payload(struct step_mes_header *hdr)
 		/* Can't determine min payload length with an ambiguous ctype. */
 		len = -1;
 		goto err;
+	}
+
+	/* Vector size. */
+	if (hdr->srclen.vec_sz) {
+		len *= (1 + hdr->srclen.vec_sz);
+	}
+
+	/* Timestamp. */
+	if (hdr->filter.flags.timestamp) {
+		len += step_mes_sz_timestamp(hdr->filter.flags.timestamp);
 	}
 
 	/* Encoding. */
@@ -225,7 +230,7 @@ void step_mes_print(struct step_measurement *mes)
 	printk("SrcLen:           0x%08X\n", mes->header.srclen_bits);
 	printk("  len:            0x%04X (%u)\n", mes->header.srclen.len, mes->header.srclen.len);
 	printk("  fragment:       %u\n", mes->header.srclen.fragment);
-	printk("  _rsvd:          %u\n", mes->header.srclen._rsvd);
+	printk("  vec_sz:         %u\n", mes->header.srclen.vec_sz);
 	if (mes->header.srclen.samples == 15) {
 		printk("  samples:        - (Arbitrary count, see payload)\n");
 	} else if (mes->header.srclen.samples) {

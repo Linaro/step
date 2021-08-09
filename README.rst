@@ -147,7 +147,7 @@ Measurements make use of the following header, with a 12-byte overhead:
    +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
    |     C Type    | Scale Factor  |         SI Unit Type          | <- Unit
    +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-   |   Source ID   | S Cnt | R | F |        Payload Length         | <- SrcLen
+   |   Source ID   | S Cnt | V | F |        Payload Length         | <- SrcLen
    +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
    |                      Timestamp (optional)                     |
    +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
@@ -209,6 +209,11 @@ SrcLen
 
 The **Source/Len** word describes the size of the payload, with an option to
 spread larger payloads over multiple packets.
+
+The vector size field can be set to indicate that individual samples are
+vectors (versus scalars), consisting of 2, 3 or 4 components. This covers
+the most common vector representations: XY coordinates (2), XYZ vectors (3),
+quaternions (4), etc.
 
 It also indicates the number of samples present in this measurement payload,
 in steps of power of two (2, 4, 8, 16, 32, etc., samples). This allows for

@@ -21,7 +21,7 @@ struct node_cfg {
 	.mult = 10.0F,
 };
 
-/* Overrides the filter engine when evaluating this node. */
+/* Initialisation callback (fires when node added to registry). */
 int node_init(void *cfg, uint32_t handle, uint32_t inst)
 {
 	cb_stats.init++;

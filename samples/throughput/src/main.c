@@ -13,11 +13,19 @@
 /* The number of measurements to publish. */
 #define STEP_THROUGHPUT_MSGS (1000)
 
-/* Die temp measurement payload. */
-struct dietemp_payload {
+/* Accelerometer measurement payload. */
+struct accel_payload {
 	uint32_t timestamp;
-	float temp_c;
+	float accel_x;
+	float accel_y;
+	float accel_z;
 };
+
+/* Initialisation callback (fires when node added to registry). */
+int node_init(void *cfg, uint32_t handle, uint32_t inst)
+{
+	return 0;
+}
 
 /* Node exec callback. */
 int node_exec(struct step_measurement *mes, uint32_t handle, uint32_t inst)
@@ -31,30 +39,30 @@ int node_exec(struct step_measurement *mes, uint32_t handle, uint32_t inst)
 	}
 
 	/* No processing done since we only want to measure pipeline throughput. */
-	// struct dietemp_payload *tp = mes->payload;
-	// printk("[%d:%d] %.2f C\n", handle, inst, tp->temp_c);
+	// struct accel_payload *tp = mes->payload;
+	// printk("[%d:%d] %.2f %.2f %.2f m/s^2\n", handle, inst,
+	//        tp->accel_x, tp->accel_y, tp->accel_z);
 
 	return 0;
 }
 
 /* Simple processor node. */
 struct step_node test_node_data = {
-	.name = "Test processor node",
+	.name = "Accelerometer node",
 	.filters = {
 		.count = 1,
 		.chain = (struct step_filter[]){
 			{
-				/* Die temperature. */
-				.match = STEP_MES_TYPE_TEMPERATURE +
-					 (STEP_MES_EXT_TYPE_TEMP_DIE <<
-					  STEP_MES_MASK_EXT_TYPE_POS),
-				.ignore_mask = ~STEP_MES_MASK_FULL_TYPE,
+				/* Any accelerometer. */
+				.match = STEP_MES_TYPE_ACCELEROMETER,
+				.ignore_mask = ~STEP_MES_MASK_BASE_TYPE,
 			},
 		},
 	},
 
 	/* Callbacks */
 	.callbacks = {
+		.init_handler = node_init,
 		.exec_handler = node_exec,
 	},
 };
@@ -65,11 +73,10 @@ struct step_node *test_node = &test_node_data;
 /**
  * @brief Pre-populated measurement header.
  */
-static struct step_mes_header dietemp_header = {
+static struct step_mes_header accel_header = {
 	/* Filter word. */
 	.filter = {
-		.base_type = STEP_MES_TYPE_TEMPERATURE,
-		.ext_type = STEP_MES_EXT_TYPE_TEMP_DIE,
+		.base_type = STEP_MES_TYPE_ACCELEROMETER,
 		.flags = {
 			.data_format = STEP_MES_FORMAT_NONE,
 			.encoding = STEP_MES_ENCODING_NONE,
@@ -79,13 +86,15 @@ static struct step_mes_header dietemp_header = {
 	},
 	/* SI Unit word. */
 	.unit = {
-		.si_unit = STEP_MES_UNIT_SI_DEGREE_CELSIUS,
+		.si_unit = STEP_MES_UNIT_SI_ACCEL_M_PER_S_2,
 		.ctype = STEP_MES_UNIT_CTYPE_IEEE754_FLOAT32,
 		.scale_factor = STEP_MES_SI_SCALE_NONE,
 	},
 	/* Source/Len word. */
 	.srclen = {
-		.len = sizeof(struct dietemp_payload),
+		/* Indicate that this is an XYZ vector. */
+		.vec_sz = STEP_MES_VECTOR_SZ_3,
+		.len = sizeof(struct accel_payload),
 	}
 };
 
@@ -96,7 +105,7 @@ void main(void)
 	uint32_t instr = 0;
 	uint32_t instr_total = 0;
 	struct step_measurement *mes;
-	struct dietemp_payload *payload;
+	struct accel_payload *payload;
 
 	/* Register a minimal processor node. */
 	rc = step_pm_register(test_node, 0, &handle);
@@ -110,21 +119,23 @@ void main(void)
 		STEP_INSTR_START(instr);
 
 		/* Allocate measurement from the sample pool. */
-		mes = step_sp_alloc(dietemp_header.srclen.len);
+		mes = step_sp_alloc(accel_header.srclen.len);
 		if (mes == NULL) {
 			printk("Out of memory!\n");
 			goto err;
 		}
 
 		/* Copy the measurement header. */
-		mes->header.filter_bits = dietemp_header.filter_bits;
-		mes->header.unit_bits = dietemp_header.unit_bits;
-		mes->header.srclen_bits = dietemp_header.srclen_bits;
+		mes->header.filter_bits = accel_header.filter_bits;
+		mes->header.unit_bits = accel_header.unit_bits;
+		mes->header.srclen_bits = accel_header.srclen_bits;
 
 		/* Assign a pointer to the payload for easy reference. */
 		payload = mes->payload;
 		payload->timestamp = k_uptime_get_32();
-		payload->temp_c = 32.0F;
+		payload->accel_x = 0.0F;
+		payload->accel_y = 0.0F;
+		payload->accel_z = 0.0F;
 
 #if (CONFIG_STEP_PROC_MGR_POLL_RATE > 0)
 		/* Assign measurement to FIFO so polling thread finds it. */

@@ -45,7 +45,7 @@
  * +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
  * |     C Type    | Scale Factor  |         SI Unit Type          | <- Unit
  * +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
- * |   Source ID   | S Cnt | R | F |        Payload Length         | <- SrcLen
+ * |   Source ID   | S Cnt | V | F |        Payload Length         | <- SrcLen
  * +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
  * |                      Timestamp (optional)                     |
  * +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
@@ -168,9 +168,12 @@
  *       Indicates that this is a packet fragment, and the contents should be
  *       appended to the previous packets from this source before being parsed.
  *
- *   o Reserved       [18:19]
+ *   o Vector Size    [18:19]
  *
- *       Must be set to 0.
+ *       Indicates that this is a vector (rather than a scalar) value, composed
+ *       of vect_sz + 1 components. Since this is only two bits, it is limited
+ *       to representing small vectors or quaternion-type units containing
+ *       up to 4 distinct components. Leave at 0 to indicate a scalar value.
  *
  *   o Sample Count   [20:23]
  *
@@ -312,8 +315,8 @@ struct step_mes_header {
 			struct {
 				/** Indicates this is a fragment of a larger packet. */
 				uint8_t fragment : 2;
-				/** Reserved for future use. Must be set to 0. */
-				uint8_t _rsvd : 2;
+				/** Indicates the number of vector units. 0 for scalar. */
+				uint8_t vec_sz : 2;
 				/** Sample count (2^n), 0 = 1 sample */
 				uint8_t samples : 4;
 			};
@@ -394,6 +397,18 @@ enum step_mes_fragment {
 	STEP_MES_FRAGMENT_PARTIAL       = 1,
 	/** Final fragment in the larger payload. */
 	STEP_MES_FRAGMENT_FINAL         = 2,
+};
+
+/** Vector size. */
+enum step_mes_vector_sz {
+	/** Scalar value. */
+	STEP_MES_VECTOR_SZ_NONE         = 0,
+	/** Pair, such as an X,Y co-ordinate. */
+	STEP_MES_VECTOR_SZ_2            = 1,
+	/** Vector 3, such as an XYZ vector. */
+	STEP_MES_VECTOR_SZ_3            = 2,
+	/** Vector 4, such as a Quaternion. */
+	STEP_MES_VECTOR_SZ_4            = 3,
 };
 
 /**
