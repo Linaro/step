@@ -47,7 +47,7 @@ void test_proc_reg_limit(void)
 
 /**
  * @brief This represents a minimal end-to-end workflow allocating, assigning,
- *        queueing and processing a single step_measurement.
+ *        queueing, processing and freeing a single step_measurement.
  */
 void test_proc_manual(void)
 {
@@ -112,6 +112,71 @@ void test_proc_manual(void)
 
 	/* Make sure heap memory was freed. */
 	zassert_equal(step_sp_bytes_alloc(), 0, NULL);
+
+	/* Clear the node registry. */
+	rc = step_pm_clear();
+	zassert_equal(rc, 0, NULL);
+}
+
+/**
+ * @brief This represents a minimal end-to-end workflow assigning,
+ *        queueing and processing a single non-allocated (i.e. non-heap-based)
+ *        step_measurement.
+ */
+void test_proc_manual_non_alloc(void)
+{
+	int rc;
+	uint32_t handle;
+	int msgcnt;
+
+	/* Point to a statically defined measurement. */
+	struct step_measurement *mes = &step_test_mes_dietemp;
+
+	/* Make sure the polling thread is stopped. */
+	rc = step_pm_suspend();
+	zassert_equal(rc, 0, NULL);
+
+	/* Clear processor node stats. */
+	memset(&step_test_data_cb_stats, 0,
+	       sizeof(struct step_test_data_procnode_cb_stats));
+
+	/* Assign measurement to FIFO. */
+	step_sp_put(mes);
+
+	/* Clear the processor node manager. */
+	rc = step_pm_clear();
+	zassert_equal(rc, 0, NULL);
+
+	/* Register a processor node. */
+	rc = step_pm_register(step_test_data_procnode_chain, 0, &handle);
+	zassert_equal(rc, 0, NULL);
+	zassert_equal(handle, 0, NULL);
+
+	/* Poll the sample pool, which should trigger message processing,
+	 * indicate that memory should NOT be freed when finished since the
+	 * step_measurement is not taken from the sample pool heap.
+	 */
+	rc = step_pm_poll(&msgcnt, false);
+	zassert_equal(rc, 0, NULL);
+	zassert_equal(msgcnt, 1, NULL);
+
+	/* Verify that the processor callbacks have been fired. */
+	zassert_equal(step_test_data_cb_stats.init, 2, NULL);
+	zassert_equal(step_test_data_cb_stats.evaluate, 0, NULL);
+	zassert_equal(step_test_data_cb_stats.matched, 1, NULL);
+	zassert_equal(step_test_data_cb_stats.start, 2, NULL);
+	zassert_equal(step_test_data_cb_stats.run, 2, NULL);
+	zassert_equal(step_test_data_cb_stats.stop, 2, NULL);
+	zassert_equal(step_test_data_cb_stats.error, 0, NULL);
+
+	/* Make sure the sample pool FIFO is empty. */
+	rc = step_pm_poll(&msgcnt, false);
+	zassert_equal(rc, 0, NULL);
+	zassert_equal(msgcnt, 0, NULL);
+
+	/* Also check the FIFO directly. */
+	mes = step_sp_get();
+	zassert_is_null(mes, NULL);
 
 	/* Clear the node registry. */
 	rc = step_pm_clear();

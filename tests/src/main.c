@@ -23,6 +23,7 @@ extern void test_filter_evaluate_match_bad(void);
 /* tests_proc.c */
 extern void test_proc_reg_limit(void);
 extern void test_proc_manual(void);
+extern void test_proc_manual_non_alloc(void);
 extern void test_proc_thread(void);
 extern void test_proc_get_node(void);
 
@@ -48,6 +49,7 @@ void test_main(void)
 
 		ztest_unit_test(test_proc_reg_limit),
 		ztest_unit_test(test_proc_manual),
+		ztest_unit_test(test_proc_manual_non_alloc),
 		ztest_unit_test(test_proc_thread),
 		ztest_unit_test(test_proc_get_node),
 		
