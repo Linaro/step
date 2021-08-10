@@ -99,9 +99,7 @@ enum step_mes_unit_ctype {
  *   - 0x0080..0x008F = Unitless values (percent, interval, etc.)
  *   - 0x0090..0x00FF = Reserved
  *   - 0x0100..0x0FFF = SI combined units (generic)
- *   - 0x1000..0x10FF = Audio units
- *   - 0x1100..0x11FF = Accelerometer units
- *   - ... other 'base' types ...
+ *   - 0x1000..0w7FFF = Base type specific units, in groups of 0xFF.
  *   - 0x8000..0xFEFF = Reserved
  *   - 0xFF00..0xFFFE = User defined units
  */
@@ -176,17 +174,127 @@ enum step_mes_unit_si {
 	/** @brief 0.0 .. 1.0 inclusive. */
 	STEP_MES_UNIT_SI_INTERVAL               = 0x81,
 
-	/* 0x0100..0x0FFF: SI Generic Combined Units. */
+	/* 0x1000..0x10FF: STEP_MES_TYPE_AREA Combined Units. */
 	/** @brief m^2 */
-	STEP_MES_UNIT_SI_M_2                    = 0x1000,
+	STEP_MES_UNIT_SI_METERS_2               = 0x1000,
 
-	/* 0x1000..0x10FF: Audio Units. */
-	/** @brief Decibels (1/10 of a bel). */
-	STEP_MES_UNIT_SI_AUDIO_DECIBELS         = 0x1000,
+	/* 0x1100..0x11FF: STEP_MES_TYPE_ACCELERATION Combined Units. */
+	/** @brief m/s^2 */
+	STEP_MES_UNIT_SI_METER_PER_SECOND_2     = 0x1100,
 
-	/* 0x1100..0x11FF: Accelerometer Units. */
-	/** @brief m/s^2. */
-	STEP_MES_UNIT_SI_ACCEL_M_PER_S_2        = 0x1100,
+	/* 0x1200..0x12FF: STEP_MES_TYPE_AMPLITUDE Combined Units. */
+
+	/* 0x1300..0x13FF: STEP_MES_TYPE_CAPACITANCE Combined Units. */
+
+	/* 0x1400..0x14FF: STEP_MES_TYPE_COLOR Combined Units. */
+
+	/* 0x1500..0x15FF: STEP_MES_TYPE_COORDINATES Combined Units. */
+
+	/* 0x1600..0x16FF: STEP_MES_TYPE_CURRENT Combined Units. */
+
+	/* 0x1700..0x17FF: STEP_MES_TYPE_DIMENSION Combined Units. */
+
+	/* 0x1800..0x18FF: STEP_MES_TYPE_FREQUENCYY Combined Units. */
+
+	/* 0x1900..0x19FF: STEP_MES_TYPE_HUMIDITY Combined Units. */
+	/** @brief Percent */
+	STEP_MES_UNIT_SI_RELATIVE_HUMIDITY = 0x1900,
+
+	/* 0x1A00..0x1AFF: STEP_MES_TYPE_INDUCTANCE Combined Units. */
+
+	/* 0x1B00..0x1BFF: STEP_MES_TYPE_LIGHT Combined Units. */
+	/** @brief cd/m^2 */
+	STEP_MES_UNIT_SI_CANDELA_PER_METER_2                    = 0x1B00,
+	/** @brief J/m^2 */
+	STEP_MES_UNIT_SI_JOULE_PER_METER_2                      = 0x1B01,
+	/** @brief J/m^2/Hz */
+	STEP_MES_UNIT_SI_JOULE_PER_METER_2_PER_HZ               = 0x1B02,
+	/** @brief J/m^2/nm */
+	STEP_MES_UNIT_SI_JOULE_PER_METER_2_PER_NM               = 0x1B03,
+	/** @brief Energy density, J/m^3 */
+	STEP_MES_UNIT_SI_JOULE_PER_METER_3                      = 0x1B04,
+	/** @brief lm/m^2 */
+	STEP_MES_UNIT_SI_LUMEN_PER_METER_2                      = 0x1B05,
+	/** @brief lm/W */
+	STEP_MES_UNIT_SI_LUMEN_PER_WATT                         = 0x1B06,
+	/** @brief lm s, AKA talbot */
+	STEP_MES_UNIT_SI_LUMEN_SECOND                           = 0x1B07,
+	/** @brief lm s/m^3 */
+	STEP_MES_UNIT_SI_LUMEN_SECOND_PER_METER_3               = 0x1B08,
+	/** @brief lx s */
+	STEP_MES_UNIT_SI_LUX_SECOND                             = 0x1B09,
+	/** @brief W/Hz */
+	STEP_MES_UNIT_SI_WATTS_PER_HERTZ                        = 0x1B0A,
+	/** @brief W/m^2 */
+	STEP_MES_UNIT_SI_WATTS_PER_METER_2                      = 0x1B0B,
+	/** @brief W/m^2/Hz */
+	STEP_MES_UNIT_SI_WATTS_PER_METER_2_PER_HZ               = 0x1B0C,
+	/** @brief W/m^2/nm */
+	STEP_MES_UNIT_SI_WATTS_PER_METER_2_PER_NM               = 0x1B0D,
+	/** @brief W/nm */
+	STEP_MES_UNIT_SI_WATTS_PER_NM                           = 0x1B0E,
+	/** @brief W/sr */
+	STEP_MES_UNIT_SI_WATTS_PER_STERADIAN                    = 0x1B0F,
+	/** @brief W/sr/Hz */
+	STEP_MES_UNIT_SI_WATTS_PER_STERADIAN_PER_HERTZ          = 0x1B10,
+	/** @brief W/sr/m^2 */
+	STEP_MES_UNIT_SI_WATTS_PER_STERADIAN_PER_METER_2        = 0x1B11,
+	/** @brief W/sr/m^2/Hz */
+	STEP_MES_UNIT_SI_WATTS_PER_STERADIAN_PER_METER_2_PER_HZ = 0x1B12,
+	/** @brief W/sr/m^2/nm */
+	STEP_MES_UNIT_SI_WATTS_PER_STERADIAN_PER_METER_2_PER_NM = 0x1B13,
+	/** @brief W/sr/nm */
+	STEP_MES_UNIT_SI_WATTS_PER_STERADIAN_PER_NM             = 0x1B14,
+
+	/* 0x1C00..0x1CFF: STEP_MES_TYPE_MAGNETIC_FIELD Combined Units. */
+	/** @brief uT */
+	STEP_MES_UNIT_SI_MICROTESLA                             = 0x1C00,
+
+	/* 0x1D00..0x1DFF: STEP_MES_TYPE_MASS Combined Units. */
+	/** @brief g */
+	STEP_MES_UNIT_SI_GRAMS                                  = 0x1D00,
+
+	/* 0x1E00..0x1EFF: STEP_MES_TYPE_MOMENTUM Combined Units. */
+
+	/* 0x1F00..0x1FFF: STEP_MES_TYPE_ORIENTATION Combined Units. */
+
+	/* 0x2000..0x20FF: STEP_MES_TYPE_PHASE Combined Units. */
+
+	/* 0x2100..0x21FF: STEP_MES_TYPE_PRESSURE Combined Units. */
+	/** @brief hPA */
+	STEP_MES_UNIT_SI_HECTOPASCAL = 0x2100,
+
+	/* 0x2200..0x22FF: STEP_MES_TYPE_RESISTANCE Combined Units. */
+
+	/* 0x2300..0x23FF: STEP_MES_TYPE_SOUND Combined Units. */
+
+	/* 0x2400..0x24FF: STEP_MES_TYPE_TEMPERATURE Combined Units. */
+
+	/* 0x2500..0x25FF: STEP_MES_TYPE_TIME Combined Units. */
+
+	/* 0x2600..0x26FF: STEP_MES_TYPE_VELOCITY Combined Units. */
+	/** @brief m^3/s, flow rate. */
+	STEP_MES_UNIT_SI_METERS_3_SECOND        = 0x2601,
+
+	/* 0x2700..0x27FF: STEP_MES_TYPE_VOLTAGE Combined Units. */
+	/** @brief mV */
+	STEP_MES_UNIT_SI_MILLIVOLTS             = 0x2700,
+
+	/* 0x2800..0x28FF: STEP_MES_TYPE_VOLUME Combined Units. */
+	/** @brief m^3 */
+	STEP_MES_UNIT_SI_METERS_3               = 0x2800,
+
+	/* 0x2900..0x29FF: STEP_MES_TYPE_ACIDITY Combined Units. */
+	/** @brief pH level (not actually a unit, shhh!) */
+	STEP_MES_UNIT_SI_PH                     = 0x2900,
+
+	/* 0x2A00..0x2AFF: STEP_MES_TYPE_CONDUCTIVITY Combined Units. */
+	/** @brief S/m */
+	STEP_MES_UNIT_SI_SIEMENS_PER_METER      = 0x2A00,
+
+	/* 0x2B00..0x2BFF: STEP_MES_TYPE_FORCE Combined Units. */
+
+	/* 0x2C00..0x2CFF: STEP_MES_TYPE_ENERGY Combined Units. */
 
 	/* 0xFF00..0xFFFE = User defined units. */
 	STEP_MES_UNIT_SI_USER_DEFINED_1         = 0xFF00,

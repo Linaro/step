@@ -54,7 +54,7 @@ struct step_node test_node_data = {
 		.chain = (struct step_filter[]){
 			{
 				/* Any accelerometer. */
-				.match = STEP_MES_TYPE_ACCELEROMETER,
+				.match = STEP_MES_TYPE_ACCELERATION,
 				.ignore_mask = ~STEP_MES_MASK_BASE_TYPE,
 			},
 		},
@@ -76,7 +76,7 @@ struct step_node *test_node = &test_node_data;
 static struct step_mes_header accel_header = {
 	/* Filter word. */
 	.filter = {
-		.base_type = STEP_MES_TYPE_ACCELEROMETER,
+		.base_type = STEP_MES_TYPE_ACCELERATION,
 		.flags = {
 			.data_format = STEP_MES_FORMAT_NONE,
 			.encoding = STEP_MES_ENCODING_NONE,
@@ -86,7 +86,7 @@ static struct step_mes_header accel_header = {
 	},
 	/* SI Unit word. */
 	.unit = {
-		.si_unit = STEP_MES_UNIT_SI_ACCEL_M_PER_S_2,
+		.si_unit = STEP_MES_UNIT_SI_METER_PER_SECOND_2,
 		.ctype = STEP_MES_UNIT_CTYPE_IEEE754_FLOAT32,
 		.scale_factor = STEP_MES_SI_SCALE_NONE,
 	},
