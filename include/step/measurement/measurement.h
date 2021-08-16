@@ -220,7 +220,7 @@
  */
 
 /**
- * @file measurement.h
+ * @file
  * @brief API header file for STEP measurements.
  */
 
@@ -246,7 +246,9 @@ extern "C" {
 #define STEP_MES_MASK_TIMESTAMP_POS   (26)
 #define STEP_MES_MASK_TIMESTAMP       (0x7 << STEP_MES_MASK_TIMESTAMP_POS)
 
-/** Measurement header. All fields in little endian. */
+/**
+ * @brief Measurement header. All fields in little endian.
+ */
 struct step_mes_header {
 	/** Filter (header upper word). */
 	union {

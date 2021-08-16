@@ -10,10 +10,13 @@
 #include <step/step.h>
 
 /**
- * @file
  * @brief STEP_MES_TYPE_LIGHT extended type definitions
  * @ingroup MEASUREMENT
  * @{
+ */
+
+/**
+ * @file
  */
 
 #ifdef __cplusplus

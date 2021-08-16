@@ -10,10 +10,19 @@
 #include <step/step.h>
 
 /**
- * @defgroup CACHE LRU Cache
+ * @defgroup CACHE Filter Match Cache
  * @ingroup step_api
- * @brief API header file for a least recently used (LRU) cache
+ * @brief API header file for a least recently used (LRU) cache.
+ * 
+ * Provides a 'least recently used' cache mechanism for evaluating measurment
+ * filter values against processor nodes or node chains. As the cache fills up
+ * the least recently used cache record will be removed to make room for a new
+ * entry.
  * @{
+ */
+
+/**
+ * @file
  */
 
 #ifdef __cplusplus

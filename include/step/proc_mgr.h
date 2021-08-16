@@ -14,7 +14,31 @@
  * @defgroup PROCMGR Processor Node Management
  * @ingroup step_api
  * @brief API header file for STEP processor node manager
+ * 
+ * This module manages the processor node registry, the evaluation of
+ * measurements against records in the node registry, and if enabled the
+ * polling thread used to retrieve and process any queued measurements.
+ * 
+ * It ensures that measurements are evaluated against the registry in the
+ * correct order, based on the node or node chain's 'priority' field, and that
+ * the @ref step_measurement is freed from the sample pool's heap memory once
+ * processing is complete (if requested).
+ * 
+ * Nodes can be inserted, enabled or disabled at run time or at build time.
+ * The maximum number of nodes stored in the registry is set via KConfig with
+ * the CONFIG_STEP_PROC_MGR_NODE_LIMIT variable.
+ * 
+ * The sample rate for thee polling thread that checks the sample pool FIFO for
+ * queued messages can be configured via CONFIG_STEP_PROC_MGR_POLL_RATE,
+ * setting a value in Hertz. Setting this to 0 disables the polling thread,
+ * and measurements will have to be manually processing via a call to
+ * @ref step_pm_process
+ * 
  * @{
+ */
+
+/**
+ * @file
  */
 
 #ifdef __cplusplus

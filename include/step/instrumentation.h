@@ -11,6 +11,10 @@
 #include <sys/printk.h>
 #include <step/step.h>
 
+/**
+ * @file
+ */
+
 #if CONFIG_STEP_INSTRUMENTATION
 /**
  * @brief Reads the high-precision timer start time.

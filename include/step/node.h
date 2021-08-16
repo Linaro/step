@@ -15,7 +15,23 @@
  * @defgroup NODE Nodes
  * @ingroup step_api
  * @brief API header file for STeP processor nodes.
+ * 
+ * Nodes are the main building block in STeP, and encapsulate the logic to
+ * 'process' incoming @ref step_measurement packets. Thy can be used
+ * individually, or connected together in 'processor chains', where the
+ * measurment fed into the first node in the chain is handed off to subsequent
+ * nodes for further processing.
+ * 
+ * The first record in a node chain contains a 'filter' or 'filter chain' that
+ * determines if a @ref step_measurement should be processed with this node.
+ * Assigning NULL to the filter field means that the node will accept all
+ * incoming measurements, otherwise the measurement's filter field will be
+ * evaluated against the node's filter chain via the filter evaluation engine.
  * @{
+ */
+
+/**
+ * @file
  */
 
 #ifdef __cplusplus
@@ -28,7 +44,7 @@ extern "C" {
  *
  * @param cfg       Pointer to the config struct/value for this node, if any.
  * @param handle    The handle of the source node this callback.
- * @param inst      sdp_node instance in a node chain (zero-based).
+ * @param inst      step_node instance in a node chain (zero-based).
  *
  * @return 0 on success, negative error code on failure
  */
@@ -40,7 +56,7 @@ typedef int (*step_node_init_t)(void *cfg, uint32_t handle, uint32_t inst);
  *
  * @param mes       Pointer to the step_measurement being used.
  * @param handle    The handle of the source node this callback.
- * @param inst      sdp_node instance in a node chain (zero-based).
+ * @param inst      step_node instance in a node chain (zero-based).
  *
  * @return 0 on success, negative error code on failure
  */
@@ -53,7 +69,7 @@ typedef int (*step_node_callback_t)(struct step_measurement *mes,
  *
  * @param mes       Pointer to the step_measurement being used.
  * @param handle    The handle of the source node this callback.
- * @param inst      sdp_node instance in a node chain (zero-based).
+ * @param inst      step_node instance in a node chain (zero-based).
  *
  * @return 1 on a match, 0 on match failure.
  */
@@ -66,7 +82,7 @@ typedef bool (*step_node_evaluate_t)(struct step_measurement *mes,
  *
  * @param mes       Pointer to the step_measurement being used.
  * @param handle    The handle of the source node this callback.
- * @param inst      sdp_node instance in a node chain (zero-based).
+ * @param inst      step_node instance in a node chain (zero-based).
  * @param error     Negative error code produced during node execution.
  */
 typedef void (*step_node_error_t)(struct step_measurement *mes,
@@ -175,7 +191,7 @@ struct step_node {
 };
 
 /**
- * @brief Prints full details of the supplied processor node using printk.
+ * @brief Prints details of the supplied processor node using printk.
  *
  * @param node The node to display.
  */

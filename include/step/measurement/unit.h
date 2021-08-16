@@ -10,10 +10,13 @@
 #include <step/step.h>
 
 /**
- * @file
  * @brief SI unit type, ctype and scale definitions
  * @ingroup MEASUREMENT
  * @{
+ */
+
+/**
+ * @file
  */
 
 #ifdef __cplusplus

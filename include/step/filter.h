@@ -14,7 +14,15 @@
  * @defgroup FILTER Filter Definitions
  * @ingroup step_api
  * @brief API header file for the STeP filter engine.
+ * 
+ * This module implements the evaluation logic to determine if there is a
+ * match between a measurment's filter field and the filter chain associated
+ * with a processor node.
  * @{
+ */
+
+/**
+ * @file
  */
 
 #ifdef __cplusplus
@@ -146,7 +154,7 @@ struct step_filter_chain {
 };
 
 /**
- * @brief Prints the supplied filter chain using printk.
+ * @brief Prints details of the supplied filter chain using printk.
  *
  * @param fc The sdsp_filter_chain to print.
  */

@@ -10,10 +10,13 @@
 #include <step/step.h>
 
 /**
- * @file
  * @brief Base measurement type definitions
  * @ingroup MEASUREMENT
  * @{
+ */
+
+/**
+ * @file
  */
 
 #ifdef __cplusplus

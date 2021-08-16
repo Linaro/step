@@ -14,7 +14,23 @@
  * @defgroup SAMPLEPOOL Sample Pool Management
  * @ingroup step_api
  * @brief API header file for STEP sample pool
+ * 
+ * This module provides a means to allocate and free @ref step_measurement
+ * instances from a shared memory heap, and to queue measurements for
+ * processing in a simple FIFO buffer.
+ * 
+ * Allocating measurements from heap isn't mandatory, but it does provide a
+ * number of benefits with asynchronous processing of measurements, such as
+ * efficient use of limited memory, and automatic release of the measurement
+ * from memory once processing is complete, meaning the processing state
+ * doesn't need to be tracked by the data source.
+ * 
+ * The heap size is set via KConfig using the CONFIG_STEP_POOL_SIZE property.
  * @{
+ */
+
+/**
+ * @file
  */
 
 #ifdef __cplusplus

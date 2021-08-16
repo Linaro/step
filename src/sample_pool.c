@@ -17,7 +17,9 @@ K_FIFO_DEFINE(step_fifo);
 K_HEAP_DEFINE(step_elem_pool, CONFIG_STEP_POOL_SIZE);
 K_MUTEX_DEFINE(step_sp_alloc_mtx);
 
-/* Sample pool statistics */
+/**
+ * @brief Sample pool statistics
+ */
 struct step_sp_stats {
 	int32_t bytes_alloc;
 	uint32_t bytes_alloc_total;

@@ -10,8 +10,12 @@
 #include <stdint.h>
 
 /**
- * @defgroup step_api Secure telemetry pipeline (STeP) API
+ * @defgroup step_api Secure Telemetry Pipeline (STeP) API
  * @{
+ */
+
+/**
+ * @file
  */
 
 #ifdef __cplusplus
