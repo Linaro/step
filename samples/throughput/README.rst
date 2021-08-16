@@ -6,7 +6,21 @@ Secure Telemetry Pipeline (STeP) Throughput Example
 Overview
 ********
 
-TODO
+This sample provides basic throughput testing to determine how many measurements
+per second can be processed with a minimal registry setup.
+
+There are two common scenarios where throughput should be tested:
+
+1. Using the measurement polling thread.
+2. Manually processing measurements (direct call to ``step_pm_process``).
+
+Setting ``CONFIG_STEP_PROC_MGR_POLL_RATE`` to ``0`` disables the polling thread
+and leads to higher throughput, but at the cost of manually managing when
+measurements are processed.
+
+Enabling the polling thread has some additional overhead, but allows for
+asynchronous measurement processing and the ability to set an appropriate
+priority level for the polling thread.
 
 Requirements
 ************
@@ -20,15 +34,15 @@ real hardware.
 Building and Running
 ********************
 
-To run this example on the **Cortex M3 emulator**, run the following commands
-which will compile the application, run it on the emulator, and output
-the result to the console:
+To run this example on the **mps2_an521 (Cortex-M33) emulator**, run the
+following commands which will compile the application, run it on the emulator,
+and output the result to the console:
 
 .. code-block:: console
 
     $ cd samples/throughput
     $ mkdir b && cd b
-    $ cmake -GNinja -DBOARD=qemu_cortex_m3 ..
+    $ cmake -GNinja -DBOARD=mps2_an521 ..
     $ ninja
     $ ninja run
 
@@ -36,7 +50,7 @@ To do the same thing using ``west``, run:
 
 .. code-block:: console
 
-   $ west build -p -b qemu_cortex_m3 samples/throughput/ -t run
+   $ west build -p -b mps2_an521 samples/throughput/ -t run
 
 Press ``CTRL+A`` to exit QEMU.
 
@@ -67,19 +81,19 @@ This application will normally output text resembling the following:
 
 .. code-block:: console
 
-   *** Booting Zephyr OS build zephyr-v2.6.0-536-g89212a7fbf5f  ***
+   *** Booting Zephyr OS build zephyr-v2.6.0-1967-g00bfac00aecb  ***
    
    Processed 1000 measurements:
    
-   total time: 106413 us
-   per sample: 106 us
-   mes/s:      9433
+   total time: 162735 us
+   per sample: 162 us
+   mes/s:      6172
    
    Sample pool statistics:
    
    bytes_alloc (cur): 0
-   bytes_alloc_total: 32000
-   bytes_freed_total: 32000
+   bytes_alloc_total: 40000
+   bytes_freed_total: 40000
    fifo_put_calls:    0
    fifo_get_calls:    0
    pool_free_calls:   1000
