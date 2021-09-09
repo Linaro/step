@@ -6,8 +6,49 @@ Secure Telemetry Pipeline (STeP) for Zephyr
 Overview
 ********
 
-An experimental data processing pipeline that can be used with any
-:ref:`supported board <boards>`.
+STeP is an experimental asychronous data processing pipeline that enables
+telemetry data to be represented in a generic manner (`measurements`), and
+processed via one or more **processor nodes** in pipelines called
+**node chains**.
+
+Processor nodes can be thought of as mini telemetry applications that can be
+chained together to represent complex data processing workflows.
+
+Processor nodes and node-chains are added to a runtime-updateable
+**node registry**. Incoming measurements will be evaluated againt registered
+and active processor nodes to determine if there is a **filter match** between
+the measurement and the first record in the node chain. If a match occurs, the
+measurement will be processed by the matching node or node chain.
+
+**NOTE**: STeP is NOT intended to replace Zephyr's sensor API or sensor
+drivers, but to act as an endpoint for that raw telemetry data!
+
+Presentation
+************
+
+STeP was presented as a proof of concept at Linaro Connect Fall 2021
+in LVC21F-303. This slidedeck provides more detailed information on STeP as of
+the date that presentation was given.
+
+Click the image below to see a PDF of the slidedeck:
+
+.. image:: doc/LVC21F-303.png
+   :target: doc/LVC21F-303%20Secure%20Sensor%20Data%20Pipeline.pdf
+
+Status
+******
+
+This project is a proof of concept and a work in progress. It is intended to
+test the concept of a flexible telemetry pipeline that can handle common
+security requirements such as sanitising, hashing, signing, encrypting and
+encoding telemetry data, reducing individual operations to reusable
+building blocks or mini applications.
+
+Eventually, some of these nodes, or the entire system, should be allocated to
+a trusted execution environment (TF-M, etc.), and linked to an inferrence
+engine for demonstration purposes. As a first step, however, implementing this
+as a Zephyr module allows for a flexible CI workflow, easy emulation in QEMU,
+and rapid development and testing.
 
 Adding STeP to your project via ``west``
 ****************************************
