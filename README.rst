@@ -68,7 +68,7 @@ this module by adding the following sections to ``zephyr/west.yml``:
 
 .. code-block::
 
-   - name: linaro_sensor_pipeline
+   - name: linaro_step
      remote: microbuilder
      path: modules/lib/step
      revision: main
