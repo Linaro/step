@@ -1,0 +1,5 @@
+sample:
+  name: Secure telemetry pipeline FoC motor control sample
+tests:
+  test:
+    tags: step
