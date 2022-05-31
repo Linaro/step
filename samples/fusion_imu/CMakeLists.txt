@@ -5,4 +5,5 @@ project(step_foc)
 target_sources(app PRIVATE src/main.c)
 target_sources(app PRIVATE src/fusion_nodes.c)
 target_sources(app PRIVATE src/imu_data_producer.c)
+target_sources(app PRIVATE src/zsl_fusion_config.c)
 

@@ -13,10 +13,15 @@
 #include <step/node.h>
 #include <step/measurement/measurement.h>
 
+#include <zsl/zsl.h>
+#include <zsl/orientation/fusion/fusion.h>
+#include <zsl/orientation/orientation.h>
+
 #ifdef __cplusplus
 extern "C" {
 #endif
 
+extern struct zsl_euler fusion_node_result;
 extern struct step_node *fusion_node_chain;
 
 #ifdef __cplusplus
