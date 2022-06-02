@@ -174,8 +174,12 @@ enum step_mes_unit_si {
 	/* 0x0080..0x008F (128-143): 'Unitless' Units. */
 	/** @brief %, 0.0 .. 100.0 inclusive. */
 	STEP_MES_UNIT_SI_PERCENT                = 0x80,
-	/** @brief 0.0 .. 1.0 inclusive. */
+	/** @brief +/- 0.0 .. 1.0 inclusive. */
 	STEP_MES_UNIT_SI_INTERVAL               = 0x81,
+	/** @brief +/- 0.0 ... 359.99 inclusive. Not an offical IS unit for
+	 *  angular measurements (which should be STEP_MES_UNIT_SI_RADIAN), but
+	 *  it is listed as an 'accepted' unit. */
+	STEP_MES_UNIT_SI_DEGREE                 = 0x82,
 
 	/* 0x1000..0x10FF: STEP_MES_TYPE_AREA Combined Units. */
 	/** @brief m^2 */
