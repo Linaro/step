@@ -54,6 +54,14 @@ void step_sp_put(struct step_measurement *mes);
 struct step_measurement *step_sp_get(void);
 
 /**
+ * @brief Gets an step_measurement from the pool's FIFO, blocks until a sample
+ *        is available.
+ *
+ * @return A pointer to the measurement.
+ */
+struct step_measurement *step_sp_get_until_available(void);
+
+/**
  * @brief Frees the heap memory associated with 'ds'.
  *
  * @param mes Pointer to the step_measurement whose memory should be freed.

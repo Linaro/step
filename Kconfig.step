@@ -67,9 +67,20 @@ config STEP_PROC_MGR_NODE_LIMIT
 	  memory wihout instrumentation, or STEP_PROC_MGR_NODE_LIMIT * 24 if
 	  CONFIG_STEP_INSTRUMENTATION is enabled.
 
+config STEP_PROC_MGR_EVENT_DRIVEN
+	bool "Enables the process manager to be event driven"
+	default n
+	help
+	This option makes the processor manager background thread
+		execute in an event driven fashion.  A single measurement in
+		the FIFO in a pending state will cause the thread to trigger.
+		When enabled, the pipeline execution rate will be determined
+		by the sensor data througput.
+
 config STEP_PROC_MGR_POLL_RATE
 	int "Rate in Hz to poll the measurement pool."
-	default 10
+	default 0 if STEP_PROC_MGR_EVENT_DRIVEN
+	default 10 
 	range 0 100
 	help
 	  Determines the rate, in Hz, that the processor node manager should poll
@@ -79,6 +90,7 @@ config STEP_PROC_MGR_POLL_RATE
 
 config STEP_PROC_MGR_PRIORITY
 	int "Priority level for the polling thread."
+	default 0 if STEP_PROC_MGR_EVENT_DRIVEN
 	default 7
 	help
 	  Sets the priority level for the polling thread that is created when
