@@ -72,13 +72,11 @@ static uint32_t step_pm_handle_counter = 0;
  * they should be evaluated. The 'process' function traverses this list. */
 static sys_slist_t pm_node_slist = SYS_SLIST_STATIC_INIT(&pm_node_slist);
 
-#if (CONFIG_STEP_PROC_MGR_POLL_RATE > 0)
 static void step_pm_poll_thread(bool free);
 /* Create the polling thread. */
 K_THREAD_DEFINE(step_pm_tid, CONFIG_STEP_PROC_MGR_STACK_SIZE,
 		step_pm_poll_thread, 1, NULL, NULL,
 		CONFIG_STEP_PROC_MGR_PRIORITY, 0, 0);
-#endif
 
 /* Registry should be locked during processing or when modifying it. */
 K_MUTEX_DEFINE(step_pm_reg_access);
@@ -400,8 +398,19 @@ int step_pm_poll(int *mcnt, bool free)
 		*mcnt = 0;
 	}
 
-	/* Check FIFO for unprocessed measurements. */
+#ifdef CONFIG_STEP_PROC_MGR_EVENT_DRIVEN
+		if(k_current_get() != step_pm_tid) {
+			/* for compatibillity reasons if this function is called outside from
+			 * poll thread it should not block:
+			 */
+			mes = step_sp_get();
+		} else {
+			/* block the thread until we get any sample on the FIFO */
+			mes = step_sp_get_until_available();
+		}
+#else
 	mes = step_sp_get();
+#endif
 	while (mes != NULL) {
 		if (mcnt != NULL) {
 			*mcnt += 1;
@@ -419,7 +428,6 @@ err:
 	return rc;
 }
 
-#if (CONFIG_STEP_PROC_MGR_POLL_RATE > 0)
 /**
  * @brief Polling handler if automatic polling is requested.
  *
@@ -431,10 +439,12 @@ static void step_pm_poll_thread(bool free)
 
 	while (1) {
 		step_pm_poll(&matches, free);
+#ifndef CONFIG_STEP_PROC_MGR_EVENT_DRIVEN
 		k_sleep(K_MSEC(1000 / CONFIG_STEP_PROC_MGR_POLL_RATE));
+#endif
+
 	}
 }
-#endif
 
 int step_pm_disable_node(uint32_t handle)
 {

@@ -26,6 +26,7 @@ struct step_sp_stats {
 	uint32_t bytes_freed_total;
 	uint32_t fifo_put_calls;
 	uint32_t fifo_get_calls;
+	uint32_t fifo_get_av_calls;
 	uint32_t pool_free_calls;
 	uint32_t pool_flush_calls;
 	uint32_t pool_alloc_calls;
@@ -44,6 +45,12 @@ struct step_measurement *step_sp_get(void)
 {
 	step_sp_stats_inst.fifo_get_calls++;
 	return k_fifo_get(&step_fifo, K_NO_WAIT);
+}
+
+struct step_measurement *step_sp_get_until_available(void)
+{
+	step_sp_stats_inst.fifo_get_available_calls++;
+	return k_fifo_get(&step_fifo, K_FOREVER);
 }
 
 void step_sp_free(struct step_measurement *mes)
@@ -143,6 +150,7 @@ void step_sp_print_stats(void)
 	printk("bytes_freed_total: %d\n", step_sp_stats_inst.bytes_freed_total);
 	printk("fifo_put_calls:    %d\n", step_sp_stats_inst.fifo_put_calls);
 	printk("fifo_get_calls:    %d\n", step_sp_stats_inst.fifo_get_calls);
+	printk("fifo_get_av_calls: %d\n", step_sp_stats_inst.fifo_get_av_calls);
 	printk("pool_free_calls:   %d\n", step_sp_stats_inst.pool_free_calls);
 	printk("pool_flush_calls:  %d\n", step_sp_stats_inst.pool_flush_calls);
 	printk("pool_alloc_calls:  %d\n", step_sp_stats_inst.pool_alloc_calls);
