@@ -49,7 +49,7 @@ struct step_measurement *step_sp_get(void)
 
 struct step_measurement *step_sp_get_until_available(void)
 {
-	step_sp_stats_inst.fifo_get_available_calls++;
+	step_sp_stats_inst.fifo_get_av_calls++;
 	return k_fifo_get(&step_fifo, K_FOREVER);
 }
 
