@@ -307,6 +307,9 @@ int step_pm_process(struct step_measurement *mes, int *matches, bool free)
 #endif
 			}
 
+			/* Release the registry lock. */
+			k_mutex_unlock(&step_pm_reg_access);
+
 			/* Execute processor node chain on match. */
 			if (match) {
 				/* Sequentially fire each node in the node chain. */
@@ -353,6 +356,9 @@ int step_pm_process(struct step_measurement *mes, int *matches, bool free)
 				/* Track the total match count. */
 				match_count += 1;
 			}
+
+		/* Lock registry access during processing. */
+		k_mutex_lock(&step_pm_reg_access, K_FOREVER);
 
 #if CONFIG_STEP_INSTRUMENTATION
 			/* Stop total runtime INSTR timer. */
