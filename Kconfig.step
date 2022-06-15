@@ -71,11 +71,11 @@ config STEP_PROC_MGR_EVENT_DRIVEN
 	bool "Enables the process manager to be event driven"
 	default n
 	help
-	This option makes the processor manager background thread
-		execute in an event driven fashion.  A single measurement in
-		the FIFO in a pending state will cause the thread to trigger.
-		When enabled, the pipeline execution rate will be determined
-		by the sensor data througput.
+	  This option makes the processor manager background thread
+	  execute in an event driven fashion.  A single measurement in
+	  the FIFO in a pending state will cause the thread to trigger.
+	  When enabled, the pipeline execution rate will be determined
+	  by the sensor data througput.
 
 config STEP_PROC_MGR_POLL_RATE
 	int "Rate in Hz to poll the measurement pool."
