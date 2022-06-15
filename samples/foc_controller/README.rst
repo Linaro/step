@@ -50,11 +50,15 @@ Building and Flashing
 Using this sample with the supported G474RE Nucleo board does not 
 require special instructions, just use west command as shown below:
 
-`$ west build -p always -b nucleo_g474re modules/lib/step/samples/foc_controller`
+.. code-block:: console
+
+    $ west build -p always -b nucleo_g474re modules/lib/step/samples/foc_controller
 
 Flashing also does not require special steps, just type:
 
-`$ west flash`
+.. code-block:: console
+
+    $ west flash
 
 Expected result
 ***************
@@ -67,4 +71,6 @@ the motor shaft torque in exchange for higher speeds.
 Reminder Uq and Ud are specified in volts, typing the command below 
 will result in immediate motor spinning.
 
-`$ step_foc set -4.0 -1.0`
+.. code-block:: console
+
+    $ step_foc set -4.0 -1.0
