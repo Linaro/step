@@ -108,4 +108,11 @@ config STEP_PROC_MGR_STACK_SIZE
 	  account the requirements of the largest processor node chain in the
 	  pipeline.
 
+config STEP_PROC_MGR_CALLBACKS_NUM
+	int "Maximum number of callbacks available to allocate"
+	default 32
+	help
+	  Sets the maximum number of callbacks that the processor manager
+	  can allocate from its memory pool.
+
 endif

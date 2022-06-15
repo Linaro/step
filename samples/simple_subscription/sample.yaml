@@ -1,0 +1,5 @@
+sample:
+  name: Secure telemetry pipeline subscription example
+tests:
+  test:
+    tags: step

@@ -297,3 +297,181 @@ void test_proc_get_node(void)
 	node = step_pm_node_get(2, 0);
 	zassert_is_null(node, NULL);
 }
+
+/**
+ * @brief Test the subscription of registered node
+ */
+static struct step_measurement *received_measurement = NULL;
+static uint32_t received_handle;
+static uint32_t received_user_data;
+static uint32_t callback_counts;
+static uint32_t callbacks_on_second_node_counts;
+
+void on_node_completed(struct step_measurement *mes, uint32_t handle, void *user)
+{
+	received_measurement = mes;
+	received_handle = handle;
+	received_user_data = (uint32_t)user;
+
+	if(handle == 0) {
+		callback_counts++;
+	} else if(handle == 1) {
+		callbacks_on_second_node_counts++;
+	}
+}
+
+void test_proc_subscribe_node_chain(void)
+{
+	int rc;
+	int msgcnt = 0;
+	uint32_t handle;
+
+	/* Clear the processor node manager. */
+	rc = step_pm_clear();
+	zassert_equal(rc, 0, NULL);
+
+	/* Register a processor node. */
+	rc = step_pm_register(step_test_data_procnode_chain, 0, &handle);
+	zassert_equal(rc, 0, NULL);
+	zassert_equal(handle, 0, NULL);
+
+	/* subscribe to the registered node */
+	rc = step_pm_subscribe_to_node(handle, on_node_completed, (void *)0x12345678);
+	zassert_equal(rc, 0, NULL);
+
+	/* Allocate memory for measurement. */
+	struct step_measurement *mes = step_sp_alloc(step_test_mes_dietemp.header.srclen.len);
+	zassert_not_null(mes, NULL);
+
+	/* Copy test data into heap-based measurement instance. */
+	memcpy(&(mes->header), &(step_test_mes_dietemp.header),
+	       sizeof(struct step_mes_header));
+	memcpy(mes->payload, step_test_mes_dietemp.payload,
+	       step_test_mes_dietemp.header.srclen.len);
+
+	callback_counts	= 0;
+	/* Assign measurement to FIFO. */
+	step_sp_put(mes);
+	rc = step_pm_poll(&msgcnt, true);
+	zassert_equal(rc, 0, NULL);
+	zassert_equal(msgcnt, 1, NULL);
+
+	/* compare data sent with received from subscription callback */
+	int match = memcmp(received_measurement->payload, mes->payload, step_test_mes_dietemp.header.srclen.len);
+	zassert_equal(match, 0, NULL);
+	match = memcmp(received_measurement, mes, sizeof(struct step_measurement));
+	zassert_equal(match, 0, NULL);
+	zassert_equal(handle, received_handle, NULL);
+	zassert_equal(received_user_data, 0x12345678, NULL);
+	zassert_equal(callback_counts, 1, NULL);
+}
+
+void test_proc_subscribe_node_chain_multiple_callbacks(void)
+{
+	int rc;
+	int msgcnt = 0;
+	uint32_t handle;
+
+	/* Clear the processor node manager. */
+	rc = step_pm_clear();
+	zassert_equal(rc, 0, NULL);
+
+	/* Register a processor node. */
+	rc = step_pm_register(step_test_data_procnode_chain, 0, &handle);
+	zassert_equal(rc, 0, NULL);
+	zassert_equal(handle, 0, NULL);
+
+	/* fill lots of callbacks in single node */
+	for (int i = 0 ; i < 4; i++) {
+		rc = step_pm_subscribe_to_node(handle, on_node_completed, (void *)0x12345678);
+		zassert_equal(rc, 0, NULL);
+	}
+
+	/* Allocate memory for measurement. */
+	struct step_measurement *mes = step_sp_alloc(step_test_mes_dietemp.header.srclen.len);
+	zassert_not_null(mes, NULL);
+
+	/* Copy test data into heap-based measurement instance. */
+	memcpy(&(mes->header), &(step_test_mes_dietemp.header),
+	       sizeof(struct step_mes_header));
+	memcpy(mes->payload, step_test_mes_dietemp.payload,
+	       step_test_mes_dietemp.header.srclen.len);
+
+	callback_counts = 0;
+
+	/* Assign measurement to FIFO. */
+	step_sp_put(mes);
+	rc = step_pm_poll(&msgcnt, true);
+	zassert_equal(rc, 0, NULL);
+	zassert_equal(msgcnt, 1, NULL);
+
+	/* compare data sent with received from subscription callback */
+	int match = memcmp(received_measurement->payload, mes->payload, step_test_mes_dietemp.header.srclen.len);
+	zassert_equal(match, 0, NULL);
+	match = memcmp(received_measurement, mes, sizeof(struct step_measurement));
+	zassert_equal(match, 0, NULL);
+	zassert_equal(handle, received_handle, NULL);
+	zassert_equal(received_user_data, 0x12345678, NULL);
+	zassert_equal(callback_counts, 4, "callback_counts: %d", callback_counts);
+}
+
+void test_proc_subscribe_multiple_node_chain_multiple_callbacks(void)
+{
+	int rc;
+	int msgcnt = 0;
+	uint32_t handle1, handle2;
+
+	/* Clear the processor node manager. */
+	rc = step_pm_clear();
+	zassert_equal(rc, 0, NULL);
+
+	/* Register a processor node. */
+	rc = step_pm_register(step_test_data_procnode_chain, 0, &handle1);
+	zassert_equal(rc, 0, NULL);
+	zassert_equal(handle1, 0, NULL);
+
+	/* Register a second processor node. */
+	rc = step_pm_register(step_test_data_procnode_chain, 0, &handle2);
+	zassert_equal(rc, 0, NULL);
+	zassert_equal(handle2, 1, NULL);
+
+	/* fill lots of callbacks in first node */
+	for (int i = 0 ; i < 4; i++) {
+		rc = step_pm_subscribe_to_node(handle1, on_node_completed, (void *)0x12345678);
+		zassert_equal(rc, 0, NULL);
+	}
+
+	/* fill lots of callbacks in second node */
+	for (int i = 0 ; i < 4; i++) {
+		rc = step_pm_subscribe_to_node(handle2, on_node_completed, (void *)0x12345678);
+		zassert_equal(rc, 0, NULL);
+	}
+
+	/* Allocate memory for measurement. */
+	struct step_measurement *mes = step_sp_alloc(step_test_mes_dietemp.header.srclen.len);
+	zassert_not_null(mes, NULL);
+
+	/* Copy test data into heap-based measurement instance. */
+	memcpy(&(mes->header), &(step_test_mes_dietemp.header),
+	       sizeof(struct step_mes_header));
+	memcpy(mes->payload, step_test_mes_dietemp.payload,
+	       step_test_mes_dietemp.header.srclen.len);
+
+	callback_counts = 0;
+	callbacks_on_second_node_counts = 0;
+
+	/* Assign measurement to FIFO. */
+	step_sp_put(mes);
+	rc = step_pm_poll(&msgcnt, true);
+	zassert_equal(rc, 0, NULL);
+	zassert_equal(msgcnt, 1, NULL);
+
+	/* compare data sent with received from subscription callback */
+	int match = memcmp(received_measurement->payload, mes->payload, step_test_mes_dietemp.header.srclen.len);
+	zassert_equal(match, 0, NULL);
+	match = memcmp(received_measurement, mes, sizeof(struct step_measurement));
+	zassert_equal(match, 0, NULL);
+	zassert_equal(received_user_data, 0x12345678, NULL);
+	zassert_equal(callback_counts, 4, "callback_counts: %d", callback_counts);
+	zassert_equal(callbacks_on_second_node_counts, 4, "callback_counts: %d", callbacks_on_second_node_counts);
+}

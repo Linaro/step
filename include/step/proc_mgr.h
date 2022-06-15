@@ -46,6 +46,15 @@ extern "C" {
 #endif
 
 /**
+ * @brief Calllback fired when a node chain is completed.
+ *
+ * @param mes       The measurement processed by this node.
+ * @param handle    The handle the node has been registered under.
+ * @param user_data The pointer to the user data passed when callback is called.
+ */
+typedef void (*node_chain_completed_callback)(struct step_measurement *mes, uint32_t node_handle, void* user_data);
+
+/**
  * @brief Registers a new processor node.
  *
  * This function registers a processor node or node chain, such that it will be
@@ -158,6 +167,17 @@ int step_pm_disable_node(uint32_t handle);
  * @return int  0 on success, negative error code on failure.
  */
 int step_pm_enable_node(uint32_t handle);
+
+/**
+ * @brief Registers a callback to a particular node chain.
+ *
+ * @param handle    The handle the node has been registered under.
+ * @param cb        The callback tobe invoked when node chain completes.
+ * @param user_data The pointer to a user defined data.
+ *
+ * @return int  0 on success, negative error code on failure.
+ */
+int step_pm_subscribe_to_node(uint32_t handle, node_chain_completed_callback cb, void *user_data);
 
 /**
  * @brief Displays a list of registered processor nodes in the order which
