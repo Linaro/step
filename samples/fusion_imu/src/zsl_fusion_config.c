@@ -9,7 +9,8 @@
 static zsl_real_t _mahn_intfb[3] = { 0.0, 0.0, 0.0 };
 struct zsl_fus_mahn_cfg mahn_cfg = {
 	.kp = 200,
-	.ki = 0.00200,
+	.ki = 0.02200,
+	.integral_limit = 1000.0f,
 	.intfb = {
 		.sz = 3,
 		.data = _mahn_intfb,
