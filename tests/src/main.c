@@ -26,6 +26,9 @@ extern void test_proc_manual(void);
 extern void test_proc_manual_non_alloc(void);
 extern void test_proc_thread(void);
 extern void test_proc_get_node(void);
+extern void test_proc_subscribe_node_chain(void);
+extern void test_proc_subscribe_node_chain_multiple_callbacks(void);
+extern void test_proc_subscribe_multiple_node_chain_multiple_callbacks(void);
 
 /* tests_sample_pool.c */
 extern void test_sp_alloc(void);
@@ -52,6 +55,9 @@ void test_main(void)
 		ztest_unit_test(test_proc_manual_non_alloc),
 		ztest_unit_test(test_proc_thread),
 		ztest_unit_test(test_proc_get_node),
+		ztest_unit_test(test_proc_subscribe_node_chain),
+		ztest_unit_test(test_proc_subscribe_node_chain_multiple_callbacks),
+		ztest_unit_test(test_proc_subscribe_multiple_node_chain_multiple_callbacks),
 		
 		ztest_unit_test(test_sp_alloc),
 		ztest_unit_test(test_sp_alloc_limit),

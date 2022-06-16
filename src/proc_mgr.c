@@ -18,6 +18,24 @@
 LOG_MODULE_REGISTER(proc_mgr);
 
 /**
+ * @brief represents a callback chain to be invoked after a node is processed.
+ */
+struct step_node_sub_callback {
+	/**
+	 * @brief Singly-linked list node reference.
+	 */
+	sys_snode_t snode;
+	/**
+	 * @brief callback to be called.
+	 */
+	node_chain_completed_callback cb;
+	/**
+	 * @brief caller specific data.
+	 */
+	void* user_data;
+};
+
+/**
  * @brief Struct used to represent a @ref step_node in the registry.
  */
 struct step_pm_node_record {
@@ -25,6 +43,11 @@ struct step_pm_node_record {
 	 * @brief Singly-linked list node reference.
 	 */
 	sys_snode_t snode;
+
+	/**
+	 * @brief Singly-linked list of subscriber callbacks.
+	 */
+	sys_slist_t sub_callbacks;
 
 	/**
 	 * @brief Pointer to the @ref step_node to register.
@@ -80,6 +103,7 @@ K_THREAD_DEFINE(step_pm_tid, CONFIG_STEP_PROC_MGR_STACK_SIZE,
 
 /* Registry should be locked during processing or when modifying it. */
 K_MUTEX_DEFINE(step_pm_reg_access);
+K_HEAP_DEFINE(step_callbacks_pool, CONFIG_STEP_PROC_MGR_CALLBACKS_NUM * sizeof(struct step_node_sub_callback));
 
 int step_pm_register(struct step_node *node, uint16_t pri, uint32_t *handle)
 {
@@ -111,6 +135,8 @@ int step_pm_register(struct step_node *node, uint16_t pri, uint32_t *handle)
 	step_pm_nodes[*handle].priority = pri;
 	step_pm_nodes[*handle].handle = *handle;
 	step_pm_nodes[*handle].flags.enabled = 1;
+
+	sys_slist_init(&step_pm_nodes[*handle].sub_callbacks);
 
 	/* Find the correct insertion point based on priority. */
 	match = prev = NULL;
@@ -344,12 +370,20 @@ int step_pm_process(struct step_measurement *mes, int *matches, bool free)
 							n->callbacks.error_handler(mes,
 										   pnode->handle, node_idx, node_rc);
 						}
-					}
-
+					}					
 					/* Move to next node in the chain, if present. */
 					node_idx++;
 					n = n->next;
 				} while (n != NULL);
+
+				/* evaluate the subscriptors at end of node processing */
+				struct step_node_sub_callback *subs;
+				struct step_node_sub_callback *subs_tmp;
+				SYS_SLIST_FOR_EACH_CONTAINER_SAFE(&pnode->sub_callbacks,subs,subs_tmp,snode) {
+					if(subs->cb) {
+						subs->cb(mes,pnode->handle,subs->user_data);
+					}
+				}
 
 				/* Track the total match count. */
 				match_count += 1;
@@ -439,7 +473,7 @@ static void step_pm_poll_thread(bool free)
 
 	while (1) {
 		step_pm_poll(&matches, free);
-#ifndef CONFIG_STEP_PROC_MGR_EVENT_DRIVEN
+#if !defined(CONFIG_STEP_PROC_MGR_EVENT_DRIVEN) && (CONFIG_STEP_PROC_MGR_POLL_RATE > 0) 
 		k_sleep(K_MSEC(1000 / CONFIG_STEP_PROC_MGR_POLL_RATE));
 #endif
 
@@ -477,6 +511,42 @@ int step_pm_enable_node(uint32_t handle)
 	step_pm_nodes[handle].flags.enabled = 1;
 
 err:
+	return rc;
+}
+
+int step_pm_subscribe_to_node(uint32_t handle, node_chain_completed_callback cb, void *user_data)
+{
+	int rc = 0;
+
+	/* Lock registry access during registration. */
+	k_mutex_lock(&step_pm_reg_access, K_FOREVER);
+
+	LOG_DBG("Subscribing to processor node %d:", handle);
+
+	if (handle > step_pm_handle_counter) {
+		LOG_ERR("Invalid handle: %d", handle);
+		rc = -EINVAL;
+		goto err;
+	}
+
+	struct step_pm_node_record *r = &step_pm_nodes[handle];
+	struct step_node_sub_callback *nc = k_heap_alloc(&step_callbacks_pool, 
+												sizeof(struct step_node_sub_callback), 
+												K_NO_WAIT);
+
+	if(nc == NULL) {
+		LOG_ERR("No more callbacks available: %d", handle);
+		rc = -ENOMEM;
+		goto err;
+	}
+
+	/* fill and attach this callback to the node chain callback list*/
+	nc->cb = cb;
+	nc->user_data = user_data;
+	sys_slist_append(&r->sub_callbacks, &nc->snode);
+	
+err:
+	k_mutex_unlock(&step_pm_reg_access);
 	return rc;
 }
 
