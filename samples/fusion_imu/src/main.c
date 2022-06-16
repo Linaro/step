@@ -95,17 +95,32 @@ static int step_fusion_cmd_set(const struct shell *shell, size_t argc, char **ar
 
 static int step_fusion_cmd_stream(const struct shell *shell, size_t argc, char **argv)
 {
-	if (argc != 2) {
-		return -EINVAL;
-	}
-	
-	int time = strtol(argv[1], NULL, 10) * 1000;
-	if(time <= 0) {
+	int stream_time = 0; 
+
+	if (argc < 2) {
 		return -EINVAL;
 	}
 
-	k_timer_start(&stream_timer, K_MSEC(time), K_MSEC(0));
-	enable_stream = true;
+	if(!strcmp("forever", argv[1])) 
+	{
+		enable_stream = true;
+
+	} else if (!strcmp("timed", argv[1]) ){
+		if(argc != 3) {
+			return -EINVAL;
+		}
+
+		stream_time = strtol(argv[2], NULL, 10) * 1000;
+		if(stream_time <= 0) {
+			return -EINVAL;
+		}
+
+		enable_stream = true;
+		k_timer_start(&stream_timer, K_MSEC(stream_time), K_MSEC(0));
+
+	} else {
+		return -EINVAL;
+	}
 
 	return 0;
 }
@@ -143,7 +158,7 @@ SHELL_STATIC_SUBCMD_SET_CREATE(
 	SHELL_CMD(imu, NULL, "Prints raw sensor data", step_fusion_cmd_imu),
 	SHELL_CMD(calibrate, NULL, "Calibrates the IMU sensor", step_fusion_cmd_calibrate),
 	SHELL_CMD(set_mahoney, NULL, "Sets Mahoney filter kp and ki", step_fusion_cmd_set),
-	SHELL_CMD(stream, NULL, "start orientation data playback over serial for N seconds", step_fusion_cmd_stream),
+	SHELL_CMD(stream, NULL, "start orientation data playback over serial use forever option to continous streaming or timed plus time seconds to timed streaming which stops automatically", step_fusion_cmd_stream),
 	SHELL_SUBCMD_SET_END
 	);
 

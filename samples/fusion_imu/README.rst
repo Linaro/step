@@ -76,8 +76,22 @@ its source code:
 * The source code: https://github.com/nathandunk/BetterSerialPlotter
 
 After tunning the fusion algorithm, just type the command stream from step_fusion
-command sets to start the data streaming over the console, this command takes an extra
-argument which is the streaming data in seconds.
+command sets to start the data streaming over the console, there are two options 
+of streaming data:
+
+.. code-block:: console
+    $ step_fusion stream forever
+
+The command above will start the streaming data which stays running until the board
+gets reset. Alternatively user may use the following command to make the board streaming
+data for a fixed amount of time in seconds:
+
+.. code-block:: console
+    $ step_fusion stream timed 10
+
+The command above will make the board stream the fused data for 10 seconds, stopping at 
+the end and available for new commands. Use this option during tunning before use the 
+contionous streaming way above.
 
 Mahoney Tunning
 ***************
