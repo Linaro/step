@@ -80,14 +80,14 @@ command sets to start the data streaming over the console, there are two options
 of streaming data:
 
 .. code-block:: console
-    $ step_fusion stream forever
+    $ step_fusion stream 0
 
 The command above will start the streaming data which stays running until the board
 gets reset. Alternatively user may use the following command to make the board streaming
 data for a fixed amount of time in seconds:
 
 .. code-block:: console
-    $ step_fusion stream timed 10
+    $ step_fusion stream 10
 
 The command above will make the board stream the fused data for 10 seconds, stopping at 
 the end and available for new commands. Use this option during tunning before use the 
