@@ -95,17 +95,30 @@ static int step_fusion_cmd_set(const struct shell *shell, size_t argc, char **ar
 
 static int step_fusion_cmd_stream(const struct shell *shell, size_t argc, char **argv)
 {
-	if (argc != 2) {
-		return -EINVAL;
+	int stream_time = 0; 
+
+	if ((argc == 1) || (strcmp(argv[1], "help") == 0) || argc > 2) {
+		shell_print(shell, "Starts streaming orientation data.\n");
+		shell_print(shell, "  $ %s %s <timeout_s>\n", argv[-1], argv[0]);
+		shell_print(shell, "  <timeout_s> Time to stream in seconds. 0 = non-stop.\n");
+		shell_print(shell, "Example: %s %s 10", argv[-1], argv[0]);
+		return 0;
 	}
-	
-	int time = strtol(argv[1], NULL, 10) * 1000;
-	if(time <= 0) {
+
+	// Get timeout
+	stream_time = strtol(argv[1], NULL, 10) * 1000;
+	if(stream_time < 0) {
+		shell_print(shell, "Invalid timeout_s: %d", stream_time / 1000);
 		return -EINVAL;
 	}
 
-	k_timer_start(&stream_timer, K_MSEC(time), K_MSEC(0));
+	// Enable stream
 	enable_stream = true;
+	
+	// Start the timer if time isn't infinite (0)
+	if (stream_time) {
+		k_timer_start(&stream_timer, K_MSEC(stream_time), K_MSEC(0));
+	}
 
 	return 0;
 }
@@ -143,7 +156,7 @@ SHELL_STATIC_SUBCMD_SET_CREATE(
 	SHELL_CMD(imu, NULL, "Prints raw sensor data", step_fusion_cmd_imu),
 	SHELL_CMD(calibrate, NULL, "Calibrates the IMU sensor", step_fusion_cmd_calibrate),
 	SHELL_CMD(set_mahoney, NULL, "Sets Mahoney filter kp and ki", step_fusion_cmd_set),
-	SHELL_CMD(stream, NULL, "start orientation data playback over serial for N seconds", step_fusion_cmd_stream),
+	SHELL_CMD(stream, NULL, "Streams orientation data", step_fusion_cmd_stream),
 	SHELL_SUBCMD_SET_END
 	);
 
