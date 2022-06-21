@@ -95,11 +95,13 @@ static uint32_t step_pm_handle_counter = 0;
  * they should be evaluated. The 'process' function traverses this list. */
 static sys_slist_t pm_node_slist = SYS_SLIST_STATIC_INIT(&pm_node_slist);
 
+#if (CONFIG_STEP_PM_POLL_RATE > 0) || defined(STEP_PROC_MGR_EVENT_DRIVEN) 
 static void step_pm_poll_thread(bool free);
 /* Create the polling thread. */
 K_THREAD_DEFINE(step_pm_tid, CONFIG_STEP_PROC_MGR_STACK_SIZE,
 		step_pm_poll_thread, 1, NULL, NULL,
 		CONFIG_STEP_PROC_MGR_PRIORITY, 0, 0);
+#endif
 
 /* Registry should be locked during processing or when modifying it. */
 K_MUTEX_DEFINE(step_pm_reg_access);
@@ -462,6 +464,8 @@ err:
 	return rc;
 }
 
+#if (CONFIG_STEP_PM_POLL_RATE > 0) || defined(STEP_PROC_MGR_EVENT_DRIVEN) 
+
 /**
  * @brief Polling handler if automatic polling is requested.
  *
@@ -479,6 +483,7 @@ static void step_pm_poll_thread(bool free)
 
 	}
 }
+#endif
 
 int step_pm_disable_node(uint32_t handle)
 {

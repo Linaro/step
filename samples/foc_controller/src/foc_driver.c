@@ -59,16 +59,13 @@ static struct step_mes_header rotor_sensor_header = {
 static void foc_driver_rotor_position_sample_thread(void *arg);
 
 /* Rotor sensor measurement thread. */
-K_THREAD_DEFINE(step_pm_tid, 4096,
+K_THREAD_DEFINE(rotor_sample_tid, 4096,
 		foc_driver_rotor_position_sample_thread, NULL, NULL, NULL,
 		-1, 0, 0);
 
 const static float encoder_to_degrees_ratio = (360.0f) / AS5600_PULSES_PER_REVOLUTION;
 
 static foc_measurement_callback_t user_callback;
-static float bus_dc_link_voltage;
-static float bus_dc_link_bias_voltage;
-static float voltage_to_duty_ratio;
 static float pole_pairs;
 
 static struct {
@@ -137,30 +134,6 @@ static void foc_driver_get_rotor_position(struct step_measurement * rotor_measur
 	p->timestamp = k_uptime_get_32();
 }
 
-static void foc_set_pwms(float dc_a, float dc_b) 
-{
-	/* saturate the duties */
-	if(dc_a > 1.0f) {
-		dc_a = 1.0f;
-	} else if (dc_a < 0.0f) {
-		dc_a = 0.0f;
-	}
-
-	if(dc_b > 1.0f) {
-		dc_b = 1.0f;
-	} else if (dc_b < 0.0f) {
-		dc_b = 0.0f;
-	}
-
-	/* scale the duty cicle to nanoseconds */
-	dc_a *= PWM_PERIOD_NSEC - 1;
-	dc_b *= PWM_PERIOD_NSEC - 1;
-
-	pwm_set(inverter_pwm, 1 , PWM_PERIOD_NSEC, dc_a, 0);
-	pwm_set(inverter_pwm, 2 , PWM_PERIOD_NSEC, dc_b, 0);
-	pwm_set(inverter_pwm, 3 , PWM_PERIOD_NSEC, dc_b, 0);
-}
-
 static void foc_driver_rotor_position_sample_thread(void *arg)
 {	
 	int mcnt;
@@ -186,17 +159,10 @@ static void foc_driver_rotor_position_sample_thread(void *arg)
 	}
 }
 
-int foc_driver_initialize(float motor_pole_pairs, float dc_link_voltage, foc_measurement_callback_t cb)
+int foc_driver_initialize(float motor_pole_pairs, foc_measurement_callback_t cb)
 {
 	int rc = 0;
 
-	if(dc_link_voltage < 0.0f) {
-		return -EINVAL;
-	}
-
-	bus_dc_link_voltage = dc_link_voltage;
-	bus_dc_link_bias_voltage = bus_dc_link_voltage / 2.0f;
-	voltage_to_duty_ratio = 1.0f / bus_dc_link_voltage;
 	user_callback = cb;
 	pole_pairs = motor_pole_pairs;
 
@@ -204,7 +170,7 @@ int foc_driver_initialize(float motor_pole_pairs, float dc_link_voltage, foc_mea
 	encoder_reading.zero_offset = 0;
 
 	i2c_configure(encoder_i2c, I2C_MODE_MASTER | I2C_SPEED_FAST);
-	foc_driver_set_voltages(0.0f, 0.0f);
+	foc_driver_set_duty_cycle(0.0f, 0.0f, 0.0f);
 
 	gpio_pin_configure_dt(&enable_u, GPIO_OUTPUT);
 	gpio_pin_configure_dt(&enable_v, GPIO_OUTPUT);
@@ -220,37 +186,38 @@ int foc_driver_initialize(float motor_pole_pairs, float dc_link_voltage, foc_mea
 int foc_driver_set_encoder_offset(void)
 {
 	/* align rotor each startup */
-	foc_driver_set_voltages(0.0f, 0.0f);
-	k_sleep(K_MSEC(500));
-
-	foc_driver_set_voltages(0.1f * bus_dc_link_voltage, 0.0f);
-	k_sleep(K_MSEC(500));
-
 	encoder_reading.zero_offset = foc_driver_read_encoder() & AS5600_READING_MASK;
 
 	return 0;
 }
 
-void foc_driver_set_voltages(float voltage_u, float voltage_v)
+void foc_driver_set_duty_cycle(float dc_u, float dc_v, float dc_w)
 {
-	/* center the modulation */
-	voltage_u += bus_dc_link_bias_voltage;
-	voltage_v += bus_dc_link_bias_voltage;
-
-	/* saturate the voltages */
-	if(voltage_u > bus_dc_link_voltage) {
-		voltage_u = bus_dc_link_voltage;
-	} else if (voltage_u < 0.0f) {
-		voltage_u = 0.0f;
+	/* saturate the duties */
+	if(dc_u > 1.0f) {
+		dc_u = 1.0f;
+	} else if (dc_u < 0.0f) {
+		dc_u = 0.0f;
 	}
 
-	if(voltage_v > bus_dc_link_voltage) {
-		voltage_v = bus_dc_link_voltage;
-	} else if (voltage_v < 0.0f) {
-		voltage_v = 0.0f;
+	if(dc_v > 1.0f) {
+		dc_v = 1.0f;
+	} else if (dc_v < 0.0f) {
+		dc_v = 0.0f;
 	}
 
-	/* scale voltages and pass to the inverter */
-	foc_set_pwms(voltage_u * voltage_to_duty_ratio, 
-				voltage_v * voltage_to_duty_ratio);
+	if(dc_w > 1.0f) {
+		dc_w = 1.0f;
+	} else if (dc_w < 0.0f) {
+		dc_w = 0.0f;
+	}
+
+	/* scale the duty cycle to nanoseconds */
+	dc_u *= PWM_PERIOD_NSEC - 1;
+	dc_v *= PWM_PERIOD_NSEC - 1;
+	dc_w *= PWM_PERIOD_NSEC - 1;
+
+	pwm_set(inverter_pwm, 1 , PWM_PERIOD_NSEC, dc_u, 0);
+	pwm_set(inverter_pwm, 2 , PWM_PERIOD_NSEC, dc_v, 0);
+	pwm_set(inverter_pwm, 3 , PWM_PERIOD_NSEC, dc_w, 0);
 }
