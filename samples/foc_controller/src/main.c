@@ -13,7 +13,6 @@
 #include "foc_nodes.h"
 
 #define SAMPLE_MOTOR_POLE_PAIRS 	7
-#define SAMPLE_DC_LINK_VOLTAGE_MV  	12000
 
 static float motor_vq;
 static float motor_vd;
@@ -38,7 +37,6 @@ void main(void)
 
 	/* initialize the foc driver first */
 	rc = foc_driver_initialize(SAMPLE_MOTOR_POLE_PAIRS,
-							(SAMPLE_DC_LINK_VOLTAGE_MV / 1000.0f),
 							on_foc_measurement);
 	if (rc) {
 		printk("foc driver init failed!\n");
@@ -72,8 +70,8 @@ static int step_foc_cmd_align(const struct shell *shell, size_t argc, char **arg
 /* Subcommand array for "step_foc" (level 1). */
 SHELL_STATIC_SUBCMD_SET_CREATE(
 	sub_step_foc,
-	SHELL_CMD(set, NULL, "Set voltages to control the motor", step_foc_cmd_set),
-	SHELL_CMD(align, NULL, "Align rotor and calibrate sensor", step_foc_cmd_align),	
+	SHELL_CMD(set, NULL, "Set voltage d-q vector to control the motor between -1 and +1", step_foc_cmd_set),
+	SHELL_CMD(align, NULL, "Align rotor and calibrate its position sensor", step_foc_cmd_align),	
 	SHELL_SUBCMD_SET_END
 	);
 

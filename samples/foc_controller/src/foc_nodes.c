@@ -10,6 +10,7 @@
 #include <step/proc_mgr.h>
 #include "foc_nodes.h"
 #include "foc_driver.h"
+#include "foc_svm.h"
 #include <arm_math.h>
 
 /**
@@ -32,7 +33,7 @@
  * │  Collect       │  | │ Inverse        │            │ Inverse       │ |       │ Inverter       │
  * │  Node          │  | │ Park Transform │            │ Clarke Trans. │ |       │ Update         │
  * │                ├───►│                ├────────────►               ├────────►│ Node           │
- * │  Capture       │  | │ VQD -> Vab     │            │ Vab->Vuvw     │ |       │ Vuvw-> PWM     │
+ * │  Capture       │  | │ VQD -> Vab     │            │ Vab->Vuvw     │ |       │ Vuvw-> SVPWM   │
  * │  the samples   │  | │                │            │               │ |       │                │
  * │                │  | │                │            │               │ |       │                │
  * └───────▲────────┘  | └────────────────┘            └───────────────┘ |       └────────┬───────┘
@@ -53,6 +54,43 @@
 /* rotor sensor align step */
 int foc_align_rotor(void *cfg, uint32_t handle, uint32_t inst)
 {
+	/* for rotor alignment the idea is to provide the initial voltage
+	 * vector with a phase of 90 degree and apply to the motor, and wait
+	 * the rotor to align mechanically to that voltage applied, this will
+	 * translate the stator and rotor magnetic fields are properly 90 degree
+	 * aligned
+	 */
+	float sine;
+	float cosine;
+	float alpha;
+	float beta;
+	float inverter_duties[3];
+
+	/* we want a voltage vector with 90 degree of phase */
+	arm_sin_cos_f32(90, &sine, &cosine);
+
+	/* use only 20% of the current capacity to avoid heating*/
+	arm_inv_park_f32(0.0f,
+					0.2f,
+					&alpha,
+					&beta,
+					sine,
+					cosine);
+
+	/* convert the alpha-beta frame into SVPWM signals */
+	foc_svm_set(alpha, 
+			beta,
+			&inverter_duties[0],
+			&inverter_duties[1],
+			&inverter_duties[2]);
+
+	/* set the voltage vector to the inverter and... */
+	foc_driver_set_duty_cycle(inverter_duties[0], inverter_duties[1], inverter_duties[2]);
+	
+	/* give a delay to the rotor align mechanically */
+	k_sleep(K_MSEC(500));
+
+	/* before releasing the voltage, sets the zero angle offset in the encoder*/
 	return foc_driver_set_encoder_offset();
 }
 
@@ -64,7 +102,7 @@ int foc_do_process(struct step_measurement *mes, uint32_t handle, uint32_t inst)
 	struct foc_feeback_sensor_data *feed = &p->state;
 	float sine;
 	float cosine;
-	
+
 	arm_sin_cos_f32(feed->e_rotor_position, &sine, &cosine);
 
 	arm_inv_park_f32(command->voltage_d,
@@ -73,23 +111,26 @@ int foc_do_process(struct step_measurement *mes, uint32_t handle, uint32_t inst)
 					&command->voltage_beta,
 					sine,
 					cosine);
-
-	arm_inv_clarke_f32(command->voltage_alpha, 
-					command->voltage_beta,
-					&command->voltage_u,
-					&command->voltage_v);
+	
 	return 0;
 }
 
-/* update the inverter step, the last block on FoC chain */
-int foc_do_update_inverter(struct step_measurement *mes, uint32_t handle, uint32_t inst)
+/* do SVPWM update the inverter step, the last block on FoC chain */
+int foc_do_space_vector_modulation(struct step_measurement *mes, uint32_t handle, uint32_t inst)
 {
 	struct foc_controller_payload *p = mes->payload;
+	float inverter_duties[3];
 
-	/* Update the 3-phase inverter */
-	foc_driver_set_voltages(p->cmd.voltage_u,
-						p->cmd.voltage_v);
+	/* convert the alpha-beta frame into SVPWM signals */
+	foc_svm_set(p->cmd.voltage_alpha, 
+			p->cmd.voltage_beta,
+			&inverter_duties[0],
+			&inverter_duties[1],
+			&inverter_duties[2]);
 
+	/* and transfer them directly to the inverter */
+	foc_driver_set_duty_cycle(inverter_duties[0], inverter_duties[1], inverter_duties[2]);
+	
 	return 0;
 }
 
@@ -141,7 +182,7 @@ struct step_node foc_node_chain_data[] = {
 		.name = "inverter update",
 		/* Callbacks */
 		.callbacks = {
-			.exec_handler = foc_do_update_inverter,
+			.exec_handler = foc_do_space_vector_modulation,
 		},
 
 		/* Config settings */

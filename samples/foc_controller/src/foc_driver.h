@@ -54,14 +54,12 @@ struct foc_controller_payload {
  * 
  * @param cb user callback to be executed each measurement from motor rotor position.
  * 
- * @param dc_link_voltage inverter dc bus voltage in volts.
- *
  * @param motor_pole_pairs number of motor pole pairs.
  * 
  * @return int  0 on success, otherwise a negative error code.
  * 
  */
-int foc_driver_initialize(float motor_pole_pairs, float dc_link_voltage, foc_measurement_callback_t cb);
+int foc_driver_initialize(float motor_pole_pairs, foc_measurement_callback_t cb);
 
 
 /**
@@ -73,14 +71,17 @@ int foc_driver_initialize(float motor_pole_pairs, float dc_link_voltage, foc_mea
 int foc_driver_set_encoder_offset(void);
 
 /**
- * @brief set inverter voltages.
+ * @brief set inverter voltages based on duty cycle.
  * 
- * @param voltage_u voltage to be applied to the in phase u of motor
+ * @param dc_u voltage to be applied to the in phase u of motor
  *
- * @param voltage_v voltage to be applied to the in phase v of motor
+ * @param dc_v voltage to be applied to the in phase v of motor
+ *
+ * @param dc_v voltage to be applied to the in phase v of motor
  * 
+ * @param values should be normalized between 0 and 1 
  */
-void foc_driver_set_voltages(float voltage_u, float voltage_v);
+void foc_driver_set_duty_cycle(float dc_u, float dc_v, float dc_w);
 
 #ifdef __cplusplus
 }
