@@ -1,0 +1,81 @@
+.. step-foc-sample:
+
+Secure Telemetry Pipeline (STeP) Sensorless FoC Motor control Example 
+#####################################################################
+This sample presents a motor control pipeline using STeP, 
+STeP is used as orchestrator to perform a Field Oriented 
+Control (FoC) to command Brushless motors such PMSM or BLDC, this
+sample is similar to the foc_controller but here an extra node 
+is created as a rotor position sensor observer which feeds the 
+rotor position samples to the FoC node.
+
+Overview
+********
+The FoC pipeline in this sample uses the voltage mode command,
+that is it, no current control in closed loop, instead the pair
+of voltages, direct and quadrature are applied directly to the
+FoC engine, then converted to a 3-phase stator voltages.
+
+The STeP pipeline is triggered each time the motor rotor position
+is measured, then the other node chains are executed, one for 
+execute FoC followed by the PWM Inverter update.
+
+Additionally, the rotor position data is obtained by a secondary
+node which executes a current observer which generates an estimated
+rotor position signals which is responsible to feed the FoC controller
+node.
+
+Requirements
+************
+To experiment the motor control is necessary a power electronics interface
+that supports three PWM signals on its input. This sample was tested using 
+the ST Microelectronics IHM07M1 brushless motor interface development kit
+plus a Nucleo G474RE board, altough any nucleo board that has support for 
+PWM and I2C from Zephyr would work.
+
+Different from the sensored FoC controller sample, the signals used are the
+current shunts which feeds the ADC channels, these measurements are used instead
+by the current observer which generate then the rotor position estimation.
+
+For the PWM, the test was made using the pins PA8, PA9 and PA10, these 
+pins output the PWM signlas from TIM1, respectively the channels 1 to 3.
+Also the driver on the power board have 3 enable signals that need to be
+tied to high, in the test they are connected on PC10 to PC12. More 
+information can be obtained checking the sample overlay file for this
+application. 
+
+In src/main.c the user may select the SAMPLE_DC_LINK_VOLTAGE_MV, depending
+on the voltage applied in the power stage, which is typically 12V, The 
+constant SAMPLE_MOTOR_POLE_PAIRS is motor dependent and needs to be checked
+in the target motor documentation, values amoung 7 and 14 pole pairs are 
+very common.
+
+Building and Flashing
+*********************
+Using this sample with the supported G474RE Nucleo board does not 
+require special instructions, just use west command as shown below:
+
+.. code-block:: console
+
+    $ west build -p always -b nucleo_g474re modules/lib/step/samples/foc_controller
+
+Flashing also does not require special steps, just type:
+
+.. code-block:: console
+
+    $ west flash
+
+Expected result
+***************
+After flashing the code the shell will become available and 
+you can type step_foc set <Uq> <Ud> command to set the voltage direct 
+and quadrature commands. Uq is the quadrature voltage used mainly 
+to perform speed variation, Ud is used as field weakening reducing 
+the motor shaft torque in exchange for higher speeds.
+
+Reminder Uq and Ud are specified in volts, typing the command below 
+will result in immediate motor spinning.
+
+.. code-block:: console
+
+    $ step_foc set -4.0 -1.0
