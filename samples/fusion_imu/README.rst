@@ -29,7 +29,8 @@ Requirements
 ************
 If user wants to see the streamed data, it needs to attach the board specific
 serial port pins to a Serial-to-USB converter to capture the straming data
-sent by the board.
+sent by the board, also this sample is intended to work with Zephyr version
+3.1 and above.
 
 Building and Flashing
 *********************
