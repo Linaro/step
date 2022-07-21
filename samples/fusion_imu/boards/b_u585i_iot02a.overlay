@@ -10,12 +10,10 @@
 	board_imu: ism330dhcx@6b {
 		compatible = "st,ism330dhcx";
 		reg = <0x6B>;
-		label = "ISM330DHCX";
 	};
 
 	board_mag: iis2mdc@1e {
 		compatible = "st,iis2mdc";
 		reg = <0x1E>;
-		label = "IIS2MDC";
 	};
 };
