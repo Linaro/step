@@ -95,7 +95,7 @@ static uint32_t step_pm_handle_counter = 0;
  * they should be evaluated. The 'process' function traverses this list. */
 static sys_slist_t pm_node_slist = SYS_SLIST_STATIC_INIT(&pm_node_slist);
 
-#if (CONFIG_STEP_PM_POLL_RATE > 0) || defined(STEP_PROC_MGR_EVENT_DRIVEN) 
+#if (CONFIG_STEP_PROC_MGR_POLL_RATE > 0) || defined(CONFIG_STEP_PROC_MGR_EVENT_DRIVEN) 
 static void step_pm_poll_thread(bool free);
 /* Create the polling thread. */
 K_THREAD_DEFINE(step_pm_tid, CONFIG_STEP_PROC_MGR_STACK_SIZE,
@@ -464,7 +464,7 @@ err:
 	return rc;
 }
 
-#if (CONFIG_STEP_PM_POLL_RATE > 0) || defined(STEP_PROC_MGR_EVENT_DRIVEN) 
+#if (CONFIG_STEP_PROC_MGR_POLL_RATE > 0) || defined(STEP_PROC_MGR_EVENT_DRIVEN) 
 
 /**
  * @brief Polling handler if automatic polling is requested.
