@@ -1,0 +1,36 @@
+/*
+ * SPDX-License-Identifier: Apache-2.0
+ *
+ * Copyright (c) 2022 Linaro
+ */
+
+ #include <dt-bindings/pwm/pwm.h>
+
+/ {
+	gpio_enable {
+		compatible = "gpio-keys";
+		inverter_enable: button {
+			label = "inverter_enable";
+			gpios = <&gpioc 10 GPIO_ACTIVE_HIGH>,
+                    <&gpioc 11 GPIO_ACTIVE_HIGH>,
+                    <&gpioc 12 GPIO_ACTIVE_HIGH>;
+		};
+	};
+};
+ 
+ /* Set PWM that are attached to the IHM07 dev board's power stage */
+ &timers1 {
+     status = "okay";
+ 
+     inverter_pwm: pwm {
+         status = "okay";
+         pinctrl-0 = <&tim1_ch1_pa8 &tim1_ch2_pa9 &tim1_ch3_pa10>; 
+         pinctrl-names = "default";
+     };
+};
+
+&i2c1 {
+	pinctrl-0 = <&i2c1_scl_pb8 &i2c1_sda_pb9>;
+	pinctrl-names = "default";
+	status = "okay";
+};

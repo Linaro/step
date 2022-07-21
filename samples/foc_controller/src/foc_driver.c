@@ -24,9 +24,7 @@
 
 #define ROTOR_DRV_PAYLOAD_SZ      (sizeof(struct foc_controller_payload))
 #define ROTOR_DRV_PAYLOAD_SRC_ID  (2)
-
-/* PWM frequency about 16KHz */
-#define PWM_PERIOD_NSEC 62500
+#define PWM_PERIOD_NSEC 25000
 
 /**
  * @brief Pre-populated measurement header to copy into allocated measurements.
