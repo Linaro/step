@@ -11,7 +11,9 @@
 #include "floatcheck.h"
 #include "data.h"
 
-void test_mes_check_header(void)
+ZTEST_SUITE(tests_measurement, NULL, NULL, NULL, NULL, NULL);
+
+ZTEST(tests_measurement, test_mes_check_header)
 {
 	/* Base data type. */
 	zassert_equal(step_test_mes_dietemp.header.filter.base_type,
@@ -66,7 +68,7 @@ void test_mes_check_header(void)
 		      NULL);
 }
 
-void test_mes_check_payload(void)
+ZTEST(tests_measurement, test_mes_check_payload)
 {
 	struct payload {
 		uint32_t timestamp;
@@ -90,7 +92,7 @@ void test_mes_check_payload(void)
 	zassert_true(val_is_equal(payload->temp_c[3], -3.6F, 0.0001), NULL);
 }
 
-void test_mes_check_sample_count(void)
+ZTEST(tests_measurement, test_mes_check_sample_count)
 {
 	int rc;
 
@@ -98,7 +100,7 @@ void test_mes_check_sample_count(void)
 	zassert_ok(rc, NULL);
 }
 
-void test_mes_check_payload_sz(void)
+ZTEST(tests_measurement, test_mes_check_payload_sz)
 {
 	int32_t sz;
 
