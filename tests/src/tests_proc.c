@@ -15,7 +15,9 @@
 #include "data.h"
 #include "floatcheck.h"
 
-void test_proc_reg_limit(void)
+ZTEST_SUITE(tests_proc_manager, NULL, NULL, NULL, NULL, NULL);
+
+ZTEST(tests_proc_manager, test_proc_reg_limit)
 {
 	int rc;
 	uint32_t handle;
@@ -49,7 +51,7 @@ void test_proc_reg_limit(void)
  * @brief This represents a minimal end-to-end workflow allocating, assigning,
  *        queueing, processing and freeing a single step_measurement.
  */
-void test_proc_manual(void)
+ZTEST(tests_proc_manager, test_proc_manual)
 {
 	int rc;
 	uint32_t handle;
@@ -123,7 +125,7 @@ void test_proc_manual(void)
  *        queueing and processing a single non-allocated (i.e. non-heap-based)
  *        step_measurement.
  */
-void test_proc_manual_non_alloc(void)
+ZTEST(tests_proc_manager, test_proc_manual_non_alloc)
 {
 	int rc;
 	uint32_t handle;
@@ -186,7 +188,7 @@ void test_proc_manual_non_alloc(void)
 /**
  * @brief Tests the automatic polling of queued measurements.
  */
-void test_proc_thread(void)
+ZTEST(tests_proc_manager, test_proc_thread)
 {
 	int rc;
 	uint32_t handle;
@@ -264,7 +266,7 @@ void test_proc_thread(void)
 /**
  * @brief Tests the automatic polling of queued measurements.
  */
-void test_proc_get_node(void)
+ZTEST(tests_proc_manager, test_proc_get_node)
 {
 	int rc;
 	uint32_t handle;
@@ -320,7 +322,7 @@ void on_node_completed(struct step_measurement *mes, uint32_t handle, void *user
 	}
 }
 
-void test_proc_subscribe_node_chain(void)
+ZTEST(tests_proc_manager, test_proc_subscribe_node_chain)
 {
 	int rc;
 	int msgcnt = 0;
@@ -366,7 +368,7 @@ void test_proc_subscribe_node_chain(void)
 	zassert_equal(callback_counts, 1, NULL);
 }
 
-void test_proc_subscribe_node_chain_multiple_callbacks(void)
+ZTEST(tests_proc_manager, test_proc_subscribe_node_chain_multiple_callbacks)
 {
 	int rc;
 	int msgcnt = 0;
@@ -415,7 +417,7 @@ void test_proc_subscribe_node_chain_multiple_callbacks(void)
 	zassert_equal(callback_counts, 4, "callback_counts: %d", callback_counts);
 }
 
-void test_proc_subscribe_multiple_node_chain_multiple_callbacks(void)
+ZTEST(tests_proc_manager, test_proc_subscribe_multiple_node_chain_multiple_callbacks)
 {
 	int rc;
 	int msgcnt = 0;

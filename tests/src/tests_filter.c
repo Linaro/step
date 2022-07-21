@@ -12,7 +12,9 @@
 #include "floatcheck.h"
 #include "data.h"
 
-void test_filter_evaluate_fc_null(void)
+ZTEST_SUITE(tests_filter, NULL, NULL, NULL, NULL, NULL);
+
+ZTEST(tests_filter, test_filter_evaluate_fc_null)
 {
 	int rc = 0;
 	int match;
@@ -32,7 +34,7 @@ void test_filter_evaluate_fc_null(void)
 	zassert_equal(match, 1, NULL);
 }
 
-void test_filter_evaluate_mes_null(void)
+ZTEST(tests_filter, test_filter_evaluate_mes_null)
 {
 	int rc = 0;
 	int match;
@@ -52,7 +54,7 @@ void test_filter_evaluate_mes_null(void)
 	zassert_equal(match, 0, NULL);
 }
 
-void test_filter_evaluate_fc_len(void)
+ZTEST(tests_filter, test_filter_evaluate_fc_len)
 {
 	int rc = 0;
 	int match;
@@ -78,7 +80,7 @@ void test_filter_evaluate_fc_len(void)
 	zassert_equal(match, 1, NULL);
 }
 
-void test_filter_evaluate_fc_bad_op0(void)
+ZTEST(tests_filter, test_filter_evaluate_fc_bad_op0)
 {
 	int rc = 0;
 	int match;
@@ -104,7 +106,7 @@ void test_filter_evaluate_fc_bad_op0(void)
 	zassert_equal(match, 0, NULL);
 }
 
-void test_filter_evaluate_match_good(void)
+ZTEST(tests_filter, test_filter_evaluate_match_good)
 {
 	int rc = 0;
 	int match;
@@ -127,7 +129,7 @@ void test_filter_evaluate_match_good(void)
 	// zassert_equal(step_test_data_cb_stats.matched, 1, NULL);
 }
 
-void test_filter_evaluate_match_bad(void)
+ZTEST(tests_filter, test_filter_evaluate_match_bad)
 {
 	/* TODO */
 

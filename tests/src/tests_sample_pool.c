@@ -11,7 +11,9 @@
 #include "floatcheck.h"
 #include "data.h"
 
-void test_sp_alloc(void)
+ZTEST_SUITE(tests_sample_pool, NULL, NULL, NULL, NULL, NULL);
+
+ZTEST(tests_sample_pool, test_sp_alloc)
 {
 	struct step_measurement *mes;
 	struct step_measurement *ref = &step_test_mes_dietemp;
@@ -77,7 +79,7 @@ void test_sp_alloc(void)
 	zassert_true(step_sp_bytes_alloc() == 0, NULL);
 }
 
-void test_sp_alloc_limit(void)
+ZTEST(tests_sample_pool, test_sp_alloc_limit)
 {
 	int rec_size = sizeof(struct step_measurement) +
 		       (8 - (sizeof(struct step_measurement) % 8));
@@ -107,7 +109,7 @@ void test_sp_alloc_limit(void)
 	zassert_true(step_sp_bytes_alloc() == 0, NULL);
 }
 
-void test_sp_fifo(void)
+ZTEST(tests_sample_pool, test_sp_fifo)
 {
 	struct step_measurement *src;
 	struct step_measurement *dst;
