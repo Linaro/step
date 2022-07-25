@@ -61,15 +61,15 @@ this module by adding the following sections to ``zephyr/west.yml``:
 .. code-block::
 
    remotes:
-     - name: microbuilder
-       url-base: https://github.com/microbuilder
+     - name: Linaro
+       url-base: https://github.com/Linaro
 
 2. In the ``manifest/projects`` section add:
 
 .. code-block::
 
-   - name: linaro_step
-     remote: microbuilder
+   - name: step
+     remote: linaro
      path: modules/lib/step
      revision: main
 
