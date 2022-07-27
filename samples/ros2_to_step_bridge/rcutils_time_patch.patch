@@ -1,0 +1,17 @@
+diff --git a/src/time_unix.c b/src/time_unix.c
+index 35fed19..a5ce3f3 100644
+--- a/src/time_unix.c
++++ b/src/time_unix.c
+@@ -28,7 +28,12 @@ extern "C"
+ #include <mach/mach.h>
+ #endif  // defined(__MACH__)
+ #include <math.h>
++
++#if defined(__ZEPHYR__)
++#include <posix/time.h>
++#else
+ #include <time.h>
++#endif
+ #include <unistd.h>
+ 
+ #include "./common.h"

@@ -1,0 +1,5 @@
+sample:
+  name: Secure telemetry pipeline IMU fusion sample
+tests:
+  test:
+    tags: step
