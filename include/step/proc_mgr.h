@@ -143,6 +143,7 @@ int step_pm_process(struct step_measurement *mes, int *matches, bool free);
  *        process, and processes them on a first in, first processed basis.
  *
  * @param mcnt      Pointer to the number of samples read from the sample pool.
+ *                  (Deprecated), currrently noop.
  * @param free      If set to true (1), the measurement will be freed
  *                  from shared memory when processing is complete.
  *

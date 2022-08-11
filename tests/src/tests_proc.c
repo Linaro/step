@@ -90,6 +90,7 @@ ZTEST(tests_proc_manager, test_proc_manual)
 	zassert_equal(handle, 0, NULL);
 
 	/* Poll the sample pool, which should trigger message processing. */
+	msgcnt = step_sp_fifo_count();
 	rc = step_pm_poll(&msgcnt, true);
 	zassert_equal(rc, 0, NULL);
 	zassert_equal(msgcnt, 1, NULL);
@@ -104,8 +105,10 @@ ZTEST(tests_proc_manager, test_proc_manual)
 	zassert_equal(step_test_data_cb_stats.error, 0, NULL);
 
 	/* Make sure the sample pool FIFO is empty. */
+	msgcnt = step_sp_fifo_count();
 	rc = step_pm_poll(&msgcnt, true);
 	zassert_equal(rc, 0, NULL);
+	zassert_true(step_sp_fifo_count() == 0, NULL);
 	zassert_equal(msgcnt, 0, NULL);
 
 	/* Also check the FIFO directly. */
@@ -158,6 +161,7 @@ ZTEST(tests_proc_manager, test_proc_manual_non_alloc)
 	 * indicate that memory should NOT be freed when finished since the
 	 * step_measurement is not taken from the sample pool heap.
 	 */
+	msgcnt = step_sp_fifo_count();
 	rc = step_pm_poll(&msgcnt, false);
 	zassert_equal(rc, 0, NULL);
 	zassert_equal(msgcnt, 1, NULL);
@@ -172,7 +176,9 @@ ZTEST(tests_proc_manager, test_proc_manual_non_alloc)
 	zassert_equal(step_test_data_cb_stats.error, 0, NULL);
 
 	/* Make sure the sample pool FIFO is empty. */
+	msgcnt = step_sp_fifo_count();
 	rc = step_pm_poll(&msgcnt, false);
+	zassert_true(step_sp_fifo_count() == 0, NULL);
 	zassert_equal(rc, 0, NULL);
 	zassert_equal(msgcnt, 0, NULL);
 
@@ -245,6 +251,7 @@ ZTEST(tests_proc_manager, test_proc_thread)
 	/* Make sure the sample pool FIFO is empty. */
 	rc = step_pm_poll(&msgcnt, true);
 	zassert_equal(rc, 0, NULL);
+	msgcnt = step_sp_fifo_count();
 	zassert_equal(msgcnt, 0, NULL);
 
 	/* Also check the FIFO directly. */
@@ -328,6 +335,8 @@ ZTEST(tests_proc_manager, test_proc_subscribe_node_chain)
 	int msgcnt = 0;
 	uint32_t handle;
 
+	rc = step_pm_suspend();
+
 	/* Clear the processor node manager. */
 	rc = step_pm_clear();
 	zassert_equal(rc, 0, NULL);
@@ -354,7 +363,8 @@ ZTEST(tests_proc_manager, test_proc_subscribe_node_chain)
 	callback_counts	= 0;
 	/* Assign measurement to FIFO. */
 	step_sp_put(mes);
-	rc = step_pm_poll(&msgcnt, true);
+	msgcnt = step_sp_fifo_count();
+	rc = step_pm_poll(&msgcnt, false);
 	zassert_equal(rc, 0, NULL);
 	zassert_equal(msgcnt, 1, NULL);
 
@@ -366,6 +376,8 @@ ZTEST(tests_proc_manager, test_proc_subscribe_node_chain)
 	zassert_equal(handle, received_handle, NULL);
 	zassert_equal(received_user_data, 0x12345678, NULL);
 	zassert_equal(callback_counts, 1, NULL);
+	step_sp_free(mes);
+
 }
 
 ZTEST(tests_proc_manager, test_proc_subscribe_node_chain_multiple_callbacks)
@@ -373,6 +385,8 @@ ZTEST(tests_proc_manager, test_proc_subscribe_node_chain_multiple_callbacks)
 	int rc;
 	int msgcnt = 0;
 	uint32_t handle;
+
+	rc = step_pm_suspend();
 
 	/* Clear the processor node manager. */
 	rc = step_pm_clear();
@@ -403,7 +417,8 @@ ZTEST(tests_proc_manager, test_proc_subscribe_node_chain_multiple_callbacks)
 
 	/* Assign measurement to FIFO. */
 	step_sp_put(mes);
-	rc = step_pm_poll(&msgcnt, true);
+	msgcnt = step_sp_fifo_count();
+	rc = step_pm_poll(&msgcnt, false);
 	zassert_equal(rc, 0, NULL);
 	zassert_equal(msgcnt, 1, NULL);
 
@@ -415,6 +430,7 @@ ZTEST(tests_proc_manager, test_proc_subscribe_node_chain_multiple_callbacks)
 	zassert_equal(handle, received_handle, NULL);
 	zassert_equal(received_user_data, 0x12345678, NULL);
 	zassert_equal(callback_counts, 4, "callback_counts: %d", callback_counts);
+	step_sp_free(mes);
 }
 
 ZTEST(tests_proc_manager, test_proc_subscribe_multiple_node_chain_multiple_callbacks)
@@ -423,6 +439,8 @@ ZTEST(tests_proc_manager, test_proc_subscribe_multiple_node_chain_multiple_callb
 	int msgcnt = 0;
 	uint32_t handle1, handle2;
 
+	rc = step_pm_suspend();
+	
 	/* Clear the processor node manager. */
 	rc = step_pm_clear();
 	zassert_equal(rc, 0, NULL);
@@ -464,7 +482,9 @@ ZTEST(tests_proc_manager, test_proc_subscribe_multiple_node_chain_multiple_callb
 
 	/* Assign measurement to FIFO. */
 	step_sp_put(mes);
-	rc = step_pm_poll(&msgcnt, true);
+	msgcnt = step_sp_fifo_count();
+
+	rc = step_pm_poll(&msgcnt, false);
 	zassert_equal(rc, 0, NULL);
 	zassert_equal(msgcnt, 1, NULL);
 
@@ -476,4 +496,6 @@ ZTEST(tests_proc_manager, test_proc_subscribe_multiple_node_chain_multiple_callb
 	zassert_equal(received_user_data, 0x12345678, NULL);
 	zassert_equal(callback_counts, 4, "callback_counts: %d", callback_counts);
 	zassert_equal(callbacks_on_second_node_counts, 4, "callback_counts: %d", callbacks_on_second_node_counts);
+
+	step_sp_free(mes);
 }
