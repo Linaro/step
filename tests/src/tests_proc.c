@@ -6,7 +6,7 @@
 
 #include <ztest.h>
 #include <string.h>
-#include <sys/printk.h>
+#include <zephyr/sys/printk.h>
 #include <step/step.h>
 #include <step/measurement/measurement.h>
 #include <step/node.h>

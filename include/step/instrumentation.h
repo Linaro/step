@@ -7,8 +7,8 @@
 #ifndef STEP_INSTRUMENTATION_H__
 #define STEP_INSTRUMENTATION_H__
 
-#include <zephyr.h>
-#include <sys/printk.h>
+#include <zephyr/zephyr.h>
+#include <zephyr/sys/printk.h>
 #include <step/step.h>
 
 /**

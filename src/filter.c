@@ -7,7 +7,7 @@
 #include <errno.h>
 #include <step/filter.h>
 
-#include <sys/printk.h>
+#include <zephyr/sys/printk.h>
 
 void step_filt_print(struct step_filter_chain *fc)
 {

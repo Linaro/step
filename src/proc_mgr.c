@@ -4,11 +4,11 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-#include <zephyr.h>
+#include <zephyr/zephyr.h>
 #include <string.h>
-#include <logging/log.h>
-#include <sys/printk.h>
-#include <sys/slist.h>
+#include <zephyr/logging/log.h>
+#include <zephyr/sys/printk.h>
+#include <zephyr/sys/slist.h>
 #include <step/proc_mgr.h>
 #include <step/sample_pool.h>
 #include <step/cache.h>
