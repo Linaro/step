@@ -68,7 +68,7 @@ config STEP_PROC_MGR_NODE_LIMIT
 	  CONFIG_STEP_INSTRUMENTATION is enabled.
 
 config STEP_PROC_MGR_POLL_RATE
-	int "Rate in Hz to poll the measurement pool."
+	int "Rate in MS to poll the measurement pool."
 	default 10 
 	range 0 100
 	help
@@ -82,7 +82,7 @@ config STEP_PROC_MGR_PRIORITY
 	default 0
 	range -4 0
 	help
-	  Sets the priority level for the polling handler.A positive value indicates that this is
+	  Sets the priority level for the polling handler. Keeps it to 0 for
 	  a preemptible thread, and a negative value indicates that this is a
 	  cooperative thread. The higher the value, the lower the thread priority.
 

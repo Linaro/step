@@ -98,7 +98,7 @@ int32_t step_sp_bytes_alloc(void);
 /**
  * @brief Checks how many messages are pending in the sample FIFO.
  *
- * @return positive number indicating the amout of pendin messages, 0 otherwise.
+ * @return positive number indicating the amout of pending messages, 0 otherwise.
  */
 uint32_t step_sp_fifo_count(void);
 
