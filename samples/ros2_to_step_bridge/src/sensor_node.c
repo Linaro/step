@@ -33,6 +33,7 @@ static rclc_support_t support;
 static rcl_init_options_t init_options;
 static rcl_node_t node;
 static rclc_executor_t executor;
+static int micro_ros_result = RCL_RET_ERROR;
 
 /* message to send data via quaternion */
 static geometry_msgs__msg__Quaternion ros_quaternion;
@@ -57,13 +58,13 @@ int sensor_init(void *cfg, uint32_t handle, uint32_t inst)
 	rclc_support_init_with_options(&support, 0, NULL, &init_options, &allocator);
 	rclc_node_init_default(&node, "step_imu_sensor_node", "", &support);
 
-	rclc_publisher_init_default(
+	micro_ros_result = rclc_publisher_init_default(
 		&publisher,
 		&node,
 		ROSIDL_GET_MSG_TYPE_SUPPORT(geometry_msgs, msg, Quaternion),
 		"sensor/step/imu/quaternion");
 	
-	rclc_executor_init(&executor, &support.context, 1, &allocator);
+	micro_ros_result = rclc_executor_init(&executor, &support.context, 1, &allocator);
 
 	return 0;
 }
@@ -99,10 +100,14 @@ int sensor_do_process(struct step_measurement *mes, uint32_t handle, uint32_t in
 	ros_quaternion.z = q.k;
 	ros_quaternion.w = q.r;
 
-	rcl_publish(&publisher, &ros_quaternion, NULL);
+	micro_ros_result = rcl_publish(&publisher, &ros_quaternion, NULL);
 
 	/* also spin the executor */
 	rclc_executor_spin_some(&executor, 100);
+
+	if(micro_ros_result != RCL_RET_OK) {
+		printk("ERROR: Micro ROS connection is not estabilished!");
+	}
 
 	return 0;
 }
