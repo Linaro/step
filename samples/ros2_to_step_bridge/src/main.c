@@ -33,7 +33,7 @@ void main(void)
 {
 	rmw_uros_set_custom_transport(
 		MICRO_ROS_FRAMING_REQUIRED,
-		(void *) &default_params,
+		(void *)DEVICE_DT_GET(DT_ALIAS(uros_serial_port)),
 		zephyr_transport_open,
 		zephyr_transport_close,
 		zephyr_transport_write,
@@ -45,7 +45,7 @@ void main(void)
 
 	rcl_init_options_t init_options = rcl_get_zero_initialized_init_options();
 	RCCHECK(rcl_init_options_init(&init_options, allocator));
-	rmw_init_options_t* rmw_options = rcl_init_options_get_rmw_init_options(&init_options);
+	rcl_init_options_get_rmw_init_options(&init_options);
 
 	// create init_options
 	RCCHECK(rclc_support_init_with_options(&support, 0, NULL, &init_options, &allocator));

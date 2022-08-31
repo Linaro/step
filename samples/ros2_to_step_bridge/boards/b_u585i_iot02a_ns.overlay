@@ -3,6 +3,15 @@
  *
  * Copyright (c) 2022 Linaro
  */
+/ {
+    aliases {
+        uros-serial-port = &usart1;
+    };
+};
+
+&usart1 {
+    status = "okay";
+};
 
 &i2c2 {
 	status = "okay";
@@ -16,4 +25,11 @@
 		compatible = "st,iis2mdc";
 		reg = <0x1E>;
 	};
+};
+
+&zephyr_udc0 {
+    cdc_acm_uart0: cdc_acm_uart0 {
+            compatible = "zephyr,cdc-acm-uart";
+            label = "CDC_ACM_0";
+    };
 };

@@ -1,5 +1,5 @@
 sample:
-  name: Secure telemetry pipeline IMU fusion sample
+  name: Secure telemetry pipeline ROS2 bridge sample
 tests:
   test:
     tags: step
