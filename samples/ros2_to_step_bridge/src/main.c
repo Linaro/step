@@ -1,88 +1,56 @@
+/*
+ * Copyright (c) 2022 Linaro
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
 #include <zephyr.h>
-#include <time.h>
-#include <device.h>
-#include <devicetree.h>
-#include <drivers/gpio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <step/step.h>
+#include <step/proc_mgr.h>
+#include <step/sample_pool.h>
+#include <shell/shell.h>
+#include "sensor_node.h"
+#include "imu_data_producer.h"
+#include "zsl_fusion_config.h"
 
-#include <rcl/rcl.h>
-#include <rcl/error_handling.h>
-#include <std_msgs/msg/int32.h>
-
-#include <rclc/rclc.h>
-#include <rclc/executor.h>
-
-#include <rmw_microros/rmw_microros.h>
-#include <microros_transports.h>
-
-#define RCCHECK(fn) { rcl_ret_t temp_rc = fn; if((temp_rc != RCL_RET_OK)){printf("Failed status on line %d: %d. Aborting.\n",__LINE__,(int)temp_rc);for(;;){};}}
-#define RCSOFTCHECK(fn) { rcl_ret_t temp_rc = fn; if((temp_rc != RCL_RET_OK)){printf("Failed status on line %d: %d. Continuing.\n",__LINE__,(int)temp_rc);}}
-
-rcl_publisher_t publisher;
-std_msgs__msg__Int32 msg;
-
-void timer_callback(rcl_timer_t * timer, int64_t last_call_time)
+void on_imu_data_production(struct imu_data_payload *imu)
 {
-	RCLC_UNUSED(last_call_time);
-	if (timer != NULL) {
-		RCSOFTCHECK(rcl_publish(&publisher, &msg, NULL));
-		msg.data++;
+	struct step_measurement *imu_measurement = step_sp_alloc(sizeof(*imu));
+
+	if(imu_measurement == NULL) {
+		printk("Warning, no memory available from sample pool! \n");
+		return;
 	}
+
+	imu->streamable = true;
+	imu_measurement->payload = imu;
+
+	/* fill measurements information before publishing: */
+	imu_measurement->header.filter_bits = imu_measurement_header.filter_bits;
+	imu_measurement->header.unit_bits = imu_measurement_header.unit_bits;
+	imu_measurement->header.srclen_bits = imu_measurement_header.srclen_bits;
+
+	/* publish sensor measurement to be processed by the waiters */
+	step_sp_put(imu_measurement);
 }
 
 void main(void)
 {
-	rmw_uros_set_custom_transport(
-		MICRO_ROS_FRAMING_REQUIRED,
-		(void *)DEVICE_DT_GET(DT_ALIAS(uros_serial_port)),
-		zephyr_transport_open,
-		zephyr_transport_close,
-		zephyr_transport_write,
-		zephyr_transport_read
-	);
+	uint32_t handle;
+	struct step_measurement *mes;
 
-	rcl_allocator_t allocator = rcl_get_default_allocator();
-	rclc_support_t support;
-
-	rcl_init_options_t init_options = rcl_get_zero_initialized_init_options();
-	RCCHECK(rcl_init_options_init(&init_options, allocator));
-	rcl_init_options_get_rmw_init_options(&init_options);
-
-	// create init_options
-	RCCHECK(rclc_support_init_with_options(&support, 0, NULL, &init_options, &allocator));
-
-	// create node
-	rcl_node_t node;
-	RCCHECK(rclc_node_init_default(&node, "zephyr_int32_publisher", "", &support));
-
-	// create publisher
-	RCCHECK(rclc_publisher_init_default(
-		&publisher,
-		&node,
-		ROSIDL_GET_MSG_TYPE_SUPPORT(std_msgs, msg, Int32),
-		"zephyr_int32_publisher"));
-
-	// create timer,
-	rcl_timer_t timer;
-	const unsigned int timer_timeout = 1000;
-	RCCHECK(rclc_timer_init_default(
-		&timer,
-		&support,
-		RCL_MS_TO_NS(timer_timeout),
-		timer_callback));
-
-	// create executor
-	rclc_executor_t executor;
-	RCCHECK(rclc_executor_init(&executor, &support.context, 1, &allocator));
-	RCCHECK(rclc_executor_add_timer(&executor, &timer));
-
-	msg.data = 0;
-
-	while(1){
-		rclc_executor_spin_some(&executor, 100);
-		usleep(100000);
+	int rc = step_pm_register(sensor_node_chain, 0, &handle);
+	if (rc) {
+		printk("Node registration failed!\n");
+		return;
 	}
 
-	// free resources
-	RCCHECK(rcl_publisher_fini(&publisher, &node))
-	RCCHECK(rcl_node_fini(&node))
+	/* then start the imu data producer */
+	rc = imu_producer_start(on_imu_data_production);
+	if (rc) {
+		printk("IMU producer start failed!\n");
+		return;
+	}
 }
