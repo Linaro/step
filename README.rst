@@ -61,7 +61,7 @@ this module by adding the following sections to ``zephyr/west.yml``:
 .. code-block::
 
    remotes:
-     - name: Linaro
+     - name: linaro
        url-base: https://github.com/Linaro
 
 2. In the ``manifest/projects`` section add:
