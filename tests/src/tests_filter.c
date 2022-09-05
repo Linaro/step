@@ -4,8 +4,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-#include <ztest.h>
-#include <sys/printk.h>
+#include <zephyr/ztest.h>
+#include <zephyr/sys/printk.h>
 #include <step/step.h>
 #include <step/node.h>
 #include <step/filter.h>

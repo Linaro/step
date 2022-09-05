@@ -14,7 +14,7 @@
 #ifndef ZEPHYR_INCLUDE_STEP_FLOATCHECK_H_
 #define ZEPHYR_INCLUDE_STEP_FLOATCHECK_H_
 
-#include <zephyr.h>
+#include <zephyr/kernel.h>
 #include <stdint.h>
 
 #ifdef __cplusplus

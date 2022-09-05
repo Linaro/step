@@ -6,12 +6,12 @@
 
 #include <arm_math.h>
 #include <string.h>
-#include <zephyr.h>
-#include <device.h>
-#include <drivers/i2c.h>
-#include <drivers/pwm.h>
-#include <drivers/gpio.h>
-#include <sys/printk.h>
+#include <zephyr/kernel.h>
+#include <zephyr/device.h>
+#include <zephyr/drivers/i2c.h>
+#include <zephyr/drivers/pwm.h>
+#include <zephyr/drivers/gpio.h>
+#include <zephyr/sys/printk.h>
 #include <step/sample_pool.h>
 #include <step/proc_mgr.h>
 #include "foc_driver.h"

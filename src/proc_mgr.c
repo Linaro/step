@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-#include <zephyr/zephyr.h>
+#include <zephyr/kernel.h>
 #include <string.h>
 #include <zephyr/logging/log.h>
 #include <zephyr/sys/printk.h>
@@ -139,8 +139,6 @@ static void step_pm_poll_handler(struct k_work *item)
 
 		if(rc) {
 			LOG_ERR("Failed to process the current sample.");
-		} else {
-			LOG_DBG("Processor manager has been executed its node chains");
 		}
 
 		mes = step_sp_get();
