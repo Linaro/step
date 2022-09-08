@@ -3,14 +3,14 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-#include <zephyr.h>
+#include <zephyr/kernel.h>>
 #include <stdio.h>
 #include <time.h>
-#include <device.h>
-#include <devicetree.h>
-#include <drivers/gpio.h>
+#include <zephyr/device.h>
+#include <zephyr/devicetree.h>
+#include <zephyr/drivers/gpio.h>
 
-#include <logging/log.h>
+#include <zephyr/logging/log.h>
 #include <step/proc_mgr.h>
 
 #include <rcl/rcl.h>
@@ -106,7 +106,9 @@ int sensor_do_process(struct step_measurement *mes, uint32_t handle, uint32_t in
 	rclc_executor_spin_some(&executor, 100);
 
 	if(micro_ros_result != RCL_RET_OK) {
-		printk("ERROR: Micro ROS connection is not estabilished!");
+		printk("ERROR: Micro ROS connection is not estabilished! \n");
+	} else {
+		printk("OK: Data published correctly to DDS \n");
 	}
 
 	return 0;

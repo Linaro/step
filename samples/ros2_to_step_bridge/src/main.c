@@ -4,13 +4,13 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-#include <zephyr.h>
+#include <zephyr/kernel.h>>
 #include <stdlib.h>
 #include <string.h>
 #include <step/step.h>
 #include <step/proc_mgr.h>
 #include <step/sample_pool.h>
-#include <shell/shell.h>
+#include <zephyr/shell/shell.h>
 #include "sensor_node.h"
 #include "imu_data_producer.h"
 #include "zsl_fusion_config.h"
