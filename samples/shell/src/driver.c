@@ -5,8 +5,8 @@
  */
 
 #include <string.h>
-#include <zephyr.h>
-#include <sys/printk.h>
+#include <zephyr/kernel.h>
+#include <zephyr/sys/printk.h>
 #include <step/sample_pool.h>
 #include <step/instrumentation.h>
 #include "driver.h"

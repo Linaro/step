@@ -4,11 +4,11 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-#include <zephyr.h>
+#include <zephyr/kernel.h>
 #include <stdlib.h>
 #include <step/step.h>
 #include <step/proc_mgr.h>
-#include <shell/shell.h>
+#include <zephyr/shell/shell.h>
 #include "foc_driver.h"
 #include "foc_nodes.h"
 

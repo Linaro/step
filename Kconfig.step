@@ -67,40 +67,28 @@ config STEP_PROC_MGR_NODE_LIMIT
 	  memory wihout instrumentation, or STEP_PROC_MGR_NODE_LIMIT * 24 if
 	  CONFIG_STEP_INSTRUMENTATION is enabled.
 
-config STEP_PROC_MGR_EVENT_DRIVEN
-	bool "Enables the process manager to be event driven"
-	default n
-	help
-	  This option makes the processor manager background thread
-	  execute in an event driven fashion.  A single measurement in
-	  the FIFO in a pending state will cause the thread to trigger.
-	  When enabled, the pipeline execution rate will be determined
-	  by the sensor data througput.
-
 config STEP_PROC_MGR_POLL_RATE
-	int "Rate in Hz to poll the measurement pool."
-	default 0 if STEP_PROC_MGR_EVENT_DRIVEN
+	int "Rate in MS to poll the measurement pool."
 	default 10 
 	range 0 100
 	help
-	  Determines the rate, in Hz, that the processor node manager should poll
+	  Determines the rate, in milisseconds, that the processor node manager should poll
 	  the measurement sample pool for new, unprocessed messages. Setting this
-	  to 0 will disable automatic polling, requiring measurements to be
+	  to 0 will disable periodic polling, requiring measurements to be
 	  manually removed from the pool and sent to the step_pm_process function.
 
 config STEP_PROC_MGR_PRIORITY
-	int "Priority level for the polling thread."
-	default 0 if STEP_PROC_MGR_EVENT_DRIVEN
-	default 7
+	int "Priority level for the polling handler."
+	default 0
+	range -4 0
 	help
-	  Sets the priority level for the polling thread that is created when
-	  STEP_PROC_MGR_POLL_RATE is > 0. A positive value indicates that this is
+	  Sets the priority level for the polling handler. Keeps it to 0 for
 	  a preemptible thread, and a negative value indicates that this is a
 	  cooperative thread. The higher the value, the lower the thread priority.
 
 config STEP_PROC_MGR_STACK_SIZE
-	int "Stack size for the polling thread."
-	default 512
+	int "Stack size for the polling handler thread."
+	default 2048
 	help
 	  Sets the stack size for the polling thread that is created when
 	  STEP_PROC_MGR_POLL_RATE is > 0. When enabled, all processor nodes will be

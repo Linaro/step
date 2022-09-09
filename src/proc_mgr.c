@@ -4,11 +4,11 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-#include <zephyr.h>
+#include <zephyr/kernel.h>
 #include <string.h>
-#include <logging/log.h>
-#include <sys/printk.h>
-#include <sys/slist.h>
+#include <zephyr/logging/log.h>
+#include <zephyr/sys/printk.h>
+#include <zephyr/sys/slist.h>
 #include <step/proc_mgr.h>
 #include <step/sample_pool.h>
 #include <step/cache.h>
@@ -84,6 +84,17 @@ struct step_pm_node_record {
 #endif
 };
 
+/* work queue strcture data used to pass fifo samples to work handler */
+struct step_pm_work_data {
+	struct k_work work;
+	bool free_after_use;
+};
+
+static struct step_pm_work_data step_pm_work;
+static bool step_pm_wqueue_started = false;
+K_THREAD_STACK_DEFINE(step_pm_work_stack, CONFIG_STEP_PROC_MGR_STACK_SIZE);
+static struct k_work_q step_pm_work_q;
+
 /* Processor node registry. This static array provides a fixed location in
  * memory for individual records in the processor node registry, along with
  * any relevant meta-data required when evaluating them. */
@@ -95,17 +106,64 @@ static uint32_t step_pm_handle_counter = 0;
  * they should be evaluated. The 'process' function traverses this list. */
 static sys_slist_t pm_node_slist = SYS_SLIST_STATIC_INIT(&pm_node_slist);
 
-#if (CONFIG_STEP_PROC_MGR_POLL_RATE > 0) || defined(CONFIG_STEP_PROC_MGR_EVENT_DRIVEN) 
-static void step_pm_poll_thread(bool free);
-/* Create the polling thread. */
-K_THREAD_DEFINE(step_pm_tid, CONFIG_STEP_PROC_MGR_STACK_SIZE,
-		step_pm_poll_thread, 1, NULL, NULL,
-		CONFIG_STEP_PROC_MGR_PRIORITY, 0, 0);
-#endif
-
 /* Registry should be locked during processing or when modifying it. */
 K_MUTEX_DEFINE(step_pm_reg_access);
 K_HEAP_DEFINE(step_callbacks_pool, CONFIG_STEP_PROC_MGR_CALLBACKS_NUM * sizeof(struct step_node_sub_callback));
+
+/* timer used for periodic polling */
+static struct k_timer step_pm_timer;
+
+static void step_pm_timer_handler(struct k_timer *timer)
+{
+	step_pm_work.free_after_use  = true;
+	k_work_submit_to_queue(&step_pm_work_q, &step_pm_work.work);
+}
+
+static void step_pm_timer_handle_stop(struct k_timer *timer)
+{
+	ARG_UNUSED(timer);
+}
+
+static void step_pm_poll_handler(struct k_work *item)
+{
+	struct step_pm_work_data *data = CONTAINER_OF(item, struct step_pm_work_data, work);
+	bool free = data->free_after_use;
+	struct step_measurement *mes = step_sp_get();
+
+	/* run until all samples gets drained from sample FIFO */
+	while(mes != NULL) {
+		int matches = 0;
+
+		/* process this sample through node chains */
+		int rc = step_pm_process(mes, &matches, free);
+
+		if(rc) {
+			LOG_ERR("Failed to process the current sample.");
+		}
+
+		mes = step_sp_get();
+	}
+	/* if the sample is empty, do not submit any new work to the queue */
+}
+
+static void step_pm_initialize_workqueue(void)
+{
+	/* if the PM workqueue is not started yet, wait it to gets up */
+	if (!step_pm_wqueue_started) {
+
+		step_pm_wqueue_started = true;
+		k_work_queue_init(&step_pm_work_q);
+		k_work_queue_start(&step_pm_work_q, step_pm_work_stack, K_THREAD_STACK_SIZEOF(step_pm_work_stack),
+				CONFIG_STEP_PROC_MGR_PRIORITY,NULL);
+		k_work_init(&step_pm_work.work, step_pm_poll_handler);
+
+		k_timer_init(&step_pm_timer, step_pm_timer_handler, step_pm_timer_handle_stop);
+#if (CONFIG_STEP_PROC_MGR_POLL_RATE > 0)
+		k_timer_start(&step_pm_timer, K_MSEC(CONFIG_STEP_PROC_MGR_POLL_RATE), K_MSEC(CONFIG_STEP_PROC_MGR_POLL_RATE));
+#endif
+	}
+
+}
 
 int step_pm_register(struct step_node *node, uint16_t pri, uint32_t *handle)
 {
@@ -115,6 +173,8 @@ int step_pm_register(struct step_node *node, uint16_t pri, uint32_t *handle)
 	struct step_pm_node_record *prev, *match;
 	struct step_node *n = node;
 	uint32_t idx = 0;
+
+	step_pm_initialize_workqueue();
 
 	/* Lock registry access during registration. */
 	k_mutex_lock(&step_pm_reg_access, K_FOREVER);
@@ -190,6 +250,8 @@ struct step_node *step_pm_node_get(uint32_t handle, uint32_t inst)
 {
 	struct step_node *n;
 
+	step_pm_initialize_workqueue();
+
 	if (handle > step_pm_handle_counter) {
 		LOG_ERR("Invalid handle: %d", handle);
 		return NULL;
@@ -216,29 +278,26 @@ struct step_node *step_pm_node_get(uint32_t handle, uint32_t inst)
 
 int step_pm_resume(void)
 {
-	int rc = 0;
-
+	step_pm_initialize_workqueue();
 #if (CONFIG_STEP_PROC_MGR_POLL_RATE > 0)
-	k_thread_resume(step_pm_tid);
+	k_timer_start(&step_pm_timer, K_MSEC(CONFIG_STEP_PROC_MGR_POLL_RATE), K_MSEC(CONFIG_STEP_PROC_MGR_POLL_RATE));
 #endif
 
-	return rc;
+	return 0;
 }
 
 int step_pm_suspend(void)
 {
-	int rc = 0;
-
-#if (CONFIG_STEP_PROC_MGR_POLL_RATE > 0)
-	k_thread_suspend(step_pm_tid);
-#endif
-
-	return rc;
+	step_pm_initialize_workqueue();
+	k_timer_stop(&step_pm_timer);
+	return 0;
 }
 
 int step_pm_clear(void)
 {
 	int rc = 0;
+
+	step_pm_initialize_workqueue();
 
 	LOG_DBG("Resetting processor node registry");
 
@@ -277,6 +336,8 @@ int step_pm_process(struct step_measurement *mes, int *matches, bool free)
 	struct step_pm_node_record *pnode;
 	struct step_pm_node_record *tmp;
 	struct step_node *n;
+
+	step_pm_initialize_workqueue();
 
 #if CONFIG_STEP_INSTRUMENTATION
 	uint32_t instr = 0;
@@ -427,67 +488,34 @@ abort:
 
 int step_pm_poll(int *mcnt, bool free)
 {
-	int rc = 0;
-	struct step_measurement *mes;
+	/* deprecated */
+	ARG_UNUSED(mcnt);
+	step_pm_initialize_workqueue();
 
-	if (mcnt != NULL) {
-		*mcnt = 0;
-	}
+	/* set free flag to the sample */
+	step_pm_work.free_after_use = free;
 
-#ifdef CONFIG_STEP_PROC_MGR_EVENT_DRIVEN
-		if(k_current_get() != step_pm_tid) {
-			/* for compatibillity reasons if this function is called outside from
-			 * poll thread it should not block:
-			 */
-			mes = step_sp_get();
-		} else {
-			/* block the thread until we get any sample on the FIFO */
-			mes = step_sp_get_until_available();
-		}
-#else
-	mes = step_sp_get();
-#endif
-	while (mes != NULL) {
-		if (mcnt != NULL) {
-			*mcnt += 1;
-		}
-		/* Evaluate the measurement against the processor node registry. */
-		rc = step_pm_process(mes, NULL, free);
-		if (rc) {
-			goto err;
-		}
-		/* Check if we have more measurements available. */
-		mes = step_sp_get();
+	/* trigger the processor manager */
+	int rc = k_work_submit_to_queue(&step_pm_work_q, &step_pm_work.work);
+
+	if (rc < 0) {
+		goto err;
+	} else {
+		/* positive values are not an error in wqueues 
+		 * it just indicates the work has not been executed yet
+		 */
+		rc = 0;
 	}
 
 err:
 	return rc;
 }
 
-#if (CONFIG_STEP_PROC_MGR_POLL_RATE > 0) || defined(CONFIG_STEP_PROC_MGR_EVENT_DRIVEN) 
-
-/**
- * @brief Polling handler if automatic polling is requested.
- *
- * @param free Whether to free measurement from heap memory once processed.
- */
-static void step_pm_poll_thread(bool free)
-{
-	int matches = 0;
-
-	while (1) {
-		step_pm_poll(&matches, free);
-#if !defined(CONFIG_STEP_PROC_MGR_EVENT_DRIVEN) && (CONFIG_STEP_PROC_MGR_POLL_RATE > 0) 
-		k_sleep(K_MSEC(1000 / CONFIG_STEP_PROC_MGR_POLL_RATE));
-#endif
-
-	}
-}
-#endif
-
 int step_pm_disable_node(uint32_t handle)
 {
 	int rc = 0;
+
+	step_pm_initialize_workqueue();
 
 	LOG_DBG("Disabling processor node %d:", handle);
 
@@ -506,6 +534,8 @@ int step_pm_enable_node(uint32_t handle)
 {
 	int rc = 0;
 
+	step_pm_initialize_workqueue();
+
 	LOG_DBG("Enabling processor node %d:", handle);
 
 	if (handle > step_pm_handle_counter) {
@@ -522,6 +552,8 @@ err:
 int step_pm_subscribe_to_node(uint32_t handle, node_chain_completed_callback cb, void *user_data)
 {
 	int rc = 0;
+
+	step_pm_initialize_workqueue();
 
 	/* Lock registry access during registration. */
 	k_mutex_lock(&step_pm_reg_access, K_FOREVER);
@@ -560,6 +592,8 @@ int step_pm_list(void)
 	struct step_pm_node_record *pnode;
 	struct step_pm_node_record *tmp;
 	uint32_t inst;
+
+	step_pm_initialize_workqueue();
 
 	printk("Processor node registry:\n");
 

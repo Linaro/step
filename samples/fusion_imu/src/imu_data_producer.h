@@ -11,7 +11,7 @@
 extern "C" {
 #endif
 
-#include <zephyr.h>
+#include <zephyr/kernel.h>
 #include <stdlib.h>
 #include <stdbool.h>
 #include <step/step.h>

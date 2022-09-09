@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-#include <ztest.h>
+#include <zephyr/ztest.h>
 #include <step/step.h>
 #include <step/measurement/measurement.h>
 #include <step/sample_pool.h>
@@ -97,7 +97,9 @@ ZTEST(tests_sample_pool, test_sp_alloc_limit)
 		zassert_not_null(mes, NULL);
 		step_sp_put(mes);
 	}
+
 	zassert_true(step_sp_bytes_alloc() == rec_size * (max_samples - 1), NULL);
+	zassert_true(step_sp_fifo_count() != 0, NULL);
 
 	/* Try to allocate one more sample. */
 	mes = step_sp_alloc(0);
@@ -107,6 +109,7 @@ ZTEST(tests_sample_pool, test_sp_alloc_limit)
 	/* Flush heap memory. */
 	step_sp_flush();
 	zassert_true(step_sp_bytes_alloc() == 0, NULL);
+	zassert_true(step_sp_fifo_count() == 0, NULL);
 }
 
 ZTEST(tests_sample_pool, test_sp_fifo)
@@ -150,6 +153,7 @@ ZTEST(tests_sample_pool, test_sp_fifo)
 	/* Free memory. */
 	step_sp_free(src);
 	zassert_true(step_sp_bytes_alloc() == 0, NULL);
+	zassert_true(step_sp_fifo_count() == 0, NULL);
 
 	/* FIFO should be empty. */
 	src = step_sp_get();

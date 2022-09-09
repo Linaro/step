@@ -5,7 +5,7 @@
  */
 
 #include <stdio.h>
-#include <logging/log.h>
+#include <zephyr/logging/log.h>
 #include <step/proc_mgr.h>
 #include "nodes.h"
 #include "driver.h"

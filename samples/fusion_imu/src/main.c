@@ -4,13 +4,13 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-#include <zephyr.h>
+#include <zephyr/kernel.h>
 #include <stdlib.h>
 #include <string.h>
 #include <step/step.h>
 #include <step/proc_mgr.h>
 #include <step/sample_pool.h>
-#include <shell/shell.h>
+#include <zephyr/shell/shell.h>
 #include "fusion_nodes.h"
 #include "imu_data_producer.h"
 #include "zsl_fusion_config.h"
@@ -32,6 +32,7 @@ K_TIMER_DEFINE(stream_timer, stream_end, stream_stop);
 
 void on_imu_data_production(struct imu_data_payload *imu)
 {
+	int mcnt;
 	struct step_measurement *imu_measurement = step_sp_alloc(sizeof(*imu));
 
 	if(imu_measurement == NULL) {
@@ -49,7 +50,8 @@ void on_imu_data_production(struct imu_data_payload *imu)
 
 	/* publish sensor measurement to be processed by the waiters */
 	step_sp_put(imu_measurement);
-
+	step_pm_poll(&mcnt, true);
+	
 	/* make a copy of the IMU incoming data for shelll presentation: */
 	memcpy(&raw, imu, sizeof(raw));
 }
