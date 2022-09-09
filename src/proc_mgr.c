@@ -464,7 +464,7 @@ err:
 	return rc;
 }
 
-#if (CONFIG_STEP_PROC_MGR_POLL_RATE > 0) || defined(STEP_PROC_MGR_EVENT_DRIVEN) 
+#if (CONFIG_STEP_PROC_MGR_POLL_RATE > 0) || defined(CONFIG_STEP_PROC_MGR_EVENT_DRIVEN) 
 
 /**
  * @brief Polling handler if automatic polling is requested.
