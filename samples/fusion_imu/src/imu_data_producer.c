@@ -153,6 +153,8 @@ static void imu_sample_thread(void *arg)
         if(imu_user_callback) {
             imu_user_callback(&measurement);
         }
+
+		k_sleep(K_MSEC(10));
     }
 }
 

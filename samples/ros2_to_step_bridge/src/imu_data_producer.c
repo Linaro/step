@@ -43,7 +43,7 @@ const struct step_mes_header imu_measurement_header = {
 
 /* imu measurement thread. */
 static void imu_sample_thread(void *arg);
-K_THREAD_DEFINE(imu_sample_tid, 8192, imu_sample_thread, NULL, NULL, NULL, 1, 0, 0);
+K_THREAD_DEFINE(imu_sample_tid, 8192, imu_sample_thread, NULL, NULL, NULL, -1, 0, 0);
 
 static inline float imu_zephyr_sensor_to_float(struct sensor_value *val)
 {
@@ -153,6 +153,8 @@ static void imu_sample_thread(void *arg)
         if(imu_user_callback) {
             imu_user_callback(&measurement);
         }
+
+		k_sleep(K_MSEC(10));
     }
 }
 

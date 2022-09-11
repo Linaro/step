@@ -3,7 +3,7 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-#include <zephyr/kernel.h>>
+#include <zephyr/kernel.h>
 #include <stdio.h>
 #include <time.h>
 #include <zephyr/device.h>
@@ -77,9 +77,6 @@ int sensor_do_process(struct step_measurement *mes, uint32_t handle, uint32_t in
 	ZSL_VECTOR_DEF(av, 3);
 	ZSL_VECTOR_DEF(gv, 3);
 
-	zsl_vec_init(&av);
-	zsl_vec_init(&gv);
-
 	av.data[0] = imu->imu_accel_x;
 	av.data[1] = imu->imu_accel_y;
 	av.data[2] = imu->imu_accel_z;
@@ -101,15 +98,6 @@ int sensor_do_process(struct step_measurement *mes, uint32_t handle, uint32_t in
 	ros_quaternion.w = q.r;
 
 	micro_ros_result = rcl_publish(&publisher, &ros_quaternion, NULL);
-
-	/* also spin the executor */
-	rclc_executor_spin_some(&executor, 100);
-
-	if(micro_ros_result != RCL_RET_OK) {
-		printk("ERROR: Micro ROS connection is not estabilished! \n");
-	} else {
-		printk("OK: Data published correctly to DDS \n");
-	}
 
 	return 0;
 }

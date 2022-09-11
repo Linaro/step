@@ -14,11 +14,26 @@ Requirements
 ************
 This sample assumes the user has some exposition to ROS2 and its command line tools.
 
+For now Arm-based host computers are not able to build this sample.
+
 This sample requires you to install ROS2 and micro-ROS additions to get
 everything running, please refer the the RO2 getting starter: https://docs.ros.org/en/humble/index.html
 
 Once user gets ROS2 in place into a laptop or a single computer board, just build this sample and connect
 the USB of target board into the laptop or the single board computer where ROS2 runs.
+
+User needs to update micro_ros_zephyr submodule since it is not a Zephyr standard module:
+
+.. code-block:: console
+
+    git submodule update --init --recursive
+
+This component needs `colcon` and other Python 3 packages in order to build micro-ROS packages:
+
+.. code-block:: console
+
+    pip3 install catkin_pkg lark-parser empy colcon-common-extensions
+
 
 Building and Flashing
 *********************
@@ -42,15 +57,19 @@ After the firmware gets flashed, in a terminal of your ROS2 installation launch 
 microXRCE-DDS agent:
 
 .. code-block:: console
+
     micro-xrce-dds-agent serial --dev [YOUR_BOARD_PORT] -v6
 
 On another terminal prepare ROS2 and run its topic utils to the device:
+
 .. code-block:: console
+
     ros2 topic list
 
 You should see the topic where the board publishes the data:
 
 .. code-block:: console
+
     rosout
     sensor/step/imu/quaternion
 
@@ -59,6 +78,8 @@ board and do ROS2 local processing on it, or visualize data using for example Pl
 for example:
 
 .. code-block:: console
+
     ros2 run plotjuggler plotjuggler
 
-The command above assume that Plotjuggler was installed after ROS2 gets in place.
+The command above assume that Plotjuggler was installed after ROS2 gets in place, after
+Plotjuggler starts to run, just start to listen the topics and add them to the plot.

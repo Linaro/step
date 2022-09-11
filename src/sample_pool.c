@@ -32,7 +32,9 @@ void step_sp_free(struct step_measurement *mes)
 	int len;
 
 	step_sp_stats_inst.pool_free_calls++;
-	
+
+	k_mutex_lock(&step_sp_alloc_mtx, K_FOREVER);
+
 	/* Track memory consumption.
 	 * Note that Zephyr's heap stores records in blocks of 8 bytes memory, so
 	 * there is some additional overhead when a record isn't an exact multiple
@@ -45,6 +47,8 @@ void step_sp_free(struct step_measurement *mes)
 
 	/* Free memory in heap. */
 	k_heap_free(&step_elem_pool, mes);
+	
+	k_mutex_unlock(&step_sp_alloc_mtx);
 }
 
 struct step_measurement *step_sp_alloc(uint16_t sz)
