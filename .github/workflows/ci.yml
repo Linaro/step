@@ -26,12 +26,20 @@ jobs:
           pip3 install -r ../zephyr/scripts/requirements-base.txt
           west zephyr-export
       
-      - name: Build firmware
+      - name: Build samples
         working-directory: step
         run: |
-          west build -b mps2_an521 samples/shell
+          west build -p always -b nucleo_g474re samples/foc_controller
+          rm -rf build
+          west build -p always -b b_u585i_iot02a samples/fusion_imu
+          rm -rf build
+          west build -p always -b mps2_an521 samples/shell
+          rm -rf build
+          west build -p always -b mps2_an521 samples/simple_subscription
+          rm -rf build
+          west build -p always -b mps2_an521 samples/throughput
       
       - name: Test
         working-directory: step
         run: |
-          ../zephyr/scripts/twister --inline-logs -p qemu_cortex_m3 -T tests  -v
+          ../zephyr/scripts/twister --inline-logs -p mps2_an521 -T tests  -v
