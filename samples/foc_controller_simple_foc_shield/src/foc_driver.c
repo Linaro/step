@@ -61,7 +61,7 @@ static void foc_driver_rotor_position_sample_thread(void *arg);
 /* Rotor sensor measurement thread. */
 K_THREAD_DEFINE(rotor_sample_tid, 4096,
 		foc_driver_rotor_position_sample_thread, NULL, NULL, NULL,
-		-1, 0, 0);
+		-1, 0, 500);
 
 const static float encoder_to_degrees_ratio = (360.0f) / AS5600_PULSES_PER_REVOLUTION;
 
@@ -73,12 +73,11 @@ static struct {
 	uint16_t zero_offset;
 } encoder_reading;
 
-static const struct device *inverter_pwm = DEVICE_DT_GET(DT_NODELABEL(inverter_pwm));
+static const struct device *inverter_pwm_a = DEVICE_DT_GET(DT_NODELABEL(inverter_pwm_a));
+static const struct device *inverter_pwm_b = DEVICE_DT_GET(DT_NODELABEL(inverter_pwm_b));
 static const struct device *encoder_i2c = DEVICE_DT_GET(DT_NODELABEL(i2c1));
 
-static struct gpio_dt_spec enable_u = GPIO_DT_SPEC_GET_BY_IDX(DT_NODELABEL(inverter_enable),gpios,0);
-static struct gpio_dt_spec enable_v = GPIO_DT_SPEC_GET_BY_IDX(DT_NODELABEL(inverter_enable),gpios,1);
-static struct gpio_dt_spec enable_w = GPIO_DT_SPEC_GET_BY_IDX(DT_NODELABEL(inverter_enable),gpios,2);
+static struct gpio_dt_spec enable = GPIO_DT_SPEC_GET_BY_IDX(DT_NODELABEL(inverter_enable),gpios,0);
 
 static uint16_t foc_driver_read_encoder(void)
 {
@@ -137,9 +136,15 @@ static void foc_driver_get_rotor_position(struct step_measurement * rotor_measur
 static void foc_driver_rotor_position_sample_thread(void *arg)
 {	
 	int mcnt;
-	struct step_measurement *rotor_measurement =  step_sp_alloc(ROTOR_DRV_PAYLOAD_SZ);
 
 	for(;;) {
+		struct step_measurement *rotor_measurement =  step_sp_alloc(ROTOR_DRV_PAYLOAD_SZ);
+
+		if(rotor_measurement == NULL) {
+			k_sleep(K_MSEC(1));
+			continue;
+		}
+
 		foc_driver_get_rotor_position(rotor_measurement);
 
 		if(user_callback) {
@@ -155,7 +160,7 @@ static void foc_driver_rotor_position_sample_thread(void *arg)
 		* in that case, FoC pipeline would be one of the waiters 
 		*/
 		step_sp_put(rotor_measurement);
-		step_pm_poll(&mcnt, false);
+		step_pm_poll(&mcnt, true);
 	}
 }
 
@@ -171,14 +176,8 @@ int foc_driver_initialize(float motor_pole_pairs, foc_measurement_callback_t cb)
 
 	i2c_configure(encoder_i2c, I2C_MODE_MASTER | I2C_SPEED_FAST);
 	foc_driver_set_duty_cycle(0.0f, 0.0f, 0.0f);
-
-	gpio_pin_configure_dt(&enable_u, GPIO_OUTPUT);
-	gpio_pin_configure_dt(&enable_v, GPIO_OUTPUT);
-	gpio_pin_configure_dt(&enable_w, GPIO_OUTPUT);
-
-	gpio_pin_set_dt(&enable_u, 1);
-	gpio_pin_set_dt(&enable_v, 1);
-	gpio_pin_set_dt(&enable_w, 1);
+	gpio_pin_configure_dt(&enable, GPIO_OUTPUT);
+	gpio_pin_set_dt(&enable, 1);
 
 	return rc;
 }
@@ -217,7 +216,7 @@ void foc_driver_set_duty_cycle(float dc_u, float dc_v, float dc_w)
 	dc_v *= PWM_PERIOD_NSEC - 1;
 	dc_w *= PWM_PERIOD_NSEC - 1;
 
-	pwm_set(inverter_pwm, 1 , PWM_PERIOD_NSEC, dc_u, 0);
-	pwm_set(inverter_pwm, 2 , PWM_PERIOD_NSEC, dc_v, 0);
-	pwm_set(inverter_pwm, 3 , PWM_PERIOD_NSEC, dc_w, 0);
+	pwm_set(inverter_pwm_a, 1 , PWM_PERIOD_NSEC, dc_u, 0);
+	pwm_set(inverter_pwm_a, 2 , PWM_PERIOD_NSEC, dc_v, 0);
+	pwm_set(inverter_pwm_b, 3 , PWM_PERIOD_NSEC, dc_w, 0);
 }

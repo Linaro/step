@@ -29,7 +29,9 @@ jobs:
       - name: Build samples
         working-directory: step
         run: |
-          west build -p always -b nucleo_g474re samples/foc_controller
+          west build -p always -b nucleo_g474re samples/foc_controller_simple_foc_shield
+          rm -rf build
+          west build -p always -b nucleo_g474re samples/foc_controller_x_nucleo_ihm07m1_shield
           rm -rf build
           west build -p always -b b_u585i_iot02a samples/fusion_imu
           rm -rf build

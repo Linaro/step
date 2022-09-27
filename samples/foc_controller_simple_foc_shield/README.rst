@@ -21,21 +21,21 @@ Requirements
 ************
 To experiment the motor control is necessary a power electronics interface
 that supports three PWM signals on its input. This sample was tested using 
-the ST Microelectronics IHM07M1 brushless motor interface development kit
+the SimpleFoC brushless motor interface development kit
 plus a Nucleo G474RE board, altough any nucleo board that has support for 
-PWM and I2C from Zephyr would work.
+PWM and I2C from Zephyr would work, also any board with Arduino R1 connector,
+may also work.
 
 Also besides a brushless motor, it is necessary a magnetic encoder board 
 like AS5600 (or AS5408 which is register compatible) with I2C interface.
 This FoC controller is a voltage mode, that is it, a rotor position sensor 
 like this magnetic encoder is required, it can be attached to any I2C 
-available on the MCU, for this test the I2C1 under PB8 and PB9 pins 
+available on the MCU, for this test the I2C1 under D14 and D15 arduino pins 
 were selected in the Nucleo board.
 
-For the PWM, the test was made using the pins PA8, PA9 and PA10, these 
-pins output the PWM signlas from TIM1, respectively the channels 1 to 3.
-Also the driver on the power board have 3 enable signals that need to be
-tied to high, in the test they are connected on PC10 to PC12. More 
+For the PWM, the test was made using the arduino pins D5, D6 and D9, these 
+pins are PWM output capable. Also the driver on the power board has 1 enable signal 
+that need to be tied to high, in the test it is connected to D8 arduino signal. More 
 information can be obtained checking the sample overlay file for this
 application. 
 
@@ -52,7 +52,7 @@ require special instructions, just use west command as shown below:
 
 .. code-block:: console
 
-    $ west build -p always -b nucleo_g474re modules/lib/step/samples/foc_controller
+    $ west build -p always -b nucleo_g474re modules/lib/step/samples/foc_controller_simple_foc_shield
 
 Flashing also does not require special steps, just type:
 

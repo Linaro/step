@@ -80,7 +80,7 @@ config STEP_PROC_MGR_POLL_RATE
 config STEP_PROC_MGR_PRIORITY
 	int "Priority level for the polling handler."
 	default 0
-	range -4 0
+	range -4 8
 	help
 	  Sets the priority level for the polling handler. Keeps it to 0 for
 	  a preemptible thread, and a negative value indicates that this is a
