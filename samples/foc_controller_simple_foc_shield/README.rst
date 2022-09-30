@@ -73,4 +73,4 @@ will result in immediate motor spinning.
 
 .. code-block:: console
 
-    $ step_foc set -4.0 -1.0
+    $ step_foc set -1.0 0.0

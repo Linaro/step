@@ -67,11 +67,11 @@ int foc_align_rotor(void *cfg, uint32_t handle, uint32_t inst)
 	float inverter_duties[3];
 
 	/* we want a voltage vector with 90 degree of phase */
-	arm_sin_cos_f32(90, &sine, &cosine);
+	arm_sin_cos_f32(-90, &sine, &cosine);
 
 	/* use only 20% of the current capacity to avoid heating*/
 	arm_inv_park_f32(0.0f,
-					0.2f,
+					0.4f,
 					&alpha,
 					&beta,
 					sine,
@@ -91,7 +91,7 @@ int foc_align_rotor(void *cfg, uint32_t handle, uint32_t inst)
 	k_sleep(K_MSEC(500));
 
 	/* before releasing the voltage, sets the zero angle offset in the encoder*/
-	return 0;
+	return foc_driver_set_encoder_offset();
 }
 
 /* foc algorithm process step */

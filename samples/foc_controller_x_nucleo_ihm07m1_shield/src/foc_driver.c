@@ -61,7 +61,7 @@ static void foc_driver_rotor_position_sample_thread(void *arg);
 /* Rotor sensor measurement thread. */
 K_THREAD_DEFINE(rotor_sample_tid, 4096,
 		foc_driver_rotor_position_sample_thread, NULL, NULL, NULL,
-		0, 0, 500);
+		-1, 0, 500);
 
 const static float encoder_to_degrees_ratio = (360.0f) / AS5600_PULSES_PER_REVOLUTION;
 
