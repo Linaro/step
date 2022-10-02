@@ -63,7 +63,7 @@ K_THREAD_DEFINE(rotor_sample_tid, 4096,
 		foc_driver_rotor_position_sample_thread, NULL, NULL, NULL,
 		-1, 0, 500);
 
-const static float encoder_to_degrees_ratio = (360.0f) / AS5600_PULSES_PER_REVOLUTION;
+const static float encoder_to_degrees_ratio = 2 * PI / AS5600_PULSES_PER_REVOLUTION;
 
 static foc_measurement_callback_t user_callback;
 static float pole_pairs;
@@ -137,6 +137,22 @@ static void foc_driver_rotor_position_sample_thread(void *arg)
 {	
 	int mcnt;
 
+	i2c_configure(encoder_i2c, I2C_MODE_MASTER | I2C_SPEED_FAST);
+	gpio_pin_configure_dt(&enable, GPIO_OUTPUT);
+	gpio_pin_set_dt(&enable, 1);
+
+	foc_driver_set_duty_cycle(0.0f, 0.0f, 0.0f);
+	k_sleep(K_MSEC(1000));
+
+	/* perform rotor position mechanical alignment */
+	foc_driver_set_duty_cycle(0.0f, 0.2f, 0.0f);
+	
+	/* give a delay to the rotor align mechanically */
+	k_sleep(K_MSEC(500));
+
+	/* before releasing the voltage, sets the zero angle offset in the encoder*/
+	foc_driver_set_encoder_offset();
+
 	for(;;) {
 		struct step_measurement *rotor_measurement =  step_sp_alloc(ROTOR_DRV_PAYLOAD_SZ);
 
@@ -173,12 +189,6 @@ int foc_driver_initialize(float motor_pole_pairs, foc_measurement_callback_t cb)
 
 	encoder_reading.raw = 0;
 	encoder_reading.zero_offset = 0;
-
-	i2c_configure(encoder_i2c, I2C_MODE_MASTER | I2C_SPEED_FAST);
-	foc_driver_set_duty_cycle(0.0f, 0.0f, 0.0f);
-	gpio_pin_configure_dt(&enable, GPIO_OUTPUT);
-	gpio_pin_set_dt(&enable, 1);
-
 	return rc;
 }
 

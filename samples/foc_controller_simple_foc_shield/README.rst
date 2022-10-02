@@ -21,10 +21,10 @@ Requirements
 ************
 To experiment the motor control is necessary a power electronics interface
 that supports three PWM signals on its input. This sample was tested using 
-the SimpleFoC brushless motor interface development kit
-plus a Nucleo G474RE board, altough any nucleo board that has support for 
-PWM and I2C from Zephyr would work, also any board with Arduino R1 connector,
-may also work.
+the SimpleFoC brushless motor interface development kit, it can be found
+here: https://bityli.com/GyskvCbZ plus a Nucleo G474RE board, 
+altough any nucleo board that has support for PWM and I2C from Zephyr would work, 
+also any board with Arduino R1 connector, may also work.
 
 Also besides a brushless motor, it is necessary a magnetic encoder board 
 like AS5600 (or AS5408 which is register compatible) with I2C interface.

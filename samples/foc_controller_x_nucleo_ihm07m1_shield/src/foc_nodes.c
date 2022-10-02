@@ -12,6 +12,7 @@
 #include "foc_driver.h"
 #include "foc_svm.h"
 #include <arm_math.h>
+#include <math.h>
 
 /**
  *  ┌───────────────┐
@@ -54,44 +55,7 @@
 /* rotor sensor align step */
 int foc_align_rotor(void *cfg, uint32_t handle, uint32_t inst)
 {
-	/* for rotor alignment the idea is to provide the initial voltage
-	 * vector with a phase of 90 degree and apply to the motor, and wait
-	 * the rotor to align mechanically to that voltage applied, this will
-	 * translate the stator and rotor magnetic fields are properly 90 degree
-	 * aligned
-	 */
-	float sine;
-	float cosine;
-	float alpha;
-	float beta;
-	float inverter_duties[3];
-
-	/* we want a voltage vector with 90 degree of phase */
-	arm_sin_cos_f32(-90, &sine, &cosine);
-
-	/* use only 20% of the current capacity to avoid heating*/
-	arm_inv_park_f32(0.0f,
-					0.4f,
-					&alpha,
-					&beta,
-					sine,
-					cosine);
-
-	/* convert the alpha-beta frame into SVPWM signals */
-	foc_svm_set(alpha, 
-			beta,
-			&inverter_duties[0],
-			&inverter_duties[1],
-			&inverter_duties[2]);
-
-	/* set the voltage vector to the inverter and... */
-	foc_driver_set_duty_cycle(inverter_duties[0], inverter_duties[1], inverter_duties[2]);
-	
-	/* give a delay to the rotor align mechanically */
-	k_sleep(K_MSEC(500));
-
-	/* before releasing the voltage, sets the zero angle offset in the encoder*/
-	return foc_driver_set_encoder_offset();
+	return 0;
 }
 
 /* foc algorithm process step */
@@ -103,7 +67,8 @@ int foc_do_process(struct step_measurement *mes, uint32_t handle, uint32_t inst)
 	float sine;
 	float cosine;
 
-	arm_sin_cos_f32(feed->e_rotor_position, &sine, &cosine);
+	sine = sinf(feed->e_rotor_position);
+	cosine = cosf(feed->e_rotor_position);
 
 	arm_inv_park_f32(command->voltage_d,
 					command->voltage_q,
