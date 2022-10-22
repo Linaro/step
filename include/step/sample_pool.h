@@ -38,33 +38,11 @@ extern "C" {
 #endif
 
 /**
- * @brief Adds the specified step_measurement to the pool's FIFO.
- *
- * @param mes The step_measurement to add.
- */
-void step_sp_put(struct step_measurement *mes);
-
-/**
- * @brief Gets an step_measurement from the pool's FIFO, or NULL if nothing is
- *        available.
- *
- * @return A pointer to the measurement, or NULL if no measurement could be
- * retrieved.
- */
-struct step_measurement *step_sp_get(void);
-
-/**
  * @brief Frees the heap memory associated with 'ds'.
  *
  * @param mes Pointer to the step_measurement whose memory should be freed.
  */
 void step_sp_free(struct step_measurement *mes);
-
-/**
- * @brief Reads the entire sample pool FIFO, flushing any step_measurement(s)
- *        found from heap memory. Use with care!
- */
-void step_sp_flush(void);
 
 /**
  * @brief Allocates memory for a step_measurement from the sample pool's heap.
@@ -94,20 +72,6 @@ struct step_measurement *step_sp_alloc(uint16_t sz);
  * @return int32_t The number of bytes currently allocated.
  */
 int32_t step_sp_bytes_alloc(void);
-
-/**
- * @brief Checks how many messages are pending in the sample FIFO.
- *
- * @return positive number indicating the amout of pending messages, 0 otherwise.
- */
-uint32_t step_sp_fifo_count(void);
-
-/**
- * @brief Checks if internal FIFO of sample pool has any sample pending.
- *
- * @return true if sample FIFO is empty, otherwise false.
- */
-bool step_sp_is_fifo_empty(void);
 
 /**
  * @brief Prints the contents of the statistics struct. Useful for debug

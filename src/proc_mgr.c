@@ -4,13 +4,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-#include <zephyr/kernel.h>
 #include <string.h>
-#include <zephyr/logging/log.h>
-#include <zephyr/sys/printk.h>
-#include <zephyr/sys/slist.h>
 #include <step/proc_mgr.h>
-#include <step/sample_pool.h>
 #include <step/cache.h>
 #include <step/instrumentation.h>
 
@@ -84,13 +79,6 @@ struct step_pm_node_record {
 #endif
 };
 
-/* work queue strcture data used to pass fifo samples to work handler */
-struct step_pm_work_data {
-	struct k_work work;
-	bool free_after_use;
-};
-
-static struct step_pm_work_data step_pm_work;
 static bool step_pm_wqueue_started = false;
 K_THREAD_STACK_DEFINE(step_pm_work_stack, CONFIG_STEP_PROC_MGR_STACK_SIZE);
 static struct k_work_q step_pm_work_q;
@@ -110,41 +98,7 @@ static sys_slist_t pm_node_slist = SYS_SLIST_STATIC_INIT(&pm_node_slist);
 K_MUTEX_DEFINE(step_pm_reg_access);
 K_HEAP_DEFINE(step_callbacks_pool, CONFIG_STEP_PROC_MGR_CALLBACKS_NUM * sizeof(struct step_node_sub_callback));
 
-/* timer used for periodic polling */
-static struct k_timer step_pm_timer;
-
-static void step_pm_timer_handler(struct k_timer *timer)
-{
-	step_pm_work.free_after_use  = true;
-	k_work_submit_to_queue(&step_pm_work_q, &step_pm_work.work);
-}
-
-static void step_pm_timer_handle_stop(struct k_timer *timer)
-{
-	ARG_UNUSED(timer);
-}
-
-static void step_pm_poll_handler(struct k_work *item)
-{
-	struct step_pm_work_data *data = CONTAINER_OF(item, struct step_pm_work_data, work);
-	bool free = data->free_after_use;
-	struct step_measurement *mes = step_sp_get();
-
-	/* run until all samples gets drained from sample FIFO */
-	while(mes != NULL) {
-		int matches = 0;
-
-		/* process this sample through node chains */
-		int rc = step_pm_process(mes, &matches, free);
-
-		if(rc) {
-			LOG_ERR("Failed to process the current sample.");
-		}
-
-		mes = step_sp_get();
-	}
-	/* if the sample is empty, do not submit any new work to the queue */
-}
+static int step_pm_process(struct step_measurement *mes, bool free);
 
 static void step_pm_initialize_workqueue(void)
 {
@@ -154,179 +108,24 @@ static void step_pm_initialize_workqueue(void)
 		step_pm_wqueue_started = true;
 		k_work_queue_init(&step_pm_work_q);
 		k_work_queue_start(&step_pm_work_q, step_pm_work_stack, K_THREAD_STACK_SIZEOF(step_pm_work_stack),
-				CONFIG_STEP_PROC_MGR_PRIORITY,NULL);
-		k_work_init(&step_pm_work.work, step_pm_poll_handler);
-
-		k_timer_init(&step_pm_timer, step_pm_timer_handler, step_pm_timer_handle_stop);
-#if (CONFIG_STEP_PROC_MGR_POLL_RATE > 0)
-		k_timer_start(&step_pm_timer, K_MSEC(CONFIG_STEP_PROC_MGR_POLL_RATE), K_MSEC(CONFIG_STEP_PROC_MGR_POLL_RATE));
-#endif
+				CONFIG_STEP_PROC_MGR_PRIORITY, NULL);
 	}
-
 }
 
-int step_pm_register(struct step_node *node, uint16_t pri, uint32_t *handle)
+static void step_pm_poll_handler(struct k_work *item)
 {
-	int rc = 0;
-	struct step_pm_node_record *pnode;
-	struct step_pm_node_record *tmp;
-	struct step_pm_node_record *prev, *match;
-	struct step_node *n = node;
-	uint32_t idx = 0;
+	struct step_platform_queue *link = CONTAINER_OF(item, struct step_platform_queue, work);
+	struct step_measurement *mes = CONTAINER_OF(link, struct step_measurement, queue);
 
-	step_pm_initialize_workqueue();
+	/* process this sample through node chains */
+	int rc = step_pm_process(mes, link->free_after_use);
 
-	/* Lock registry access during registration. */
-	k_mutex_lock(&step_pm_reg_access, K_FOREVER);
-
-	if (step_pm_handle_counter == CONFIG_STEP_PROC_MGR_NODE_LIMIT) {
-		*handle = -1;   /* 0xFFFFFFFF */
-		rc = -ENOMEM;
-		LOG_ERR("Registration failed: node limit reached");
-		goto err;
+	if(rc) {
+		LOG_ERR("Failed to process the current sample.");
 	}
-
-	/* Assign and increment the handle counter. */
-	*handle = step_pm_handle_counter++;
-
-	LOG_DBG("Registering node/chain (handle %d, pri %d)", *handle, pri);
-
-	/* Clear the processor node record placeholder. */
-	memset(&step_pm_nodes[*handle], 0, sizeof(struct step_pm_node_record));
-	step_pm_nodes[*handle].node = node;
-	step_pm_nodes[*handle].priority = pri;
-	step_pm_nodes[*handle].handle = *handle;
-	step_pm_nodes[*handle].flags.enabled = 1;
-
-	sys_slist_init(&step_pm_nodes[*handle].sub_callbacks);
-
-	/* Find the correct insertion point based on priority. */
-	match = prev = NULL;
-	SYS_SLIST_FOR_EACH_CONTAINER_SAFE(&pm_node_slist, pnode, tmp, snode) {
-		if ((match == NULL) && (pri > pnode->priority)) {
-			match = pnode;
-			break;
-		}
-		/* If no match, track current node for next iteration. */
-		if (match == NULL) {
-			prev = pnode;
-		}
-	}
-
-	/* Insert new node record in appropriate position based on priority. */
-	if ((match != NULL) && (prev == NULL)) {
-		/* Prepend before sole record. */
-		sys_slist_prepend(&pm_node_slist, &(step_pm_nodes[*handle].snode));
-	} else if (match != NULL) {
-		/* Insert before first lower priority record. */
-		sys_slist_insert(&pm_node_slist,
-				 &(prev->snode), &(step_pm_nodes[*handle].snode));
-	} else {
-		/* Insert at the end. */
-		sys_slist_append(&pm_node_slist, &(step_pm_nodes[*handle].snode));
-	}
-
-	/* Node initialisation callbacks. */
-	do {
-		if (n->callbacks.init_handler != NULL) {
-			/* Use the node's evaluate callback to determine match. */
-			rc = n->callbacks.init_handler(n->config, *handle, idx);
-			if (rc) {
-				n->callbacks.error_handler(NULL, *handle, idx, rc);
-			}
-		}
-		idx++;
-		n = n->next;
-	} while (n != NULL);
-
-err:
-	/* Release the registry lock. */
-	k_mutex_unlock(&step_pm_reg_access);
-
-	return rc;
 }
 
-struct step_node *step_pm_node_get(uint32_t handle, uint32_t inst)
-{
-	struct step_node *n;
-
-	step_pm_initialize_workqueue();
-
-	if (handle > step_pm_handle_counter) {
-		LOG_ERR("Invalid handle: %d", handle);
-		return NULL;
-	}
-
-	n = step_pm_nodes[handle].node;
-
-	/* Return the first node instance if requested. */
-	if (inst == 0) {
-		return n;
-	}
-
-	/* Find the requested node instance. */
-	/* ToDo: we could speed this up calculating the offset in memory. */
-	for (uint32_t i = 0; i < inst; i++) {
-		n = n->next;
-		if (n == NULL) {
-			LOG_ERR("Node instance out of bounds: %d:%d", handle, inst);
-			return NULL;
-		}
-	}
-	return n;
-}
-
-int step_pm_resume(void)
-{
-	step_pm_initialize_workqueue();
-#if (CONFIG_STEP_PROC_MGR_POLL_RATE > 0)
-	k_timer_start(&step_pm_timer, K_MSEC(CONFIG_STEP_PROC_MGR_POLL_RATE), K_MSEC(CONFIG_STEP_PROC_MGR_POLL_RATE));
-#endif
-
-	return 0;
-}
-
-int step_pm_suspend(void)
-{
-	step_pm_initialize_workqueue();
-	k_timer_stop(&step_pm_timer);
-	return 0;
-}
-
-int step_pm_clear(void)
-{
-	int rc = 0;
-
-	step_pm_initialize_workqueue();
-
-	LOG_DBG("Resetting processor node registry");
-
-	/* Lock registry access during clear. */
-	k_mutex_lock(&step_pm_reg_access, K_FOREVER);
-
-#if CONFIG_STEP_FILTER_CACHE
-	/* Clear match cache. */
-	step_cache_clear();
-#endif
-
-	/* Reset the handle counter. */
-	step_pm_handle_counter = 0;
-
-	/* Free the node record placeholders. */
-	for (uint8_t i = 0; i < CONFIG_STEP_PROC_MGR_NODE_LIMIT; i++) {
-		memset(&step_pm_nodes[i], 0, sizeof(struct step_pm_node_record));
-	}
-
-	/* Reset the linked list. */
-	sys_slist_init(&pm_node_slist);
-
-	/* Release the registry lock. */
-	k_mutex_unlock(&step_pm_reg_access);
-
-	return rc;
-}
-
-int step_pm_process(struct step_measurement *mes, int *matches, bool free)
+static int step_pm_process(struct step_measurement *mes, bool free)
 {
 	int rc = 0;
 	int match = 0;
@@ -470,10 +269,6 @@ int step_pm_process(struct step_measurement *mes, int *matches, bool free)
 	}
 
 abort:
-	/* Return the number of filter matches in node registry if requested. */
-	if (matches != NULL) {
-		*matches = match_count;
-	}
 
 	/* Free measurement from shared memory if requested. */
 	if (free) {
@@ -486,17 +281,130 @@ abort:
 	return rc;
 }
 
-int step_pm_poll(int *mcnt, bool free)
+int step_pm_register(struct step_node *node, uint16_t pri, uint32_t *handle)
 {
-	/* deprecated */
-	ARG_UNUSED(mcnt);
+	int rc = 0;
+	struct step_pm_node_record *pnode;
+	struct step_pm_node_record *tmp;
+	struct step_pm_node_record *prev, *match;
+	struct step_node *n = node;
+	uint32_t idx = 0;
+
 	step_pm_initialize_workqueue();
 
-	/* set free flag to the sample */
-	step_pm_work.free_after_use = free;
+	/* Lock registry access during registration. */
+	k_mutex_lock(&step_pm_reg_access, K_FOREVER);
+
+	if (step_pm_handle_counter == CONFIG_STEP_PROC_MGR_NODE_LIMIT) {
+		*handle = -1;   /* 0xFFFFFFFF */
+		rc = -ENOMEM;
+		LOG_ERR("Registration failed: node limit reached");
+		goto err;
+	}
+
+	/* Assign and increment the handle counter. */
+	*handle = step_pm_handle_counter++;
+
+	LOG_DBG("Registering node/chain (handle %d, pri %d)", *handle, pri);
+
+	/* Clear the processor node record placeholder. */
+	memset(&step_pm_nodes[*handle], 0, sizeof(struct step_pm_node_record));
+	step_pm_nodes[*handle].node = node;
+	step_pm_nodes[*handle].priority = pri;
+	step_pm_nodes[*handle].handle = *handle;
+	step_pm_nodes[*handle].flags.enabled = 1;
+
+	sys_slist_init(&step_pm_nodes[*handle].sub_callbacks);
+
+	/* Find the correct insertion point based on priority. */
+	match = prev = NULL;
+	SYS_SLIST_FOR_EACH_CONTAINER_SAFE(&pm_node_slist, pnode, tmp, snode) {
+		if ((match == NULL) && (pri > pnode->priority)) {
+			match = pnode;
+			break;
+		}
+		/* If no match, track current node for next iteration. */
+		if (match == NULL) {
+			prev = pnode;
+		}
+	}
+
+	/* Insert new node record in appropriate position based on priority. */
+	if ((match != NULL) && (prev == NULL)) {
+		/* Prepend before sole record. */
+		sys_slist_prepend(&pm_node_slist, &(step_pm_nodes[*handle].snode));
+	} else if (match != NULL) {
+		/* Insert before first lower priority record. */
+		sys_slist_insert(&pm_node_slist,
+				 &(prev->snode), &(step_pm_nodes[*handle].snode));
+	} else {
+		/* Insert at the end. */
+		sys_slist_append(&pm_node_slist, &(step_pm_nodes[*handle].snode));
+	}
+
+	/* Node initialisation callbacks. */
+	do {
+		if (n->callbacks.init_handler != NULL) {
+			/* Use the node's evaluate callback to determine match. */
+			rc = n->callbacks.init_handler(n->config, *handle, idx);
+			if (rc) {
+				n->callbacks.error_handler(NULL, *handle, idx, rc);
+			}
+		}
+		idx++;
+		n = n->next;
+	} while (n != NULL);
+
+err:
+	/* Release the registry lock. */
+	k_mutex_unlock(&step_pm_reg_access);
+
+	return rc;
+}
+
+struct step_node *step_pm_node_get(uint32_t handle, uint32_t inst)
+{
+	struct step_node *n;
+
+	step_pm_initialize_workqueue();
+
+	if (handle > step_pm_handle_counter) {
+		LOG_ERR("Invalid handle: %d", handle);
+		return NULL;
+	}
+
+	n = step_pm_nodes[handle].node;
+
+	/* Return the first node instance if requested. */
+	if (inst == 0) {
+		return n;
+	}
+
+	/* Find the requested node instance. */
+	/* ToDo: we could speed this up calculating the offset in memory. */
+	for (uint32_t i = 0; i < inst; i++) {
+		n = n->next;
+		if (n == NULL) {
+			LOG_ERR("Node instance out of bounds: %d:%d", handle, inst);
+			return NULL;
+		}
+	}
+	return n;
+}
+
+int step_pm_put(struct step_measurement *mes)
+{
+	if(!mes) {
+		return -EINVAL;
+	}
+
+	step_pm_initialize_workqueue();
+
+	/* attach the handler of this sample */
+	k_work_init(&mes->queue.work, step_pm_poll_handler);
 
 	/* trigger the processor manager */
-	int rc = k_work_submit_to_queue(&step_pm_work_q, &step_pm_work.work);
+	int rc = k_work_submit_to_queue(&step_pm_work_q, &mes->queue.work);
 
 	if (rc < 0) {
 		goto err;
@@ -508,6 +416,39 @@ int step_pm_poll(int *mcnt, bool free)
 	}
 
 err:
+	return rc;
+}
+
+int step_pm_clear(void)
+{
+	int rc = 0;
+
+	step_pm_initialize_workqueue();
+
+	LOG_DBG("Resetting processor node registry");
+
+	/* Lock registry access during clear. */
+	k_mutex_lock(&step_pm_reg_access, K_FOREVER);
+
+#if CONFIG_STEP_FILTER_CACHE
+	/* Clear match cache. */
+	step_cache_clear();
+#endif
+
+	/* Reset the handle counter. */
+	step_pm_handle_counter = 0;
+
+	/* Free the node record placeholders. */
+	for (uint8_t i = 0; i < CONFIG_STEP_PROC_MGR_NODE_LIMIT; i++) {
+		memset(&step_pm_nodes[i], 0, sizeof(struct step_pm_node_record));
+	}
+
+	/* Reset the linked list. */
+	sys_slist_init(&pm_node_slist);
+
+	/* Release the registry lock. */
+	k_mutex_unlock(&step_pm_reg_access);
+
 	return rc;
 }
 

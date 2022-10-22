@@ -334,13 +334,8 @@ struct step_mes_header {
  * @brief Measurement packet wrapper.
  */
 struct step_measurement {
-	/**
-	 * Zephyr's FIFO implementation requires that FIFO entries reserve a single
-	 * word at the start of the record for kernel use (to add the .next
-	 * pointer). This is wasteful, but is added here until a better alternative
-	 * can be found, or 'k_fifo_alloc_put' can be made to work properly.
-	 */
-	int *reserved;
+	/** link to the next measurement in the chain*/
+	struct step_platform_queue queue;
 
 	/** Packet header containing filter data, SI unit and payload length. */
 	struct step_mes_header header;

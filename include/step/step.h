@@ -8,6 +8,7 @@
 #define STEP_H__
 
 #include <stdint.h>
+#include <step/platform.h>
 
 /**
  * @defgroup step_api Secure Telemetry Pipeline (STeP) API

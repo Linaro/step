@@ -104,26 +104,15 @@ step_shell_cmd_pub(const struct shell *shell, size_t argc, char **argv)
 		LOG_WRN("Failed to allocate measurement in driver.");
 	}
 
-#if (CONFIG_STEP_PROC_MGR_POLL_RATE > 0)
 	/* Assign measurement to FIFO so polling thread finds it. */
-	step_sp_put(mes);
-#else
-	/* Manually process the measurement when no polling thread is present. */
-	step_pm_process(mes, NULL, true);
-#endif
-
+	step_pm_put(mes);
 	STEP_INSTR_STOP(_instr);
 
 	LOG_DBG("Published 1 measurement");
 	/* step_mes_print(smes); */
 
 #if CONFIG_STEP_INSTRUMENTATION
-#if (CONFIG_STEP_PROC_MGR_POLL_RATE > 0)
-	LOG_DBG("Took %d ns, " \
-		"excluding polling thread processing time (run 'step list').", _instr);
-#else
 	LOG_DBG("Took %d ns", _instr);
-#endif
 #endif
 
 	return 0;

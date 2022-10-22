@@ -32,7 +32,6 @@ K_TIMER_DEFINE(stream_timer, stream_end, stream_stop);
 
 void on_imu_data_production(struct imu_data_payload *imu)
 {
-	int mcnt;
 	struct step_measurement *imu_measurement = step_sp_alloc(sizeof(*imu));
 
 	if(imu_measurement == NULL) {
@@ -48,12 +47,11 @@ void on_imu_data_production(struct imu_data_payload *imu)
 	imu_measurement->header.unit_bits = imu_measurement_header.unit_bits;
 	imu_measurement->header.srclen_bits = imu_measurement_header.srclen_bits;
 
-	/* publish sensor measurement to be processed by the waiters */
-	step_sp_put(imu_measurement);
-	step_pm_poll(&mcnt, true);
-	
 	/* make a copy of the IMU incoming data for shelll presentation: */
 	memcpy(&raw, imu, sizeof(raw));
+
+	/* publish sensor measurement to be processed by the waiters */
+	step_pm_put(imu_measurement);	
 }
 
 static int step_fusion_cmd_imu(const struct shell *shell, size_t argc, char **argv)

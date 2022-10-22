@@ -7,6 +7,7 @@
 #ifndef STEP_PROC_MGR_H__
 #define STEP_PROC_MGR_H__
 
+#include <step/sample_pool.h>
 #include <step/step.h>
 #include <step/node.h>
 
@@ -93,22 +94,6 @@ int step_pm_register(struct step_node *node, uint16_t pri, uint32_t *handle);
 struct step_node* step_pm_node_get(uint32_t handle, uint32_t inst);
 
 /**
- * @brief Initialises the timer thread used to periodically poll for queued
- *        measurements.
- *
- * @return int 0 on success, negative error code on failure.
- */
-int step_pm_resume(void);
-
-/**
- * @brief Stops the timer thread used to periodically poll for queued
- *        measurements.
- *
- * @return int 0 on success, negative error code on failure.
- */
-int step_pm_suspend(void);
-
-/**
  * @brief Clears the registry, and resets the manager to it's default state.
  *
  * @return int  0 on success, negative error code on failure.
@@ -116,40 +101,14 @@ int step_pm_suspend(void);
 int step_pm_clear(void);
 
 /**
- * @brief Processes the supplied @ref step_measurement using the current
- *        processor node registry, consuming the measurement and optionally
- *        releasing it from shared memory when completed.
+ * @brief Adds the specified step_measurement to the processor manager
+ *      internal queue to be evaulated.
  *
- * This function evaluates the measurement's filter value against the filter
- * chain of the first node of each active record in the node registry. If a
- * node matches the measurement's filter value, the appropriate callbacks will
- * be fired in the processor node chain, from top to bottom. Only the first
- * node in a processor node chain is evaluted for a filter match.
+ * @param mes The step_measurement to add.
  *
- * When this function completes, the supplied @ref step_message can optionally
- * be freed from shared memory in the sample pool via the @ref free argument.
- *
- * @param mes       Pointer to the @ref step_measurement to parse.
- * @param matches   The number of matches that occured during processing.
- * @param free      If set to true (1), the measurement will be freed
- *                  from shared memory when processing is complete.
- *
- * @return int 0 on success, negative error code on failure.
+ * @return int  0 on success, negative error code on failure.
  */
-int step_pm_process(struct step_measurement *mes, int *matches, bool free);
-
-/**
- * @brief Polls the sample pool for any incoming step_measurement(s) to
- *        process, and processes them on a first in, first processed basis.
- *
- * @param mcnt      Pointer to the number of samples read from the sample pool.
- *                  (Deprecated), currently noop.
- * @param free      If set to true (1), the measurement will be freed
- *                  from shared memory when processing is complete.
- *
- * @return int 0 on success, negative error code on failure.
- */
-int step_pm_poll(int *mcnt, bool free);
+int step_pm_put(struct step_measurement *mes);
 
 /**
  * @brief Disables a registered processor node.
