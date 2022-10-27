@@ -22,10 +22,6 @@ ZTEST(tests_proc_manager, test_proc_reg_limit)
 	int rc;
 	uint32_t handle;
 
-	/* Make sure the polling thread is stopped. */
-	rc = step_pm_suspend();
-	zassert_equal(rc, 0, NULL);
-
 	/* Clear the node registry. */
 	rc = step_pm_clear();
 	zassert_equal(rc, 0, NULL);
@@ -62,13 +58,8 @@ ZTEST(tests_proc_manager, test_proc_manual)
 {
 	int rc;
 	uint32_t handle;
-	int msgcnt;
 
 	struct step_measurement *mes;
-
-	/* Make sure the polling thread is stopped. */
-	rc = step_pm_suspend();
-	zassert_equal(rc, 0, NULL);
 
 	/* Clear processor node stats. */
 	memset(&step_test_data_cb_stats, 0,
@@ -84,9 +75,6 @@ ZTEST(tests_proc_manager, test_proc_manual)
 	memcpy(mes->payload, step_test_mes_dietemp.payload,
 	       step_test_mes_dietemp.header.srclen.len);
 
-	/* Assign measurement to FIFO. */
-	step_sp_put(mes);
-
 	/* Clear the processor node manager. */
 	rc = step_pm_clear();
 	zassert_equal(rc, 0, NULL);
@@ -100,14 +88,13 @@ ZTEST(tests_proc_manager, test_proc_manual)
 	rc = step_pm_subscribe_to_node(handle, on_proc_completed, NULL);
 	zassert_equal(rc, 0, NULL);
 
-	/* Poll the sample pool, which should trigger message processing. */
-	msgcnt = step_sp_fifo_count();
-	rc = step_pm_poll(&msgcnt, true);
+	/* Assign measurement to FIFO. */
+	step_pm_put(mes);
 	zassert_equal(rc, 0, NULL);
-	zassert_equal(msgcnt, 1, NULL);
 
 	/* subscribe to the node to make sure the chain was evaluated */
-	k_sem_take(&sync, K_FOREVER);
+	rc = k_sem_take(&sync, K_MSEC(3000));
+	zassert_equal(rc, 0, NULL);
 
 	/* Verify that the processor callbacks have been fired. */
 	zassert_equal(step_test_data_cb_stats.init, 2, NULL);
@@ -117,17 +104,6 @@ ZTEST(tests_proc_manager, test_proc_manual)
 	zassert_equal(step_test_data_cb_stats.run, 2, NULL);
 	zassert_equal(step_test_data_cb_stats.stop, 2, NULL);
 	zassert_equal(step_test_data_cb_stats.error, 0, NULL);
-
-	/* Make sure the sample pool FIFO is empty. */
-	msgcnt = step_sp_fifo_count();
-	rc = step_pm_poll(&msgcnt, true);
-	zassert_equal(rc, 0, NULL);
-	zassert_true(step_sp_fifo_count() == 0, NULL);
-	zassert_equal(msgcnt, 0, NULL);
-
-	/* Also check the FIFO directly. */
-	mes = step_sp_get();
-	zassert_is_null(mes, NULL);
 
 	/* Make sure heap memory was freed. */
 	zassert_equal(step_sp_bytes_alloc(), 0, NULL);
@@ -146,21 +122,13 @@ ZTEST(tests_proc_manager, test_proc_manual_non_alloc)
 {
 	int rc;
 	uint32_t handle;
-	int msgcnt;
 
 	/* Point to a statically defined measurement. */
 	struct step_measurement *mes = &step_test_mes_dietemp;
 
-	/* Make sure the polling thread is stopped. */
-	rc = step_pm_suspend();
-	zassert_equal(rc, 0, NULL);
-
 	/* Clear processor node stats. */
 	memset(&step_test_data_cb_stats, 0,
 	       sizeof(struct step_test_data_procnode_cb_stats));
-
-	/* Assign measurement to FIFO. */
-	step_sp_put(mes);
 
 	/* Clear the processor node manager. */
 	rc = step_pm_clear();
@@ -175,17 +143,13 @@ ZTEST(tests_proc_manager, test_proc_manual_non_alloc)
 	rc = step_pm_subscribe_to_node(handle, on_proc_completed, NULL);
 	zassert_equal(rc, 0, NULL);
 
-	/* Poll the sample pool, which should trigger message processing,
-	 * indicate that memory should NOT be freed when finished since the
-	 * step_measurement is not taken from the sample pool heap.
-	 */
-	msgcnt = step_sp_fifo_count();
-	rc = step_pm_poll(&msgcnt, false);
+	/* push the sample to the processor manager */
+	rc = step_pm_put(mes);
 	zassert_equal(rc, 0, NULL);
-	zassert_equal(msgcnt, 1, NULL);
-
+	
 	/* subscribe to the node to make sure the chain was evaluated */
-	k_sem_take(&sync, K_FOREVER);
+	rc = k_sem_take(&sync, K_MSEC(3000));
+	zassert_equal(rc, 0, NULL);
 
 	/* Verify that the processor callbacks have been fired. */
 	zassert_equal(step_test_data_cb_stats.init, 2, NULL);
@@ -195,17 +159,6 @@ ZTEST(tests_proc_manager, test_proc_manual_non_alloc)
 	zassert_equal(step_test_data_cb_stats.run, 2, NULL);
 	zassert_equal(step_test_data_cb_stats.stop, 2, NULL);
 	zassert_equal(step_test_data_cb_stats.error, 0, NULL);
-
-	/* Make sure the sample pool FIFO is empty. */
-	msgcnt = step_sp_fifo_count();
-	rc = step_pm_poll(&msgcnt, false);
-	zassert_true(step_sp_fifo_count() == 0, NULL);
-	zassert_equal(rc, 0, NULL);
-	zassert_equal(msgcnt, 0, NULL);
-
-	/* Also check the FIFO directly. */
-	mes = step_sp_get();
-	zassert_is_null(mes, NULL);
 
 	/* Clear the node registry. */
 	rc = step_pm_clear();
@@ -213,90 +166,7 @@ ZTEST(tests_proc_manager, test_proc_manual_non_alloc)
 }
 
 /**
- * @brief Tests the automatic polling of queued measurements.
- */
-ZTEST(tests_proc_manager, test_proc_thread)
-{
-	int rc;
-	uint32_t handle;
-	int msgcnt;
-
-	struct step_measurement *mes;
-
-	/* Make sure the polling thread is stopped. */
-	rc = step_pm_suspend();
-	zassert_equal(rc, 0, NULL);
-
-	/* Clear processor node stats. */
-	memset(&step_test_data_cb_stats, 0,
-	       sizeof(struct step_test_data_procnode_cb_stats));
-
-	/* Allocate memory for measurement. */
-	mes = step_sp_alloc(step_test_mes_dietemp.header.srclen.len);
-	zassert_not_null(mes, NULL);
-
-	/* Copy test data into heap-based measurement instance. */
-	memcpy(&(mes->header), &(step_test_mes_dietemp.header),
-	       sizeof(struct step_mes_header));
-	memcpy(mes->payload, step_test_mes_dietemp.payload,
-	       step_test_mes_dietemp.header.srclen.len);
-
-	/* Assign measurement to FIFO. */
-	step_sp_put(mes);
-
-	/* Clear the processor node manager. */
-	rc = step_pm_clear();
-	zassert_equal(rc, 0, NULL);
-
-	/* Register a processor node. */
-	rc = step_pm_register(step_test_data_procnode_chain, 0, &handle);
-	zassert_equal(rc, 0, NULL);
-	zassert_equal(handle, 0, NULL);
-
-	/* subscribe to the registered node */
-	rc = step_pm_subscribe_to_node(handle, on_proc_completed, NULL);
-	zassert_equal(rc, 0, NULL);
-
-	/* Start the polling thread if stopped. */
-	rc = step_pm_resume();
-	zassert_equal(rc, 0, NULL);
-
-	/* subscribe to the node to make sure the chain was evaluated */
-	k_sem_take(&sync, K_FOREVER);
-
-	/* Verify that the processor callbacks have been fired. */
-	zassert_equal(step_test_data_cb_stats.init, 2, NULL);
-	zassert_equal(step_test_data_cb_stats.evaluate, 0, NULL);
-	zassert_equal(step_test_data_cb_stats.matched, 1, NULL);
-	zassert_equal(step_test_data_cb_stats.start, 2, NULL);
-	zassert_equal(step_test_data_cb_stats.run, 2, NULL);
-	zassert_equal(step_test_data_cb_stats.stop, 2, NULL);
-	zassert_equal(step_test_data_cb_stats.error, 0, NULL);
-
-	/* Make sure the sample pool FIFO is empty. */
-	rc = step_pm_poll(&msgcnt, true);
-	zassert_equal(rc, 0, NULL);
-	msgcnt = step_sp_fifo_count();
-	zassert_equal(msgcnt, 0, NULL);
-
-	/* Also check the FIFO directly. */
-	mes = step_sp_get();
-	zassert_is_null(mes, NULL);
-
-	/* Make sure heap memory was freed. */
-	zassert_equal(step_sp_bytes_alloc(), 0, NULL);
-
-	/* Clear the node registry (should also lock out the polling thread). */
-	rc = step_pm_clear();
-	zassert_equal(rc, 0, NULL);
-
-	/* Stop the polling thread. */
-	rc = step_pm_suspend();
-	zassert_equal(rc, 0, NULL);
-}
-
-/**
- * @brief Tests the automatic polling of queued measurements.
+ * @brief Tests the if check node API are correct
  */
 ZTEST(tests_proc_manager, test_proc_get_node)
 {
@@ -359,10 +229,7 @@ void on_node_completed(struct step_measurement *mes, uint32_t handle, void *user
 ZTEST(tests_proc_manager, test_proc_subscribe_node_chain)
 {
 	int rc;
-	int msgcnt = 0;
 	uint32_t handle;
-
-	rc = step_pm_suspend();
 
 	/* Clear the processor node manager. */
 	rc = step_pm_clear();
@@ -388,15 +255,11 @@ ZTEST(tests_proc_manager, test_proc_subscribe_node_chain)
 
 	callback_counts	= 0;
 	/* Assign measurement to FIFO. */
-	step_sp_put(mes);
-
-	msgcnt = step_sp_fifo_count();
-	zassert_equal(msgcnt, 1, NULL);
-	
-	rc = step_pm_poll(&msgcnt, false);
+	rc = step_pm_put(mes);
 	zassert_equal(rc, 0, NULL);
 
-	k_sem_take(&sync, K_FOREVER);
+	rc = k_sem_take(&sync, K_MSEC(3000));
+	zassert_equal(rc, 0, NULL);
 
 	/* compare data sent with received from subscription callback */
 	int match = memcmp(received_measurement->payload, mes->payload, step_test_mes_dietemp.header.srclen.len);

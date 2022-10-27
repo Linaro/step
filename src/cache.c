@@ -4,11 +4,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-#include <zephyr/kernel.h>
 #include <string.h>
 #include <step/cache.h>
-
-#include <zephyr/sys/printk.h>
 
 #if CONFIG_STEP_FILTER_CACHE
 static struct step_cache_rec step_cache_recs[CONFIG_STEP_FILTER_CACHE_DEPTH];

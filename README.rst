@@ -52,9 +52,15 @@ and rapid development and testing.
 
 Adding STeP to your project via ``west``
 ****************************************
+The recommended way is to use ``west`` to initialize this repository directly and
+all its dependencies:
 
-For projects that have been setup using ``west``, you can add a local copy of
-this module by adding the following sections to ``zephyr/west.yml``:
+.. code-block:: console
+   $ west init -m git@github.com:Linaro/step.git 
+   $ west update
+
+Alternatively you can add a local copy of this module by adding the following sections
+to ``zephyr/west.yml``:
 
 1. In the ``manifest/remotes`` section add:
 

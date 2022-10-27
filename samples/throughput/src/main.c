@@ -137,21 +137,11 @@ void main(void)
 		payload->accel_y = 0.0F;
 		payload->accel_z = 0.0F;
 
-#if (CONFIG_STEP_PROC_MGR_POLL_RATE > 0)
 		/* Assign measurement to FIFO so polling thread finds it. */
-		step_sp_put(mes);
-#else
-		/* Manually process the measurement (more accurate timing!). */
-		step_pm_process(mes, NULL, true);
-#endif
+		step_pm_put(mes);
 
 		STEP_INSTR_STOP(instr);
 		instr_total += instr;
-
-#if (CONFIG_STEP_PROC_MGR_POLL_RATE > 0)
-		/* Give the polling thread some time to run and free up memory. */
-		k_sleep(K_MSEC(10));
-#endif
 	}
 
 	/* Display timing results. */

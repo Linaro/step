@@ -4,16 +4,12 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-#include <zephyr/kernel.h>
-#include <zephyr/logging/log.h>
-#include <zephyr/sys/printk.h>
 #include <step/sample_pool.h>
 #include <step/measurement/measurement.h>
 
 #define LOG_LEVEL LOG_LEVEL_DBG
 LOG_MODULE_REGISTER(sample_pool);
 
-K_FIFO_DEFINE(step_fifo);
 K_HEAP_DEFINE(step_elem_pool, CONFIG_STEP_POOL_SIZE);
 K_MUTEX_DEFINE(step_sp_alloc_mtx);
 
@@ -23,33 +19,13 @@ K_MUTEX_DEFINE(step_sp_alloc_mtx);
 struct step_sp_stats {
 	int32_t bytes_alloc;
 	uint32_t bytes_alloc_total;
-	uint32_t bytes_freed_total;
-	uint32_t fifo_put_calls;
-	uint32_t fifo_get_calls;
 	uint32_t pool_free_calls;
-	uint32_t pool_flush_calls;
+	uint32_t bytes_freed_total;
 	uint32_t pool_alloc_calls;
-	uint32_t step_sp_fifo_items;
 };
 
 /* Track the number of bytes currently allocated, etc. */
 static struct step_sp_stats step_sp_stats_inst = { 0 };
-
-void step_sp_put(struct step_measurement *mes)
-{
-	step_sp_stats_inst.fifo_put_calls++;
-	step_sp_stats_inst.step_sp_fifo_items++;
-	k_fifo_put(&step_fifo, mes);
-}
-
-struct step_measurement *step_sp_get(void)
-{
-	step_sp_stats_inst.fifo_get_calls++;
-	if(step_sp_stats_inst.step_sp_fifo_items) {
-			step_sp_stats_inst.step_sp_fifo_items--;
-	}
-	return k_fifo_get(&step_fifo, K_NO_WAIT);
-}
 
 void step_sp_free(struct step_measurement *mes)
 {
@@ -69,28 +45,6 @@ void step_sp_free(struct step_measurement *mes)
 
 	/* Free memory in heap. */
 	k_heap_free(&step_elem_pool, mes);
-}
-
-void step_sp_flush(void)
-{
-	struct step_measurement *mes;
-
-	step_sp_stats_inst.pool_flush_calls++;
-
-	/* ToDo: This is problematic since it only frees samples that have
-	 * been pushed to the FIFO. Measurements allocated from heap but never
-	 * pushed to the FIFO will not be freed. */
-	do {
-		mes = step_sp_get();
-		if (mes) {
-			step_sp_free(mes);
-		}
-	} while (mes != NULL);
-
-	/* Warn if any memory is still consumed after flusing the meas. heap. */
-	if (step_sp_stats_inst.bytes_alloc) {
-		LOG_DBG("%d bytes left after flushing!", step_sp_stats_inst.bytes_alloc);
-	}
 }
 
 struct step_measurement *step_sp_alloc(uint16_t sz)
@@ -131,6 +85,9 @@ struct step_measurement *step_sp_alloc(uint16_t sz)
 		memset(mes->payload, 0, sz);
 	}
 
+	/* measurement allocated from sample pool should be always freed automatically*/
+	mes->queue.free_after_use = true;
+
 	k_mutex_unlock(&step_sp_alloc_mtx);
 
 	return mes;
@@ -141,25 +98,11 @@ int32_t step_sp_bytes_alloc(void)
 	return step_sp_stats_inst.bytes_alloc;
 }
 
-uint32_t step_sp_fifo_count(void)
-{
-	return 	step_sp_stats_inst.step_sp_fifo_items;
-}
-
-
-bool step_sp_is_fifo_empty(void)
-{
-	return (bool)(k_fifo_is_empty(&step_fifo));
-}
-
 void step_sp_print_stats(void)
 {
 	printk("bytes_alloc (cur): %d\n", step_sp_stats_inst.bytes_alloc);
 	printk("bytes_alloc_total: %d\n", step_sp_stats_inst.bytes_alloc_total);
 	printk("bytes_freed_total: %d\n", step_sp_stats_inst.bytes_freed_total);
-	printk("fifo_put_calls:    %d\n", step_sp_stats_inst.fifo_put_calls);
-	printk("fifo_get_calls:    %d\n", step_sp_stats_inst.fifo_get_calls);
 	printk("pool_free_calls:   %d\n", step_sp_stats_inst.pool_free_calls);
-	printk("pool_flush_calls:  %d\n", step_sp_stats_inst.pool_flush_calls);
 	printk("pool_alloc_calls:  %d\n", step_sp_stats_inst.pool_alloc_calls);
 }

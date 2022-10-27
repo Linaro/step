@@ -14,14 +14,6 @@ There are two common scenarios where throughput should be tested:
 1. Using the measurement polling thread.
 2. Manually processing measurements (direct call to ``step_pm_process``).
 
-Setting ``CONFIG_STEP_PROC_MGR_POLL_RATE`` to ``0`` disables the polling thread
-and leads to higher throughput, but at the cost of manually managing when
-measurements are processed.
-
-Enabling the polling thread has some additional overhead, but allows for
-asynchronous measurement processing and the ability to set an appropriate
-priority level for the polling thread.
-
 Requirements
 ************
 

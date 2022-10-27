@@ -71,7 +71,7 @@ int foc_align_rotor(void *cfg, uint32_t handle, uint32_t inst)
 
 	/* use only 20% of the current capacity to avoid heating*/
 	arm_inv_park_f32(0.0f,
-					0.2f,
+					0.1f,
 					&alpha,
 					&beta,
 					sine,

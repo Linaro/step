@@ -22,7 +22,7 @@ static void on_node_completed(struct step_measurement *mes, uint32_t handle, voi
 	
 	struct step_measurement *next_mes;
 	step_shell_drv_get_mes(&next_mes);
-	step_sp_put(next_mes);	
+	step_pm_put(next_mes);	
 }
 
 void main(void)
@@ -50,7 +50,7 @@ void main(void)
 		return;
 	}
 
-	step_sp_put(mes);
+	step_pm_put(mes);
 	if (rc) {
 		printk("Node subscription failed!\n");
 		return;

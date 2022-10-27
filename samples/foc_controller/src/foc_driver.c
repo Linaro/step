@@ -116,15 +116,7 @@ static void foc_driver_get_rotor_position(struct step_measurement * rotor_measur
 	fdbk->motor_pole_pairs = pole_pairs;
 
 	/* update the encoder reading */
-	uint16_t counts = foc_driver_read_encoder();
-
-	/* keeps a ZOH (Zero Order Hold) by just accepting valid measurements to 
-	 * reduce position reading distortion
-	 */
-	if(counts <= (AS5600_PULSES_PER_REVOLUTION - 1)) {
-		/* valid readings, update the encoder */
-		encoder_reading.raw = counts;
-	}
+	encoder_reading.raw = foc_driver_read_encoder();
 
 	/* make encoder measures to radians for mech and electrical angle */
 	fdbk->rotor_position = (float)((encoder_reading.raw - encoder_reading.zero_offset) &
@@ -136,26 +128,21 @@ static void foc_driver_get_rotor_position(struct step_measurement * rotor_measur
 
 static void foc_driver_rotor_position_sample_thread(void *arg)
 {	
-	int mcnt;
-	struct step_measurement *rotor_measurement =  step_sp_alloc(ROTOR_DRV_PAYLOAD_SZ);
-
 	for(;;) {
-		foc_driver_get_rotor_position(rotor_measurement);
+		struct step_measurement *rotor_measurement =  step_sp_alloc(ROTOR_DRV_PAYLOAD_SZ);
 
-		if(user_callback) {
-			user_callback(rotor_measurement);
-		}
+		foc_driver_get_rotor_position(rotor_measurement);
 
 		/* fill measurements information before publishing: */
 		rotor_measurement->header.filter_bits = rotor_sensor_header.filter_bits;
 		rotor_measurement->header.unit_bits = rotor_sensor_header.unit_bits;
 		rotor_measurement->header.srclen_bits = rotor_sensor_header.srclen_bits;
 
-		/* publish sensor measurement to be processed by the waiters
-		* in that case, FoC pipeline would be one of the waiters 
-		*/
-		step_sp_put(rotor_measurement);
-		step_pm_poll(&mcnt, false);
+		if(user_callback) {
+			user_callback(rotor_measurement);
+		}
+
+		step_pm_put(rotor_measurement);
 	}
 }
 
