@@ -56,6 +56,7 @@ The recommended way is to use ``west`` to initialize this repository directly an
 all its dependencies:
 
 .. code-block:: console
+
    $ west init -m git@github.com:Linaro/step.git 
    $ west update
 
