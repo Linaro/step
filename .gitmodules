@@ -1,0 +1,4 @@
+[submodule "samples/ros2_to_step_bridge/micro_ros_zephyr_module"]
+	path = samples/ros2_to_step_bridge/micro_ros_zephyr_module
+	url = git@github.com:micro-ROS/micro_ros_zephyr_module.git
+	branch = humble

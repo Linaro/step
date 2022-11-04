@@ -1,0 +1,36 @@
+/*
+ * SPDX-License-Identifier: Apache-2.0
+ *
+ * Copyright (c) 2022 Linaro
+ */
+/ {
+    aliases {
+        uros-serial-port = &usart1;
+    };
+};
+
+&usart1 {
+    status = "okay";
+};
+
+&i2c2 {
+	status = "okay";
+
+	board_imu: ism330dhcx@6b {
+		compatible = "st,ism330dhcx";
+		reg = <0x6B>;
+	};
+
+	board_mag: iis2mdc@1e {
+		compatible = "st,iis2mdc";
+		reg = <0x1E>;
+	};
+};
+
+&zephyr_udc0 {
+    cdc_acm_uart0: cdc_acm_uart0 {
+            compatible = "zephyr,cdc-acm-uart";
+            label = "CDC_ACM_0";
+    };
+};
+

@@ -15,6 +15,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v2
         with:
+          submodules: recursive
           path: step
       
       - name: Initialize
@@ -25,13 +26,17 @@ jobs:
           west update
           pip3 install -r ../zephyr/scripts/requirements-base.txt
           west zephyr-export
+          pip3 install catkin_pkg lark-parser empy colcon-common-extensions
       
       - name: Build samples
         working-directory: step
         run: |
+          git submodule update --init --recursive
           west build -p always -b nucleo_g474re samples/foc_controller
           rm -rf build
           west build -p always -b b_u585i_iot02a samples/fusion_imu
+          rm -rf build
+          west build  -p always -b b_u585i_iot02a samples/ros2_to_step_bridge
           rm -rf build
           west build -p always -b mps2_an521 samples/shell
           rm -rf build
