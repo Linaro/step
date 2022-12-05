@@ -1,0 +1,5 @@
+sample:
+  name: Secure telemetry pipeline multicore sample
+tests:
+  test:
+    tags: step

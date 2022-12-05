@@ -1,0 +1,14 @@
+# Private config options for multicore sample app
+
+# Copyright (c) 2022 Linaro Limited
+# SPDX-License-Identifier: Apache-2.0
+
+
+config OPENAMP_IPC_SHM_BASE_ADDRESS
+	hex
+	default "$(dt_chosen_reg_addr_hex,$(DT_CHOSEN_Z_IPC_SHM))"
+	help
+	  This option specifies base address of the memory region to
+	  be used for the OpenAMP IPC shared memory
+
+source "Kconfig.zephyr"

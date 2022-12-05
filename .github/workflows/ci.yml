@@ -43,6 +43,8 @@ jobs:
           west build -p always -b mps2_an521 samples/simple_subscription
           rm -rf build
           west build -p always -b mps2_an521 samples/throughput
+          rm -rf build
+          west build -p always -b mps2_an521 samples/mobile_robot_kinematic_server
       
       - name: Test
         working-directory: step
